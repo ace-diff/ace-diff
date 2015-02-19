@@ -1,0 +1,40 @@
+#editor1 {
+    position: absolute;
+    top: 0;
+    right: 50%;
+    bottom: 0;
+    left: 0;
+}
+#editor2 {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    bottom: 0;
+    right: 0;
+}
+
+.diffGutter {
+    width: 30px;
+}
+
+#compareBtn {
+    position: absolute;
+    bottom: 10px;
+    left: 50px;
+    z-index: 1;
+}
+.newCode {
+    border-top: 1px solid #0044ff;
+    border-bottom: 1px solid #0044ff;
+    position:absolute;
+    z-index: 20;
+    background-color: #0099cc;
+}
+
+.deletedCode {
+    position: absolute;
+    z-index: 20;
+    background-color: #990000;
+    border-top: 1px solid #cc0000;
+    border-bottom: 1px solid #cc0000;
+}
