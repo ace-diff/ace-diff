@@ -6,7 +6,7 @@
   <script src="libs/diff_match_patch.js"></script>
   <link rel=stylesheet href="style.css">
 </head>
-<body onload="diff()">
+<body>
 
 
 <div id="flex-container">
@@ -25,7 +25,6 @@
 }</div>
 
   </div>
-
   <div id="diffGutter"></div>
   <div>
 
@@ -57,11 +56,37 @@
   <span class="divider">|</span>
 
   Visualize diffs:
-    <input type="radio" name=diffVisFormat" id="diffVisFormat1" value="fullLine" />
+    <input type="radio" name="diffVisFormat" id="diffVisFormat1" value="fullLine" />
       <label for="diffVisFormat1">Full Line</label>
-    <input type="radio" name=diffVisFormat" id="diffVisFormat2" value="text" checked="checked" />
+    <input type="radio" name="diffVisFormat" id="diffVisFormat2" value="text" checked="checked" />
       <label for="diffVisFormat2">Text</label>
 </div>
+
+<script>
+
+  // controls
+  $(function () {
+
+    var aceDiffer = new AceDiff(null, { });
+
+
+    $("#autoDiff").on("click", function (e) {
+      if (e.target.checked) {
+        editors.left.ace.on("change", diff);
+        editors.right.ace.on("change", diff);
+        diff();
+      } else {
+        editors.left.ace.off("change", diff);
+        editors.right.ace.off("change", diff);
+      }
+    });
+
+    $('[name="diffVisFormat"]').on("change", function (e) {
+      visFormat = e.target.value;
+      aceDiffer.diff();
+    });
+  });
+</script>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace-diff.js"></script>

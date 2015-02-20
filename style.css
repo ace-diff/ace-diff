@@ -13,7 +13,6 @@ body {
 }
 #flex-container>div#diffGutter {
     flex: 0 0 60px;
-    background-color: #efefef;
     border-left: 1px solid #999999;
     border-right: 1px solid #999999;
 }
