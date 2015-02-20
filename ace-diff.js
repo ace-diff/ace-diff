@@ -1,5 +1,8 @@
 // all temporary, of course
 
+
+
+
 var editors = {
   left:  {
     ace: ace.edit("editor1"),
@@ -13,10 +16,7 @@ var editors = {
   }
 };
 
-editors.left.ace.setTheme("ace/theme/monokai");
 editors.left.ace.getSession().setMode("ace/mode/javascript");
-
-editors.right.ace.setTheme("ace/theme/monokai");
 editors.right.ace.getSession().setMode("ace/mode/javascript");
 
 var Range = require('ace/range').Range;
@@ -32,8 +32,6 @@ function diff() {
   var dmp = new diff_match_patch();
   var diff = dmp.diff_main(editors.right.ace.getSession().getValue(), editors.left.ace.getSession().getValue());
   dmp.diff_cleanupSemantic(diff);
-
-  console.log(diff);
 
   var editor1OffsetChars = 0;
   var editor2OffsetChars = 0;
@@ -55,10 +53,6 @@ function diff() {
       editor2OffsetChars += text.length;
 
     } else if (op === DIFF_INSERT) {
-      console.log(editors.left.map);
-
-      console.log("editor1OffsetChars", editor1OffsetChars);
-
       var info = getRangeLineNumberAndCharPositions(editors.left.map, editor1OffsetChars, text.length);
       highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
       editor1OffsetChars += text.length;
@@ -66,13 +60,11 @@ function diff() {
   });
 }
 
-
 var diffs = [];
 function highlightDiff(editor, startLine, startChar, endLine, endChar, highlightClass) {
   var editor = editors[editor];
-  editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, "fullLine")); // fullLine
+  editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, "text")); // fullLine
 }
-
 
 function unhighlightDiffs() {
   for (var i=0; i<editors.left.diffs.length; i++) {
@@ -106,10 +98,8 @@ function getRangeLineNumberAndCharPositions(docMap, charNum, strLength) {
   for (var i=0; i<docMap.length; i++) {
     if (!startLine && charNum < docMap[i]) {
       startLine = i;
-//        console.log("char num", charNum, "last line start char: ", docMap[i-1]);
       startChar = charNum - docMap[i-1];
     }
-
     if (endCharNum < docMap[i]) {
       endLine = i;
       endChar = endCharNum - docMap[i-1];
@@ -125,3 +115,21 @@ function getRangeLineNumberAndCharPositions(docMap, charNum, strLength) {
   }
 }
 
+
+
+$(function () {
+  $("#autoDiff").on("click", function (e) {
+    if (e.target.checked) {
+      editors.left.ace.on("change", diff);
+      editors.right.ace.on("change", diff);
+      diff();
+    } else {
+      editors.left.ace.off("change", diff);
+      editors.right.ace.off("change", diff);
+    }
+  });
+
+  $("[name=diffVisFormat]").on("change", function (e) {
+    console.log(e.target.value);
+  });
+});

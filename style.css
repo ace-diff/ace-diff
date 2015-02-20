@@ -1,40 +1,69 @@
+body {
+    margin: 0px;
+    padding: 0px;
+}
+#flex-container {
+    display: flex;
+    flex-direction: row;
+    height: 500px;
+}
+#flex-container>div {
+    flex-grow: 1;
+    position: relative;
+}
+#flex-container>div#diffGutter {
+    flex: 0 0 60px;
+    background-color: #efefef;
+    border-left: 1px solid #999999;
+    border-right: 1px solid #999999;
+}
+
+
 #editor1 {
     position: absolute;
     top: 0;
-    right: 50%;
     bottom: 0;
-    left: 0;
+    width:100%;
 }
 #editor2 {
     position: absolute;
     top: 0;
-    left: 50%;
     bottom: 0;
-    right: 0;
+    width:100%;
 }
 
-.diffGutter {
-    width: 30px;
-}
-
-#compareBtn {
-    position: absolute;
-    bottom: 10px;
-    left: 50px;
-    z-index: 1;
-}
 .newCode {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
     position:absolute;
     z-index: 20;
-    background-color: #0099cc;
+    background-color: #ffffcc;
 }
 
 .deletedCode {
     position: absolute;
     z-index: 20;
-    background-color: #990000;
-    border-top: 1px solid #cc0000;
-    border-bottom: 1px solid #cc0000;
+    background-color: #ffffcc;
+    border-top: 1px solid #0044ff;
+    border-bottom: 1px solid #0044ff;
+}
+
+
+
+#optionPanel {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    z-index: 1;
+    background-color: #0033cc;
+    border-radius: 4px;
+    font-size: 14px;
+    font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
+    padding: 10px 20px;
+    color: white;
+    z-index: 10;
+}
+
+.divider {
+    color: #999999;
 }

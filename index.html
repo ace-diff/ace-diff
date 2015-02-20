@@ -2,36 +2,66 @@
 <html lang="en">
 <head>
   <title>Fun with Diffing</title>
+  <script src="libs/jquery.js"></script>
   <script src="libs/diff_match_patch.js"></script>
   <link rel=stylesheet href="style.css">
 </head>
 <body onload="diff()">
 
 
-<div id="editor1">function foo(items) {
-  // just testing
+<div id="flex-container">
+  <div>
+
+<div id="editor1">function testing(items) {
   var x = "All this is syntax highlighted";
   var y = "this is a new row";
-  return x;
 
+  _.each(items, function(item) {
+    return item.something();
+  });
 
   // something else
   return y;
 }</div>
 
-<div id="diffGutter"></div>
+  </div>
 
-<div id="editor2">function foo(items) {
-  // just testing
+  <div id="diffGutter"></div>
+  <div>
+
+<div id="editor2">function testing(items) {
   var x = "All this is syntax highlighted";
-  // THIS IS like totally deleted, dude.
-  // This second comment is deleted as well
 
-  return x;
+  _.each(items, function(item) {
+    var bob = 1;
+    return item.something();
+  });
+
+  /*
+  Holy moly! The old version has a long comment
+  inserted here at the end.
+  */
+
+  // something else
+  return y;
 }</div>
 
-<input type="button" value="Compare" onclick="diff()" id="compareBtn" />
+  </div>
+</div>
 
+
+<div id="optionPanel">
+  <input type="checkbox" id="autoDiff" />
+    <label for="autoDiff">Realtime diffing</label>
+
+  <span class="divider">|</span>
+
+  Visualize diffs:
+    <input type="radio" name=diffVisFormat" id="diffVisFormat1" value="fullLine" />
+      <label for="diffVisFormat1">Full Line</label>
+    <input type="radio" name=diffVisFormat" id="diffVisFormat2" value="text" checked="checked" />
+      <label for="diffVisFormat2">Text</label>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace-diff.js"></script>
