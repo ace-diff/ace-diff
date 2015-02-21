@@ -1,3 +1,11 @@
+/**
+ * Very much in dev. Kind of a hodge podge of:
+ * - jQuery/plain vanilla,
+ * - whether the component handles creation & management of everything, or relies on dev providing some base markup
+ *
+ * I'll decide about those two in time.
+ */
+
 /*!
  * aceDiff
  * @author Ben Keen
@@ -29,46 +37,62 @@
 
 
   // our constructor
-  var AceDiff = function(element, settings) {
-    this.element = element; // TODO
+  var AceDiff = function(element, options) {
 
-    this.settings = extend({
+    /*
+    Lots to think about here. We either handle the whole thing: rendering both editors and the gutter and just
+    rely on the user providing a little base CSS, or we do like now and rely on the user providing all the markup
+    + CSS.
+
+    Both approaches have advantages/disadvantages.
+    */
+    this.element = element;
+
+    this.options = extend({
       diffFormat: "text", // text / fullLine
+      gutterID: "",
       editorLeft: {
         id: "editor1",
-        mode: "ace/mode/javascript"
+        mode: "ace/mode/javascript",
+        editable: true
       },
       editorRight: {
         id: "editor2",
-        mode: "ace/mode/javascript"
+        mode: "ace/mode/javascript",
+        editable: false
       }
-    }, settings);
+    }, options);
 
     // instantiate the editors in an internal data structure that'll store a little info about the diffs and
     // editor content
     this.editors = {
       left: {
-        ace: ace.edit(this.settings.editorLeft.id),
+        ace: ace.edit(this.options.editorLeft.id),
         map: [],
         diffs: []
       },
       right: {
-        ace: ace.edit(this.settings.editorRight.id),
+        ace: ace.edit(this.options.editorRight.id),
         map: [],
         diffs: []
       }
     };
 
+    // assumption: both editors have same line heights [maybe withdraw...]
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight;
+    this.gutterHeight = $("#" + this.options.gutterID).height();
+    this.gutterWidth = $("#" + this.options.gutterID).width();
+
     // set the modes
-    this.editors.left.ace.getSession().setMode(this.settings.editorLeft.mode);
-    this.editors.right.ace.getSession().setMode(this.settings.editorRight.mode);
+    this.editors.left.ace.getSession().setMode(this.options.editorLeft.mode);
+    this.editors.right.ace.getSession().setMode(this.options.editorRight.mode);
 
     this.diff();
   };
 
 
   // exposed helpers. This allows on-the-fly changes to the ace-diff instance settings
-  AceDiff.prototype.updateSettings = function (options) {
+  AceDiff.prototype.setOptions = function (options) {
     this.options = extend(this.options, options);
   };
 
@@ -79,7 +103,7 @@
     for (var i = 0; i < this.editors.right.diffs.length; i++) {
       this.editors.right.ace.getSession().removeMarker(this.editors.right.diffs[i]);
     }
-  }
+  };
 
 
   AceDiff.prototype.getDocMap = function(editor) {
@@ -95,9 +119,16 @@
     return map;
   };
 
+
   AceDiff.prototype.highlightDiff = function(editor, startLine, startChar, endLine, endChar, highlightClass) {
     var editor = this.editors[editor];
-    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.settings.diffFormat));
+
+    // curious patch that's necessary TODO re-examine
+//    if (endChar === 0 && endLine > 0) {
+//      endChar = getCharsOnLine(editor, --endLine);
+//    }
+
+    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.options.diffFormat));
   };
 
 
@@ -119,8 +150,8 @@
     this.editors.left.map = this.getDocMap(this.editors.left);
     this.editors.right.map = this.getDocMap(this.editors.right);
 
-    createGutter();
 
+    this.createGutter();
 
     diff.forEach(function (chunk) {
       var op = chunk[0];
@@ -136,57 +167,122 @@
         this.highlightDiff("right", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "deletedCode");
         editor2OffsetChars += text.length;
 
+        this.createCopyToLeftMarker(editor1OffsetChars, info.startLineNum, info.endLineNum);
+
       } else if (op === DIFF_INSERT) {
         var info = getRangeLineNumberAndCharPositions(this.editors.left.map, editor1OffsetChars, text.length);
         this.highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
         editor1OffsetChars += text.length;
       }
     }, this);
+  };
 
 
-    // helper function to return the first & last line numbers, and the start and end char positions for those lines
-    function getRangeLineNumberAndCharPositions(docMap, charNum, strLength) {
-      var startLine, startChar, endLine, endChar;
-      var endCharNum = charNum + strLength;
 
-      for (var i = 0; i < docMap.length; i++) {
-        if (!startLine && charNum < docMap[i]) {
-          startLine = i;
-          startChar = charNum - docMap[i - 1];
-        }
-        if (endCharNum < docMap[i]) {
-          endLine = i;
-          endChar = endCharNum - docMap[i - 1];
-          break;
-        }
+  // this one's for stuff that's been REMOVED. It'll be directed to a line 1px line on the left
+  AceDiff.prototype.createCopyToLeftMarker = function(editor1OffsetChars, rightStartLine, rightEndLine) {
+    // create an SVG element, absolutely positioned from the top of gutter. We'll handle the scrolling offsets later
+
+    var line = getLineForOffsetChars(this.editors.left, editor1OffsetChars);
+
+
+    // looks like this fires too late...
+    console.log(this.editors.left.ace.getSession().getScrollTop());
+
+    var p1_x = 0;
+    var p1_y = (line * this.lineHeight) - this.editors.left.ace.getSession().getScrollTop();
+
+    var p2_x = this.gutterWidth + 1;
+    var p2_y = rightStartLine * this.lineHeight;
+    var p3_x = this.gutterWidth + 1;
+    var p3_y = rightEndLine * this.lineHeight;
+
+
+
+
+
+    var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
+    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke:#0044ff; stroke-width:1" />';
+    $("#" + this.options.gutterID + " svg").append(marker);
+
+    // laaaame
+    $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
+  };
+
+
+  // ---------------------------------------------------------------
+
+
+  // helper function to return the first & last line numbers, and the start and end char positions for those lines
+  function getRangeLineNumberAndCharPositions(docMap, charNum, strLength) {
+    var startLine, startChar, endLine, endChar;
+    var endCharNum = charNum + strLength;
+
+    // this looks darn fishy
+    for (var i = 0; i < docMap.length; i++) {
+      if (!startLine && charNum < docMap[i]) {
+        startLine = i;
+        startChar = charNum - docMap[i - 1];
       }
-
-      return {
-        startLineNum: startLine,
-        startChar: startChar,
-        endLineNum: endLine,
-        endChar: endChar
+      if (endCharNum < docMap[i]) {
+        endLine = i;
+        endChar = endCharNum - docMap[i - 1];
+        break;
       }
     }
 
-    function createGutter() {
-      clearGutter();
-      console.log($("#diffGutter").height());
-      console.log($("#diffGutter").height());
+    return {
+      startLineNum: startLine,
+      startChar: startChar,
+      endLineNum: endLine,
+      endChar: endChar
     }
+  }
 
-    function clearGutter() {
-      $("#diffGutter svg").remove();
+  function getCharsOnLine(editor, line) {
+    return editor.ace.getSession().doc.getLine(line).length;
+  }
+
+  function getLineForOffsetChars(editor, offsetChars) {
+    var lines = editor.ace.getSession().doc.getAllLines();
+
+    var foundLine = 0, runningTotal = 0;
+    for (var i = 0; i < lines.length; i++) {
+      var lineLength = lines[i].length + 1; // +1 needed for newline char
+      runningTotal += lineLength;
+      if (offsetChars < runningTotal) {
+        foundLine = i;
+        break;
+      }
     }
+    return foundLine;
+  }
 
+  AceDiff.prototype.createGutter = function() {
+    clearGutter(this.options.gutterID);
+
+    var leftHeight = this.editors.left.ace.getSession().getLength() * this.lineHeight;
+    var rightHeight = this.editors.right.ace.getSession().getLength() * this.lineHeight;
+
+    var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
+
+    // will need to accommodate scrolling, obviously
+    var $el = $("#" + this.options.gutterID);
+
+    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute('width', this.gutterWidth);
+    svg.setAttribute('height', height);
+    svg.setAttribute('style', 'background-color: #efefef');
+    svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+
+    document.getElementById(this.options.gutterID).appendChild(svg);
   }
 
 
+  function clearGutter(id) {
+    $("#" + id + " svg").remove();
+  }
 
-  /*
-   svg paths + fill:
-   http://www.w3schools.com/svg/tryit.asp?filename=trysvg_path2
-   */
 
   // ------------------------------------------------ helpers ------------------------------------------------
 
@@ -280,6 +376,6 @@
 
     return target;
   };
-  
+
   return AceDiff;
 }));

@@ -1,0 +1,60 @@
+<html>
+<head>
+  <script src="libs/jquery.js"></script>
+  <script src="curves.js"></script>
+</head>
+<body>
+<h1>SVG path tests</h1>
+
+<p>
+  Static tests |
+  <a href="paths-animated.html">Animated tests</a>
+</p>
+
+<div id="wrapper">
+  <svg xmlns="http://www.w3.org/2000/svg" style="background-color: #efefef;" height="400px" width="500px">
+    <!-- basic pattern for when right editor's edit is lower -->
+    <!--<path d="M10,80 Q52.5,10 95,80 T180,80" stroke="black" fill="transparent" />-->
+    <path d="M100,100 Q150,125 200,150 T300,200" stroke="black" fill="transparent" />
+  </svg>
+</div>
+
+<ul>
+  <li>
+    <b>Curviness</b>
+    0% <input type="range" id="curveFactor" min="0" max="100" value="50" size="3" oninput="addCurve()" /> 100%
+  </li>
+  <li><b>Start coords</b>
+    x: <input type="text" id="startX" value="100" size="3" />
+    y: <input type="text" id="startY" value="100" size="3" />
+  </li>
+  <li><b>End coords</b>:
+    x: <input type="text" id="endX" value="300" size="3" />
+    y: <input type="text" id="endY" value="200" size="3" />
+  </li>
+</ul>
+
+<p>
+  <input type="button" value="Update" onclick="addCurve()" />
+</p>
+
+<script>
+  function addCurve() {
+    var curveFactor = parseInt($("#curveFactor").val(), 10);
+    var startX = parseInt($("#startX").val(), 10);
+    var startY = parseInt($("#startY").val(), 10);
+    var endX = parseInt($("#endX").val(), 10);
+    var endY = parseInt($("#endY").val(), 10);
+
+    var curve = generateHappyCurve(curveFactor, startX, startY, endX, endY);
+
+    $("svg").html(curve);
+    $("#wrapper").html($("#wrapper").html());
+  }
+
+//  $(addCurve);
+</script>
+
+
+</body>
+</html>

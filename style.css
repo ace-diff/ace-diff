@@ -36,7 +36,7 @@ body {
     border-bottom: 1px solid #0044ff;
     position:absolute;
     z-index: 20;
-    background-color: #ffffcc;
+    background-color: #e2f0ff;
 }
 
 .deletedCode {
@@ -46,8 +46,6 @@ body {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
 }
-
-
 
 #optionPanel {
     position: absolute;

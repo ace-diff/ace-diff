@@ -67,22 +67,24 @@
   // controls
   $(function () {
 
-    var aceDiffer = new AceDiff(null, { });
-
+    var aceDiffer = new AceDiff(null, {
+      diffFormat: "text",
+      gutterID: "diffGutter"
+    });
 
     $("#autoDiff").on("click", function (e) {
       if (e.target.checked) {
-        editors.left.ace.on("change", diff);
-        editors.right.ace.on("change", diff);
-        diff();
+        aceDiffer.editors.left.ace.on("change", function () { aceDiffer.diff(); });
+        aceDiffer.editors.right.ace.on("change", function () { aceDiffer.diff(); });
+        aceDiffer.diff();
       } else {
-        editors.left.ace.off("change", diff);
-        editors.right.ace.off("change", diff);
+        aceDiffer.editors.left.ace.off("change", diff);
+        aceDiffer.editors.right.ace.off("change", diff);
       }
     });
 
     $('[name="diffVisFormat"]').on("change", function (e) {
-      visFormat = e.target.value;
+      aceDiffer.setOptions({ diffFormat: e.target.value });
       aceDiffer.diff();
     });
   });
