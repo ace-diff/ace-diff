@@ -12,9 +12,11 @@
 <div id="flex-container">
   <div>
 
+
 <div id="editor1">function testing(items) {
   var x = "All this is syntax highlighted";
   var y = "this is a new row";
+  var z = "removed row";
 
   _.each(items, function(item) {
     return item.something();
@@ -24,26 +26,61 @@
   return y;
 }</div>
 
-  </div>
-  <div id="diffGutter"></div>
+</div>
+<div id="diffGutter"></div>
   <div>
 
 <div id="editor2">function testing(items) {
   var x = "All this is syntax highlighted";
+  var z = "removed row";
 
   _.each(items, function(item) {
-    var bob = 1;
     return item.something();
   });
 
-  /*
-  Holy moly! The old version has a long comment
-  inserted here at the end.
-  */
+  var a = "added row";
 
   // something else
   return y;
 }</div>
+
+
+
+
+    <!--<div id="editor1">function testing(items) {
+      var x = "All this is syntax highlighted";
+      var y = "this is a new row";
+
+      _.each(items, function(item) {
+        return item.something();
+      });
+
+      // something else
+      return y;
+    }</div>
+
+      </div>
+      <div id="diffGutter"></div>
+      <div>
+
+    <div id="editor2">function testing(items) {
+      var x = "All this is syntax highlighted";
+
+      _.each(items, function(item) {
+        var bob = 1;
+        return item.something();
+      });
+
+      /*
+      Holy moly! The old version has a long comment
+      inserted here at the end.
+      */
+
+      // something else
+      return y;
+    }</div>
+
+    -->
 
   </div>
 </div>
@@ -56,9 +93,9 @@
   <span class="divider">|</span>
 
   Visualize diffs:
-    <input type="radio" name="diffVisFormat" id="diffVisFormat1" value="fullLine" />
+    <input type="radio" name="diffVisFormat" id="diffVisFormat1" value="fullLine" checked="checked" />
       <label for="diffVisFormat1">Full Line</label>
-    <input type="radio" name="diffVisFormat" id="diffVisFormat2" value="text" checked="checked" />
+    <input type="radio" name="diffVisFormat" id="diffVisFormat2" value="text" />
       <label for="diffVisFormat2">Text</label>
 </div>
 
@@ -68,7 +105,7 @@
   $(function () {
 
     var aceDiffer = new AceDiff(null, {
-      diffFormat: "text",
+      diffFormat: "fullLine",
       gutterID: "diffGutter"
     });
 
@@ -89,6 +126,7 @@
     });
   });
 </script>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="ace-diff.js"></script>

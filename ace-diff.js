@@ -112,8 +112,7 @@
 
     var runningTotal = 0;
     for (var i = 0; i < lines.length; i++) {
-      var lineLength = lines[i].length + 1; // +1 needed for newline char
-      runningTotal += lineLength;
+      runningTotal += lines[i].length + 1; // +1 needed for newline char
       map[i] = runningTotal;
     }
     return map;
@@ -122,12 +121,6 @@
 
   AceDiff.prototype.highlightDiff = function(editor, startLine, startChar, endLine, endChar, highlightClass) {
     var editor = this.editors[editor];
-
-    // curious patch that's necessary TODO re-examine
-//    if (endChar === 0 && endLine > 0) {
-//      endChar = getCharsOnLine(editor, --endLine);
-//    }
-
     editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.options.diffFormat));
   };
 
@@ -163,14 +156,16 @@
 
         // things are in editor 2 that aren't in editor 1
       } else if (op === DIFF_DELETE) {
-        var info = getRangeLineNumberAndCharPositions(this.editors.right.map, editor2OffsetChars, text.length);
+        var info = getRangeLineNumberAndCharPositions(this.editors.right, editor2OffsetChars, text.length);
         this.highlightDiff("right", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "deletedCode");
         editor2OffsetChars += text.length;
-
         this.createCopyToLeftMarker(editor1OffsetChars, info.startLineNum, info.endLineNum);
 
+        // show the line in editor 1, showing where the code will be inserted
+        this.createTargetLine(this.editors.left, editor1OffsetChars);
+
       } else if (op === DIFF_INSERT) {
-        var info = getRangeLineNumberAndCharPositions(this.editors.left.map, editor1OffsetChars, text.length);
+        var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
         this.highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
         editor1OffsetChars += text.length;
       }
@@ -185,9 +180,8 @@
 
     var line = getLineForOffsetChars(this.editors.left, editor1OffsetChars);
 
-
-    // looks like this fires too late...
-    console.log(this.editors.left.ace.getSession().getScrollTop());
+    // TODO this fires too late
+//    console.log(this.editors.left.ace.getSession().getScrollTop());
 
     var p1_x = 0;
     var p1_y = (line * this.lineHeight) - this.editors.left.ace.getSession().getScrollTop();
@@ -195,10 +189,7 @@
     var p2_x = this.gutterWidth + 1;
     var p2_y = rightStartLine * this.lineHeight;
     var p3_x = this.gutterWidth + 1;
-    var p3_y = rightEndLine * this.lineHeight;
-
-
-
+    var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight;
 
 
     var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
@@ -210,25 +201,52 @@
   };
 
 
+  AceDiff.prototype.createTargetLine = function(editor, offsetChars) {
+    var line = getLineForOffsetChars(editor, offsetChars);
+
+
+    editor.diffs.push(editor.ace.session.addMarker(new Range(line, 0, line, 1), "diffInsertTarget", "fullLine"));
+  };
+
+
   // ---------------------------------------------------------------
 
 
-  // helper function to return the first & last line numbers, and the start and end char positions for those lines
-  function getRangeLineNumberAndCharPositions(docMap, charNum, strLength) {
+  // helper function to return the first & last line numbers, and the start & end char positions on each line
+  function getRangeLineNumberAndCharPositions(editor, charNum, strLength) {
     var startLine, startChar, endLine, endChar;
     var endCharNum = charNum + strLength;
 
     // this looks darn fishy
-    for (var i = 0; i < docMap.length; i++) {
-      if (!startLine && charNum < docMap[i]) {
+    for (var i = 0; i < editor.map.length; i++) {
+      if (startLine === undefined && charNum < editor.map[i]) {
         startLine = i;
-        startChar = charNum - docMap[i - 1];
+        startChar = charNum - editor.map[i - 1];
       }
-      if (endCharNum < docMap[i]) {
+      if (endCharNum < editor.map[i]) {
         endLine = i;
-        endChar = endCharNum - docMap[i - 1];
+        endChar = endCharNum - editor.map[i - 1];
         break;
       }
+    }
+
+    // if the start char is the final char on the line, it's a newline & we ignore it
+    if (getCharsOnLine(editor, startLine) === startChar) {
+      startLine++;
+      startChar = 0;
+    }
+
+    // if the end char is the first char on the line
+    if (endChar === 0) {
+      //console.log("old endline: ", endLine);
+      endLine--;
+      endChar = getCharsOnLine(editor, endLine);
+
+//      console.log("new endline: ", endLine);
+//
+//      console.log(getCharsOnLine(editor, endLine));
+//
+//      console.log("endline-- new endchar: ", endChar);
     }
 
     return {

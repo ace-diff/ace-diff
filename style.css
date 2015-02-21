@@ -64,3 +64,9 @@ body {
 .divider {
     color: #999999;
 }
+
+.diffInsertTarget {
+    height: 1px;
+    border-top: 1px solid #0044ff;
+    position: absolute;
+}
