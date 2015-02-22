@@ -78,6 +78,8 @@
       }
     };
 
+    this.addEventHandlers();
+
     // assumption: both editors have same line heights [maybe withdraw...]
     this.lineHeight = this.editors.left.ace.renderer.lineHeight;
     this.gutterHeight = $("#" + this.options.gutterID).height();
@@ -90,6 +92,11 @@
     this.diff();
   };
 
+  AceDiff.prototype.addEventHandlers = function () {
+    var updateGap = this.updateGap.bind(this);
+    this.editors.left.ace.getSession().on("changeScrollTop", updateGap);
+    this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
+  };
 
   // exposed helpers. This allows on-the-fly changes to the ace-diff instance settings
   AceDiff.prototype.setOptions = function (options) {
@@ -104,7 +111,6 @@
       this.editors.right.ace.getSession().removeMarker(this.editors.right.diffs[i]);
     }
   };
-
 
   AceDiff.prototype.getDocMap = function(editor) {
     var lines = editor.ace.getSession().doc.getAllLines();
@@ -162,7 +168,7 @@
         this.createCopyToLeftMarker(editor1OffsetChars, info.startLineNum, info.endLineNum);
 
         // show the line in editor 1, showing where the code will be inserted
-        this.createTargetLine(this.editors.left, editor1OffsetChars);
+        this.createTargetLine(this.editors.left, editor1OffsetChars, "diffInsertTarget");
 
       } else if (op === DIFF_INSERT) {
         var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
@@ -172,28 +178,27 @@
     }, this);
   };
 
+  // called onscroll. Updates the gap to ensure the connectors are all lining up
+  AceDiff.prototype.updateGap = function () {
+    this.diff();
+  };
 
-
-  // this one's for stuff that's been REMOVED. It'll be directed to a line 1px line on the left
+  // this one's for stuff that's been REMOVED in the left editor
   AceDiff.prototype.createCopyToLeftMarker = function(editor1OffsetChars, rightStartLine, rightEndLine) {
-    // create an SVG element, absolutely positioned from the top of gutter. We'll handle the scrolling offsets later
-
     var line = getLineForOffsetChars(this.editors.left, editor1OffsetChars);
-
-    // TODO this fires too late
-//    console.log(this.editors.left.ace.getSession().getScrollTop());
+    var leftScrollTop = this.editors.left.ace.getSession().getScrollTop();
+    var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
     var p1_x = 0;
-    var p1_y = (line * this.lineHeight) - this.editors.left.ace.getSession().getScrollTop();
+    var p1_y = (line * this.lineHeight) - leftScrollTop;
 
     var p2_x = this.gutterWidth + 1;
-    var p2_y = rightStartLine * this.lineHeight;
+    var p2_y = rightStartLine * this.lineHeight - rightScrollTop;
     var p3_x = this.gutterWidth + 1;
-    var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight;
-
+    var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
 
     var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
-    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke:#0044ff; stroke-width:1" />';
+    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke: #ffaa11; stroke-width:1" />';
     $("#" + this.options.gutterID + " svg").append(marker);
 
     // laaaame
@@ -201,11 +206,9 @@
   };
 
 
-  AceDiff.prototype.createTargetLine = function(editor, offsetChars) {
+  AceDiff.prototype.createTargetLine = function(editor, offsetChars, className) {
     var line = getLineForOffsetChars(editor, offsetChars);
-
-
-    editor.diffs.push(editor.ace.session.addMarker(new Range(line, 0, line, 1), "diffInsertTarget", "fullLine"));
+    editor.diffs.push(editor.ace.session.addMarker(new Range(line, 0, line, 1), className, "fullLine"));
   };
 
 
@@ -238,15 +241,8 @@
 
     // if the end char is the first char on the line
     if (endChar === 0) {
-      //console.log("old endline: ", endLine);
       endLine--;
       endChar = getCharsOnLine(editor, endLine);
-
-//      console.log("new endline: ", endLine);
-//
-//      console.log(getCharsOnLine(editor, endLine));
-//
-//      console.log("endline-- new endchar: ", endChar);
     }
 
     return {

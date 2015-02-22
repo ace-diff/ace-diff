@@ -87,7 +87,7 @@
 
 
 <div id="optionPanel">
-  <input type="checkbox" id="autoDiff" />
+  <input type="checkbox" id="autoDiff" checked="checked" />
     <label for="autoDiff">Realtime diffing</label>
 
   <span class="divider">|</span>
@@ -110,20 +110,30 @@
     });
 
     $("#autoDiff").on("click", function (e) {
-      if (e.target.checked) {
-        aceDiffer.editors.left.ace.on("change", function () { aceDiffer.diff(); });
-        aceDiffer.editors.right.ace.on("change", function () { aceDiffer.diff(); });
-        aceDiffer.diff();
-      } else {
-        aceDiffer.editors.left.ace.off("change", diff);
-        aceDiffer.editors.right.ace.off("change", diff);
-      }
+      toggleRealtimeDiffing(e.target.checked);
     });
 
     $('[name="diffVisFormat"]').on("change", function (e) {
       aceDiffer.setOptions({ diffFormat: e.target.value });
       aceDiffer.diff();
     });
+
+    function toggleRealtimeDiffing(enabled) {
+      if (enabled) {
+        aceDiffer.editors.left.ace.on("change", diff);
+        aceDiffer.editors.right.ace.on("change", diff);
+        aceDiffer.diff();
+      } else {
+        aceDiffer.editors.left.ace.off("change", diff);
+        aceDiffer.editors.right.ace.off("change", diff);
+      }
+    };
+
+    function diff() {
+      aceDiffer.diff();
+    };
+
+    toggleRealtimeDiffing(true);
   });
 </script>
 

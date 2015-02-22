@@ -5,7 +5,10 @@ body {
 #flex-container {
     display: flex;
     flex-direction: row;
-    height: 500px;
+    position: absolute;
+    bottom: 0;
+    width:100%;
+    top: 0;
 }
 #flex-container>div {
     flex-grow: 1;
@@ -15,6 +18,7 @@ body {
     flex: 0 0 60px;
     border-left: 1px solid #999999;
     border-right: 1px solid #999999;
+    background-color: #fafafa;
 }
 
 
@@ -43,8 +47,8 @@ body {
     position: absolute;
     z-index: 20;
     background-color: #ffffcc;
-    border-top: 1px solid #0044ff;
-    border-bottom: 1px solid #0044ff;
+    border-top: 1px solid #ffaa11;
+    border-bottom: 1px solid #ffaa11;
 }
 
 #optionPanel {
@@ -67,6 +71,6 @@ body {
 
 .diffInsertTarget {
     height: 1px;
-    border-top: 1px solid #0044ff;
+    border-top: 1px solid #ffaa11;
     position: absolute;
 }
