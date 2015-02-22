@@ -142,7 +142,7 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    console.log(diff);
+    //console.log(diff);
 
     var editor1OffsetChars = 0;
     var editor2OffsetChars = 0;
@@ -168,12 +168,15 @@
         this.createCopyToLeftMarker(editor1OffsetChars, info.startLineNum, info.endLineNum);
 
         // show the line in editor 1, showing where the code will be inserted
-        this.createTargetLine(this.editors.left, editor1OffsetChars, "diffInsertTarget");
+        this.createTargetLine(this.editors.left, editor1OffsetChars, "diffInsertLeftTarget");
 
       } else if (op === DIFF_INSERT) {
         var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
         this.highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
         editor1OffsetChars += text.length;
+        this.createCopyToRightMarker(editor2OffsetChars, info.startLineNum, info.endLineNum);
+
+        this.createTargetLine(this.editors.right, editor2OffsetChars, "diffInsertRightTarget");
       }
     }, this);
   };
@@ -182,6 +185,7 @@
   AceDiff.prototype.updateGap = function () {
     this.diff();
   };
+
 
   // this one's for stuff that's been REMOVED in the left editor
   AceDiff.prototype.createCopyToLeftMarker = function(editor1OffsetChars, rightStartLine, rightEndLine) {
@@ -197,17 +201,43 @@
     var p3_x = this.gutterWidth + 1;
     var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
 
-    var curve1 = getCurve(30, p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(30, p3_x, p3_y, p1_x, p1_y);
+    var curve1 = getCurve(20, p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(20, p3_x, p3_y, p1_x, p1_y);
     var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
 
-    var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" fill="#ffffcc" stroke="#ffaa11" />';
-
-//    var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
-//    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke: #ffaa11; stroke-width:1" />';
+    var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="deletedCodeConnector" />';
     $("#" + this.options.gutterID + " svg").append(path);
 
-    // laaaame
+    // good grief.
+    $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
+  };
+
+
+
+  // to be combined with previous, when I start to de-suck the code
+  AceDiff.prototype.createCopyToRightMarker = function(editor2OffsetChars, leftStartLine, leftEndLine) {
+    var line = getLineForOffsetChars(this.editors.left, editor2OffsetChars);
+    var leftScrollTop = this.editors.left.ace.getSession().getScrollTop();
+    var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
+
+    // top right
+    var p1_x = this.gutterWidth + 1;
+    var p1_y = (line * this.lineHeight) - rightScrollTop;
+
+    //
+    var p2_x = -1;
+    var p2_y = leftStartLine * this.lineHeight - leftScrollTop;
+    var p3_x = -1;
+    var p3_y = (leftEndLine * this.lineHeight) + this.lineHeight  - leftScrollTop;
+
+    var curve1 = getCurve(20, p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(20, p3_x, p3_y, p1_x, p1_y);
+    var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
+
+    var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="newCodeConnector" />';
+    $("#" + this.options.gutterID + " svg").append(path);
+
+    // good grief. Again.
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
   };
 

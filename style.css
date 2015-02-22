@@ -38,9 +38,18 @@ body {
 .newCode {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
-    position:absolute;
+    position: absolute;
     z-index: 4;
     background-color: #e2f0ff;
+}
+.newCodeConnector {
+    fill: #e2f0ff;
+    stroke: #0044ff;
+}
+.diffInsertRightTarget {
+    height: 1px;
+    border-top: 1px solid #0044ff;
+    position: absolute;
 }
 
 .deletedCode {
@@ -50,6 +59,16 @@ body {
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
 }
+.deletedCodeConnector {
+    fill: #ffffcc;
+    stroke: #ffaa11;
+}
+.diffInsertLeftTarget {
+    height: 1px;
+    border-top: 1px solid #ffaa11;
+    position: absolute;
+}
+
 
 #optionPanel {
     position: absolute;
@@ -69,8 +88,3 @@ body {
     color: #999999;
 }
 
-.diffInsertTarget {
-    height: 1px;
-    border-top: 1px solid #ffaa11;
-    position: absolute;
-}
