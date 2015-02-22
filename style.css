@@ -7,7 +7,7 @@ body {
     flex-direction: row;
     position: absolute;
     bottom: 0;
-    width:100%;
+    width: 100%;
     top: 0;
 }
 #flex-container>div {
@@ -39,13 +39,13 @@ body {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
     position:absolute;
-    z-index: 20;
+    z-index: 4;
     background-color: #e2f0ff;
 }
 
 .deletedCode {
     position: absolute;
-    z-index: 20;
+    z-index: 4;
     background-color: #ffffcc;
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;

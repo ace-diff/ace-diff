@@ -1,5 +1,6 @@
 
-function generateHappyCurve(curveFactor, startX, startY, endX, endY) {
+function getCurve(curveFactor, startX, startY, endX, endY) {
+
   // midpoint
   var mpX = startX + ((endX - startX) / 2);
   var mpY = startY + ((endY - startY) / 2);
@@ -9,21 +10,16 @@ function generateHappyCurve(curveFactor, startX, startY, endX, endY) {
 
   // control point around which the bezier curves are computed
   var cpX = startX + ((endX - startX) / 4);
-
-
-
   var curveFlatline = startY + ((endY - startY) / 4);
-
   var cpY = curveFlatline - ((diffY / 100) * curveFactor);
 
-  var svg = '<path d="M' + startX + ',' + startY + ' Q' + cpX + ',' + cpY + ' ' + mpX + ',' + mpY + ' T' + endX + ',' + endY + '" stroke="black" fill="transparent" />';
+  var curve = 'M' + startX + ',' + startY + ' Q' + cpX + ',' + cpY + ' ' + mpX + ',' + mpY + ' T' + endX + ',' + endY;
 
-  //console.log(bezier(startX, startY, endX, endY));
-
-  return svg;
+  return curve;
 }
 
 
+/*
 function bezier(x1, y1, x2, y2, epsilon) {
 
   var curveX = function(t){
@@ -41,8 +37,7 @@ function bezier(x1, y1, x2, y2, epsilon) {
     return 3 * (2 * (t - 1) * t + v * v) * x1 + 3 * (- t * t * t + 2 * v * t) * x2;
   };
 
-  return function(t){
-
+  return function(t) {
     var x = t, t0, t1, t2, x2, d2, i;
 
     // First try a few iterations of Newton's method -- normally very fast.
@@ -74,3 +69,4 @@ function bezier(x1, y1, x2, y2, epsilon) {
   };
 
 };
+*/

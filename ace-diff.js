@@ -197,9 +197,15 @@
     var p3_x = this.gutterWidth + 1;
     var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
 
-    var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
-    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke: #ffaa11; stroke-width:1" />';
-    $("#" + this.options.gutterID + " svg").append(marker);
+    var curve1 = getCurve(30, p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(30, p3_x, p3_y, p1_x, p1_y);
+    var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
+
+    var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" fill="#ffffcc" stroke="#ffaa11" />';
+
+//    var points = p1_x + "," + p1_y + " " + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
+//    var marker = '<polygon points="' + points + '" style="fill:#ffffcc; stroke: #ffaa11; stroke-width:1" />';
+    $("#" + this.options.gutterID + " svg").append(path);
 
     // laaaame
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
@@ -390,6 +396,26 @@
 
     return target;
   };
+
+  function getCurve(curveFactor, startX, startY, endX, endY) {
+
+    // midpoint
+    var mpX = startX + ((endX - startX) / 2);
+    var mpY = startY + ((endY - startY) / 2);
+
+    var diffY = Math.abs(endY - startY);
+    var diffX = Math.abs(endX - startX);
+
+    // control point around which the bezier curves are computed
+    var cpX = startX + ((endX - startX) / 4);
+    var curveFlatline = startY + ((endY - startY) / 4);
+    var cpY = curveFlatline - ((diffY / 100) * curveFactor);
+
+    var curve = 'M' + startX + ',' + startY + ' Q' + cpX + ',' + cpY + ' ' + mpX + ',' + mpY + ' T' + endX + ',' + endY;
+
+    return curve;
+  }
+
 
   return AceDiff;
 }));

@@ -15,14 +15,14 @@
   <svg xmlns="http://www.w3.org/2000/svg" style="background-color: #efefef;" height="400px" width="500px">
     <!-- basic pattern for when right editor's edit is lower -->
     <!--<path d="M10,80 Q52.5,10 95,80 T180,80" stroke="black" fill="transparent" />-->
-    <path d="M100,100 Q150,125 200,150 T300,200" stroke="black" fill="transparent" />
+    <path d="M100,100 Q150,95 200,150 T300,200" stroke="black" fill="black" />
   </svg>
 </div>
 
 <ul>
   <li>
     <b>Curviness</b>
-    0% <input type="range" id="curveFactor" min="0" max="100" value="50" size="3" oninput="addCurve()" /> 100%
+    0% <input type="range" id="curveFactor" min="0" max="100" value="30" size="3" oninput="addCurve()" /> 100%
   </li>
   <li><b>Start coords</b>
     x: <input type="text" id="startX" value="100" size="3" />
@@ -46,13 +46,14 @@
     var endX = parseInt($("#endX").val(), 10);
     var endY = parseInt($("#endY").val(), 10);
 
-    var curve = generateHappyCurve(curveFactor, startX, startY, endX, endY);
+    var curve = getCurve(curveFactor, startX, startY, endX, endY);
+    var path = '<path d="' + curve + '" stroke="black" fill="transparent" />';
 
-    $("svg").html(curve);
+    $("svg").html(path);
     $("#wrapper").html($("#wrapper").html());
   }
 
-//  $(addCurve);
+  $(addCurve);
 </script>
 
 
