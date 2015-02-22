@@ -174,6 +174,7 @@
         var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
         this.highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
         editor1OffsetChars += text.length;
+
         this.createCopyToRightMarker(editor2OffsetChars, info.startLineNum, info.endLineNum);
 
         this.createTargetLine(this.editors.right, editor2OffsetChars, "diffInsertRightTarget");
@@ -203,6 +204,8 @@
 
     var curve1 = getCurve(20, p1_x, p1_y, p2_x, p2_y);
     var curve2 = getCurve(20, p3_x, p3_y, p1_x, p1_y);
+
+
     var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
 
     var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="deletedCodeConnector" />';
@@ -213,10 +216,9 @@
   };
 
 
-
   // to be combined with previous, when I start to de-suck the code
   AceDiff.prototype.createCopyToRightMarker = function(editor2OffsetChars, leftStartLine, leftEndLine) {
-    var line = getLineForOffsetChars(this.editors.left, editor2OffsetChars);
+    var line = getLineForOffsetChars(this.editors.right, editor2OffsetChars);
     var leftScrollTop = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
@@ -224,7 +226,6 @@
     var p1_x = this.gutterWidth + 1;
     var p1_y = (line * this.lineHeight) - rightScrollTop;
 
-    //
     var p2_x = -1;
     var p2_y = leftStartLine * this.lineHeight - leftScrollTop;
     var p3_x = -1;
@@ -427,6 +428,8 @@
     return target;
   };
 
+
+  // OMG this is awful
   function getCurve(curveFactor, startX, startY, endX, endY) {
 
     // midpoint
@@ -445,6 +448,7 @@
 
     return curve;
   }
+
 
 
   return AceDiff;
