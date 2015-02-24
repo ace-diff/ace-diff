@@ -46,9 +46,15 @@ body {
     fill: #e2f0ff;
     stroke: #0044ff;
 }
-.diffInsertRightTarget {
-    height: 1px;
+.diffInsertRightTarget.lineOnly {
+    height: 0px !important;
     border-top: 1px solid #0044ff;
+    position: absolute;
+}
+.diffInsertRightTarget.range {
+    background-color: #e2f0ff;
+    border-top: 1px solid #0044ff;
+    border-bottom: 1px solid #0044ff;
     position: absolute;
 }
 

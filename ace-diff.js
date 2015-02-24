@@ -1,16 +1,8 @@
-/**
- * Very much in dev. Kind of a hodge podge of:
- * - jQuery/plain vanilla,
- * - whether the component handles creation & management of everything, or relies on dev providing some base markup
- *
- * I'll decide about those two in time.
- */
-
 /*!
- * aceDiff
+ * ace-diff
  * @author Ben Keen
  * @version 0.0.1
- * @date Feb 20 2015
+ * @date Feb 21 2015
  * @repo http://github.com/benkeen/ace-diff
  */
 
@@ -82,8 +74,9 @@
 
     // assumption: both editors have same line heights [maybe withdraw...]
     this.lineHeight = this.editors.left.ace.renderer.lineHeight;
-    this.gutterHeight = $("#" + this.options.gutterID).height();
-    this.gutterWidth = $("#" + this.options.gutterID).width();
+    var $gutter = $("#" + this.options.gutterID);
+    this.gutterHeight = $gutter.height();
+    this.gutterWidth = $gutter.width();
 
     // set the modes
     this.editors.left.ace.getSession().setMode(this.options.editorLeft.mode);
@@ -124,12 +117,10 @@
     return map;
   };
 
-
   AceDiff.prototype.highlightDiff = function(editor, startLine, startChar, endLine, endChar, highlightClass) {
     var editor = this.editors[editor];
     editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.options.diffFormat));
   };
-
 
   // our main diffing function
   AceDiff.prototype.diff = function() {
@@ -142,7 +133,7 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    //console.log(diff);
+    console.log(diff);
 
     var editor1OffsetChars = 0;
     var editor2OffsetChars = 0;
@@ -152,6 +143,8 @@
 
     this.createGutter();
 
+    // parse the raw diff info and
+    var connectors = { rtl: [], ltr: [] };
     diff.forEach(function (chunk) {
       var op = chunk[0];
       var text = chunk[1];
@@ -160,27 +153,30 @@
         editor1OffsetChars += text.length;
         editor2OffsetChars += text.length;
 
-        // things are in editor 2 that aren't in editor 1
+        // things in editor 2 that aren't in editor 1
       } else if (op === DIFF_DELETE) {
         var info = getRangeLineNumberAndCharPositions(this.editors.right, editor2OffsetChars, text.length);
-        this.highlightDiff("right", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "deletedCode");
-        editor2OffsetChars += text.length;
-        this.createCopyToLeftMarker(editor1OffsetChars, info.startLineNum, info.endLineNum);
+        this.highlightDiff("right", info.startLine, info.startChar, info.endLine, info.endChar, "deletedCode");
 
-        // show the line in editor 1, showing where the code will be inserted
-        this.createTargetLine(this.editors.left, editor1OffsetChars, "diffInsertLeftTarget");
+        editor2OffsetChars += text.length;
+        this.createCopyToLeftMarker(editor1OffsetChars, info.startLine, info.endLine);
+        this.createTargetLine(this.editors.left, editor1OffsetChars, info, "diffInsertLeftTarget");
+
 
       } else if (op === DIFF_INSERT) {
         var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
-        this.highlightDiff("left", info.startLineNum, info.startChar, info.endLineNum, info.endChar, "newCode");
         editor1OffsetChars += text.length;
-
-        this.createCopyToRightMarker(editor2OffsetChars, info.startLineNum, info.endLineNum);
-
-        this.createTargetLine(this.editors.right, editor2OffsetChars, "diffInsertRightTarget");
+        info.textLength = text.length;
+        info.otherEditorOffsetChars = editor2OffsetChars;
+        connectors.ltr.push(info);
       }
     }, this);
+
+    connectors = simplifyConnectors(connectors);
+    this.decorate(connectors);
   };
+
+
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   AceDiff.prototype.updateGap = function () {
@@ -191,6 +187,7 @@
   // this one's for stuff that's been REMOVED in the left editor
   AceDiff.prototype.createCopyToLeftMarker = function(editor1OffsetChars, rightStartLine, rightEndLine) {
     var line = getLineForOffsetChars(this.editors.left, editor1OffsetChars);
+
     var leftScrollTop = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
@@ -202,16 +199,13 @@
     var p3_x = this.gutterWidth + 1;
     var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
 
-    var curve1 = getCurve(20, p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(20, p3_x, p3_y, p1_x, p1_y);
-
+    var curve1 = getCurve(10, p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(10, p3_x, p3_y, p1_x, p1_y);
 
     var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
 
     var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="deletedCodeConnector" />';
     $("#" + this.options.gutterID + " svg").append(path);
-
-    // good grief.
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
   };
 
@@ -237,17 +231,35 @@
 
     var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="newCodeConnector" />';
     $("#" + this.options.gutterID + " svg").append(path);
-
-    // good grief. Again.
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
   };
 
 
-  AceDiff.prototype.createTargetLine = function(editor, offsetChars, className) {
-    var line = getLineForOffsetChars(editor, offsetChars);
-    editor.diffs.push(editor.ace.session.addMarker(new Range(line, 0, line, 1), className, "fullLine"));
+  AceDiff.prototype.createTargetLine = function(editor, info, className) {
+    var startLine = getLineForOffsetChars(editor, info.otherEditorOffsetChars);
+    var endLine = startLine;
+    var classNames = className;
+
+    var multiline = false;
+    if (info.startLine === info.endLine) {
+      // if the line contains shared text)
+      if (info.startChar !== 0 && getCharsOnLine(editor, startLine) !== info.endChar) {
+        multiline = true;
+      }
+    }
+
+    if (!multiline) {
+      classNames += " lineOnly";
+    } else {
+      classNames += " range";
+    }
+
+    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, "fullLine"));
   };
 
+  AceDiff.prototype.addCopyArrows = function () {
+
+  };
 
   // ---------------------------------------------------------------
 
@@ -257,12 +269,14 @@
     var startLine, startChar, endLine, endChar;
     var endCharNum = charNum + strLength;
 
-    // this looks darn fishy
     for (var i = 0; i < editor.map.length; i++) {
+
+      // only set the start line info once
       if (startLine === undefined && charNum < editor.map[i]) {
         startLine = i;
         startChar = charNum - editor.map[i - 1];
       }
+
       if (endCharNum < editor.map[i]) {
         endLine = i;
         endChar = endCharNum - editor.map[i - 1];
@@ -271,21 +285,24 @@
     }
 
     // if the start char is the final char on the line, it's a newline & we ignore it
-    if (getCharsOnLine(editor, startLine) === startChar) {
+    if (startChar > 0 && getCharsOnLine(editor, startLine) === startChar) {
       startLine++;
       startChar = 0;
     }
 
-    // if the end char is the first char on the line
+    // if the end char is the first char on the line and the start char wasn't
     if (endChar === 0) {
       endLine--;
       endChar = getCharsOnLine(editor, endLine);
+
+      // ensure that a new blank line has at least 1 char, otherwise Ace won't show it highlighted
+      if (endChar == 0) { endChar++ };
     }
 
     return {
-      startLineNum: startLine,
+      startLine: startLine,
       startChar: startChar,
-      endLineNum: endLine,
+      endLine: endLine,
       endChar: endChar
     }
   }
@@ -301,7 +318,8 @@
     for (var i = 0; i < lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
-      if (offsetChars < runningTotal) {
+      if (offsetChars <= runningTotal) {
+//        console.log(offsetChars, runningTotal);
         foundLine = i;
         break;
       }
@@ -334,6 +352,45 @@
     $("#" + id + " svg").remove();
   }
 
+
+
+  /*
+   * The purpose of this step is to combine multiple rows where, say, line 1 => line 1, line 2 => line 2,
+   * line 3-4 => line 3. That could be reduced to a single connector line 1=4 => line 1-3
+   */
+  function simplifyConnectors(connectors) {
+//    for (var i=1; i<leftToRight; i++) {
+//      if (leftToRight[i]
+//        }
+    return connectors;
+  }
+
+
+  AceDiff.prototype.decorate = function(connectors) {
+    connectors.ltr.forEach(function(info) {
+      this.highlightDiff("left", info.startLine, info.startChar, info.endLine, info.endChar, "newCode");
+      this.createCopyToRightMarker(info.otherEditorOffsetChars, info.startLine, info.endLine);
+      this.createTargetLine(this.editors.right, info, "diffInsertRightTarget");
+      this.addCopyArrows();
+    }, this);
+  };
+
+
+/*
+
+What do a want for LTR?
+
+An array of:
+{
+  highlightLeftStartLine
+  highlightLeftEndLine,
+  highlightRightStartLine
+  highlightRightEndLine
+}
+
+that'll give ALL the info I need to highlight both left and right and draw the connector
+
+*/
 
   // ------------------------------------------------ helpers ------------------------------------------------
 

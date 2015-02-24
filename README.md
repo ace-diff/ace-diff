@@ -1,4 +1,4 @@
-### ace-diff
+## Ace-diff
 
 This is an experiment to integrate [Google's diff-match-patch](https://code.google.com/p/google-diff-match-patch/) 
 into Ace Editor. 
@@ -10,7 +10,7 @@ pieces to get a sense of how Ace + the diffing lib works, so it'll undergo a gia
 
 #### Remaining TODO
 
-1. find a Bezier curve algorithm that doesn't look like it's completely demented 
+1. Find a Bezier curve algorithm that doesn't look like it's completely demented
 2. Decide on the overall approach: single `new AceDiff({ ... })` that takes care of everything for you (very plugin-y, 
 but less control for devs (you sure?)) or require devs to set up markup, etc.
 3. Drop all dependencies other than the diffing lib
