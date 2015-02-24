@@ -20,12 +20,16 @@
     root.AceDiff = factory(root);
   }
 }(this, function() {
+  "use strict";
 
-  var Range = require('ace/range').Range;
+  var Range = require("ace/range").Range;
 
-  var DIFF_EQUAL = 0;
+  // constants from match-patch-diff
+  var DIFF_EQUAL  = 0;
   var DIFF_DELETE = -1;
   var DIFF_INSERT = 1;
+  var EDITOR_RIGHT = "right"; // todo
+  var EDITOR_LEFT  = "left";
 
 
   // our constructor
@@ -33,7 +37,7 @@
     this.element = element;
 
     this.options = extend({
-      diffFormat: "text", // text / fullLine
+      diffFormat: "text", // text / fullLine [to be removed: for debugging only!]
       gutterID: "",
       editorLeft: {
         id: "editor1",
@@ -46,6 +50,7 @@
         editable: false
       }
     }, options);
+
 
     // instantiate the editors in an internal data structure that'll store a little info about the diffs and
     // editor content
@@ -76,16 +81,19 @@
     this.diff();
   };
 
+
   AceDiff.prototype.addEventHandlers = function () {
     var updateGap = this.updateGap.bind(this);
     this.editors.left.ace.getSession().on("changeScrollTop", updateGap);
     this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
   };
 
+
   // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
     this.options = extend(this.options, options);
   };
+
 
   AceDiff.prototype.unhighlightDiffs = function() {
     for (var i = 0; i < this.editors.left.diffs.length; i++) {
@@ -95,6 +103,7 @@
       this.editors.right.ace.getSession().removeMarker(this.editors.right.diffs[i]);
     }
   };
+
 
   AceDiff.prototype.getDocMap = function(editor) {
     var lines = editor.ace.getSession().doc.getAllLines();
@@ -109,9 +118,28 @@
   };
 
 
-  AceDiff.prototype.highlightDiff = function(editor, startLine, startChar, endLine, endChar, highlightClass) {
+  /**
+   * Shows a diff in one of the two editors.
+   * @param editor
+   * @param startLine the 0-indexed start line
+   * @param numRows the number of rows to highlight. 0 means just a line will appear
+   * @param highlightClass
+   */
+  AceDiff.prototype.showDiff = function(editor, startLine, numRows, className) {
     var editor = this.editors[editor];
-    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.options.diffFormat));
+
+    console.log("showing diff: ", startLine, numRows);
+
+    var endLine = (startLine + numRows) - 1;
+
+    var classNames = className;
+    if (numRows === 0) {
+      classNames += " lineOnly";
+    } else {
+      classNames += " range";
+    }
+        // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
+    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, this.options.diffFormat));
   };
 
 
@@ -126,49 +154,39 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    console.log(diff);
+//    console.log(diff);
 
-    var editor1OffsetChars = 0;
-    var editor2OffsetChars = 0;
     this.editors.left.map = this.getDocMap(this.editors.left);
     this.editors.right.map = this.getDocMap(this.editors.right);
 
+    // parse the raw diff into something a little more palatable
+    var diffs = { rtl: [], ltr: [] };
+    var offset = {
+      left: 0,
+      right: 0
+    };
 
-    this.createGutter();
-
-    // parse the raw diff info and
-    var connectors = { rtl: [], ltr: [] };
     diff.forEach(function (chunk) {
-      var op = chunk[0];
+      var op   = chunk[0];
       var text = chunk[1];
 
       if (op === DIFF_EQUAL) {
-        editor1OffsetChars += text.length;
-        editor2OffsetChars += text.length;
-
-        // things in editor 2 that aren't in editor 1
+        offset.left += text.length;
+        offset.right += text.length;
       } else if (op === DIFF_DELETE) {
-        var info = getRangeLineNumberAndCharPositions(this.editors.right, editor2OffsetChars, text.length);
-        this.highlightDiff("right", info.startLine, info.startChar, info.endLine, info.endChar, "deletedCode");
-
-        editor2OffsetChars += text.length;
-        this.createCopyToLeftMarker(editor1OffsetChars, info.startLine, info.endLine);
-        this.createTargetLine(this.editors.left, editor1OffsetChars, info, "diffInsertLeftTarget");
-
-
+        offset.right += text.length;
+        diffs.rtl.push(this.computeDiff(DIFF_DELETE, offset.left, offset.right, text.length));
       } else if (op === DIFF_INSERT) {
-        var info = getRangeLineNumberAndCharPositions(this.editors.left, editor1OffsetChars, text.length);
-        editor1OffsetChars += text.length;
-        info.textLength = text.length;
-        info.otherEditorOffsetChars = editor2OffsetChars;
-        connectors.ltr.push(info);
+        offset.left += text.length;
+        diffs.ltr.push(this.computeDiff(DIFF_INSERT, offset.left, offset.right, text.length));
       }
     }, this);
 
-    connectors = simplifyConnectors(connectors);
-    this.decorate(connectors);
-  };
+    // simplify the
+    diffs = simplifyDiffs(diffs);
 
+    this.decorate(diffs);
+  };
 
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
@@ -235,7 +253,6 @@
 
     var multiline = false;
     if (info.startLine === info.endLine) {
-      // if the line contains shared text)
       if (info.startChar !== 0 && getCharsOnLine(editor, startLine) !== info.endChar) {
         multiline = true;
       }
@@ -254,55 +271,102 @@
 
   };
 
-  // ---------------------------------------------------------------
 
+  /**
+   * This method takes the raw diffing info from the Google lib and returns a nice clean object of the following
+   * form:
+   * {
+   *   sourceStartLine:
+   *   sourceEndLine:
+   *   targetStartLine:
+   *   targetNumRows:
+   * }
+   *
+   * That's all the info we need to highlight the appropriate lines in the left + right editor, add the SVG
+   * connectors, and include the appropriate <<, >> arrows.
+   *
+   * Note: to keep the returned object simple & to allow
+   */
+  AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
 
-  // helper function to return the first & last line numbers, and the start & end char positions on each line
-  function getRangeLineNumberAndCharPositions(editor, charNum, strLength) {
-    var startLine, startChar, endLine, endChar;
-    var endCharNum = charNum + strLength;
+    // depending on whether content has been inserted or removed, we
+    var targetEditor       = (diffType === DIFF_INSERT) ? this.editors.left : this.editors.right;
+    var targetEditorOffset = (diffType === DIFF_INSERT) ? offsetLeft : offsetRight;
 
-    for (var i = 0; i < editor.map.length; i++) {
+    // if INSERT, these refer to left editor; if DELETE, right
+    var startLine,
+        startChar,
+        endLine,
+        endChar,
+        endCharNum = targetEditorOffset + strLength;
 
-      // only set the start line info once
-      if (startLine === undefined && charNum < editor.map[i]) {
-        startLine = i;
-        startChar = charNum - editor.map[i - 1];
+    for (var i=0; i<targetEditor.map.length; i++) {
+      if (startLine === undefined && targetEditorOffset < targetEditor.map[i]) {
+        startLine = i - 1; // 0-indexed, note
+        startChar = targetEditorOffset - targetEditor.map[i-1];
       }
 
-      if (endCharNum < editor.map[i]) {
-        endLine = i;
-        endChar = endCharNum - editor.map[i - 1];
+      if (endCharNum < targetEditor.map[i]) {
+        endLine = i-1;
+        endChar = endCharNum - targetEditor.map[i-1];
         break;
       }
     }
 
     // if the start char is the final char on the line, it's a newline & we ignore it
-    if (startChar > 0 && getCharsOnLine(editor, startLine) === startChar) {
+    if (startChar > 0 && getCharsOnLine(targetEditor, startLine) === startChar) {
       startLine++;
       startChar = 0;
     }
 
-    // if the end char is the first char on the line and the start char wasn't
+    // if the end char is the first char on the line, we don't want to highlight that extra line
     if (endChar === 0) {
       endLine--;
-      endChar = getCharsOnLine(editor, endLine);
-
-      // ensure that a new blank line has at least 1 char, otherwise Ace won't show it highlighted
-      if (endChar == 0) { endChar++ };
     }
 
-    return {
-      startLine: startLine,
-      startChar: startChar,
-      endLine: endLine,
-      endChar: endChar
-    }
-  }
+    var data = {};
+    if (diffType === DIFF_INSERT) {
+      var currentLineRightEditor = getLineForOffsetChars(this.editors.right, offsetRight);
 
+      // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
+      // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
+      // char for the line
+
+      var numRows = 0;
+
+      // scenario 1: only one line being inserted, and the line already contained content
+      if (startLine === endLine && (startChar > 0 || endChar < getCharsOnLine(targetEditor, startLine))) {
+        //console.log(startLine, endLine, startChar, endChar, getCharsOnLine(targetEditor, startLine));
+        numRows++;
+      }
+
+      // scenario 2:
+
+      data = {
+        sourceStartLine: startLine,
+        sourceEndLine: endLine,
+        targetStartLine: currentLineRightEditor,
+        targetNumRows: numRows
+      }
+    } else {
+
+      data = {
+//        leftStartLine: startLine,
+//        leftEndLine: endLine
+        rightStartLine: startLine,
+        rightEndLine: endLine
+      }
+    }
+
+    return data;
+  };
+
+
+  // note that this and everything else in this script uses 0-indexed row numbers
   function getCharsOnLine(editor, line) {
     return editor.ace.getSession().doc.getLine(line).length;
   }
+
 
   function getLineForOffsetChars(editor, offsetChars) {
     var lines = editor.ace.getSession().doc.getAllLines();
@@ -327,9 +391,6 @@
 
     var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
 
-    // will need to accommodate scrolling, obviously
-    var $el = $("#" + this.options.gutterID);
-
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute('width', this.gutterWidth);
     svg.setAttribute('height', height);
@@ -339,51 +400,48 @@
     document.getElementById(this.options.gutterID).appendChild(svg);
   }
 
-
   function clearGutter(id) {
     $("#" + id + " svg").remove();
   }
-
-
 
   /*
    * The purpose of this step is to combine multiple rows where, say, line 1 => line 1, line 2 => line 2,
    * line 3-4 => line 3. That could be reduced to a single connector line 1=4 => line 1-3
    */
-  function simplifyConnectors(connectors) {
+  function simplifyDiffs(diffs) {
 //    for (var i=1; i<leftToRight; i++) {
 //      if (leftToRight[i]
 //        }
-    return connectors;
+
+    // first pass
+    diffs.ltr.forEach(function () {
+
+    }, this);
+
+
+
+    return diffs;
   }
 
 
-  AceDiff.prototype.decorate = function(connectors) {
-    connectors.ltr.forEach(function(info) {
-      this.highlightDiff("left", info.startLine, info.startChar, info.endLine, info.endChar, "newCode");
-      this.createCopyToRightMarker(info.otherEditorOffsetChars, info.startLine, info.endLine);
-      this.createTargetLine(this.editors.right, info, "diffInsertRightTarget");
-      this.addCopyArrows();
+  AceDiff.prototype.decorate = function(diffs) {
+    this.createGutter();
+
+    diffs.ltr.forEach(function(info) {
+
+      console.log(info);
+
+      var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+      this.showDiff("left", info.sourceStartLine, numRows, "newCode");
+
+      this.showDiff("right", info.targetStartLine, info.targetNumRows, "newCode");
+
+//      this.createCopyToRightMarker(info.otherEditorOffsetChars, info.startLine, info.endLine);
+//      this.createTargetLine(this.editors.right, info, "diffInsertRightTarget");
+//      this.addCopyArrows();
     }, this);
   };
 
-
-/*
-
-What do a want for both LTR and RTL?
-
-An array of:
-{
-  direction: "ltr" / "rtl"
-  highlightLeftStartLine
-  highlightLeftEndLine,
-  highlightRightStartLine
-  highlightRightEndLine
-}
-
-that'll give ALL the info I need to highlight both left and right, draw the connector, draw the copy links
-
-*/
 
   // ------------------------------------------------ helpers ------------------------------------------------
 
@@ -478,10 +536,11 @@ that'll give ALL the info I need to highlight both left and right, draw the conn
     return target;
   };
 
+
   // generates a Bezier curve in SVG format
   function getCurve(startX, startY, endX, endY) {
     var w = endX - startX;
-    var halfWidth = (w / 2) + startX;
+    var halfWidth = startX + (w / 2);
 
     // position it at the initial x,y coords
     var curve = "M " + startX + " " + startY +
