@@ -46,7 +46,7 @@
     var endX = parseInt($("#endX").val(), 10);
     var endY = parseInt($("#endY").val(), 10);
 
-    var curve = getCurve(curveFactor, startX, startY, endX, endY);
+    var curve = getCurve2(startX, startY, endX, endY);
     var path = '<path d="' + curve + '" stroke="black" fill="transparent" />';
 
     $("svg").html(path);

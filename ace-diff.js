@@ -2,7 +2,7 @@
  * ace-diff
  * @author Ben Keen
  * @version 0.0.1
- * @date Feb 21 2015
+ * @date Feb 24 2015
  * @repo http://github.com/benkeen/ace-diff
  */
 
@@ -30,14 +30,6 @@
 
   // our constructor
   var AceDiff = function(element, options) {
-
-    /*
-    Lots to think about here. We either handle the whole thing: rendering both editors and the gutter and just
-    rely on the user providing a little base CSS, or we do like now and rely on the user providing all the markup
-    + CSS.
-
-    Both approaches have advantages/disadvantages.
-    */
     this.element = element;
 
     this.options = extend({
@@ -72,13 +64,12 @@
 
     this.addEventHandlers();
 
-    // assumption: both editors have same line heights [maybe withdraw...]
-    this.lineHeight = this.editors.left.ace.renderer.lineHeight;
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
     var $gutter = $("#" + this.options.gutterID);
     this.gutterHeight = $gutter.height();
     this.gutterWidth = $gutter.width();
 
-    // set the modes
+    // set the editor modes
     this.editors.left.ace.getSession().setMode(this.options.editorLeft.mode);
     this.editors.right.ace.getSession().setMode(this.options.editorRight.mode);
 
@@ -91,7 +82,7 @@
     this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
   };
 
-  // exposed helpers. This allows on-the-fly changes to the ace-diff instance settings
+  // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
     this.options = extend(this.options, options);
   };
@@ -117,10 +108,12 @@
     return map;
   };
 
+
   AceDiff.prototype.highlightDiff = function(editor, startLine, startChar, endLine, endChar, highlightClass) {
     var editor = this.editors[editor];
     editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, startChar, endLine, endChar), highlightClass, this.options.diffFormat));
   };
+
 
   // our main diffing function
   AceDiff.prototype.diff = function() {
@@ -199,8 +192,8 @@
     var p3_x = this.gutterWidth + 1;
     var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
 
-    var curve1 = getCurve(10, p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(10, p3_x, p3_y, p1_x, p1_y);
+    var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(p3_x, p3_y, p1_x, p1_y);
 
     var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
 
@@ -225,8 +218,8 @@
     var p3_x = -1;
     var p3_y = (leftEndLine * this.lineHeight) + this.lineHeight  - leftScrollTop;
 
-    var curve1 = getCurve(20, p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(20, p3_x, p3_y, p1_x, p1_y);
+    var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(p3_x, p3_y, p1_x, p1_y);
     var verticalLine = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
 
     var path = '<path d="' + curve1 + " " + verticalLine + " " + curve2 + '" class="newCodeConnector" />';
@@ -319,7 +312,6 @@
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
       if (offsetChars <= runningTotal) {
-//        console.log(offsetChars, runningTotal);
         foundLine = i;
         break;
       }
@@ -378,17 +370,18 @@
 
 /*
 
-What do a want for LTR?
+What do a want for both LTR and RTL?
 
 An array of:
 {
+  direction: "ltr" / "rtl"
   highlightLeftStartLine
   highlightLeftEndLine,
   highlightRightStartLine
   highlightRightEndLine
 }
 
-that'll give ALL the info I need to highlight both left and right and draw the connector
+that'll give ALL the info I need to highlight both left and right, draw the connector, draw the copy links
 
 */
 
@@ -485,28 +478,20 @@ that'll give ALL the info I need to highlight both left and right and draw the c
     return target;
   };
 
+  // generates a Bezier curve in SVG format
+  function getCurve(startX, startY, endX, endY) {
+    var w = endX - startX;
+    var halfWidth = (w / 2) + startX;
 
-  // OMG this is awful
-  function getCurve(curveFactor, startX, startY, endX, endY) {
+    // position it at the initial x,y coords
+    var curve = "M " + startX + " " + startY +
 
-    // midpoint
-    var mpX = startX + ((endX - startX) / 2);
-    var mpY = startY + ((endY - startY) / 2);
-
-    var diffY = Math.abs(endY - startY);
-    var diffX = Math.abs(endX - startX);
-
-    // control point around which the bezier curves are computed
-    var cpX = startX + ((endX - startX) / 4);
-    var curveFlatline = startY + ((endY - startY) / 4);
-    var cpY = curveFlatline - ((diffY / 100) * curveFactor);
-
-    var curve = 'M' + startX + ',' + startY + ' Q' + cpX + ',' + cpY + ' ' + mpX + ',' + mpY + ' T' + endX + ',' + endY;
+      // now create the curve. This is of the form "C M,N O,P Q,R" where C is a directive for SVG ("curveto"),
+      // M,N are the first curve control point, O,P the second control point and Q,R are the final coords
+      " C " + halfWidth + "," + startY + " " + halfWidth + "," + endY + " " + endX + "," + endY;
 
     return curve;
   }
-
-
 
   return AceDiff;
 }));

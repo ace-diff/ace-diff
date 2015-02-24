@@ -18,6 +18,19 @@ function getCurve(curveFactor, startX, startY, endX, endY) {
   return curve;
 }
 
+function getCurve2(startX, startY, endX, endY) {
+  var w = endX - startX;
+  var halfWidth = (w / 2) + startX;
+
+  // position it at the initial x,y coords
+  var curve = "M " + startX + " " + startY +
+
+    // now create the curve
+    " C " + halfWidth + "," + startY + " " + halfWidth + "," + endY + " " + endX + "," + endY;
+
+  return curve;
+}
+
 
 /*
 function bezier(x1, y1, x2, y2, epsilon) {

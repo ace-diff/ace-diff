@@ -23,7 +23,6 @@
 <script>
   var start = 0;
 
-
   var curveFactor = 50; // this needs to be a factor of how horizontal it is
 
   var centerX = 200;
@@ -34,7 +33,7 @@
     var x = centerX + Math.sin(start * 0.02) * 180;
     var y = centerY + Math.cos(start * 0.02) * 180;
 
-    var curve = getCurve(curveFactor, x, y, centerX, centerY);
+    var curve = getCurve2(x, y, centerX, centerY);
     $("svg").html('<path d="' + curve + '" stroke="black" fill="transparent" />');
     $("#wrapper").html($("#wrapper").html());
 
