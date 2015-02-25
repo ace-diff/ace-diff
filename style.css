@@ -19,8 +19,8 @@ body {
     border-left: 1px solid #999999;
     border-right: 1px solid #999999;
     background-color: #fafafa;
+    overflow: hidden;
 }
-
 
 #editor1 {
     position: absolute;
@@ -48,21 +48,9 @@ body {
     border-bottom: 0px;
     position: absolute;
 }
-
 .newCodeConnector {
     fill: #e2f0ff;
     stroke: #0044ff;
-}
-.diffInsertRightTarget.lineOnly {
-    height: 0px !important;
-    border-top: 1px solid #0044ff;
-    position: absolute;
-}
-.diffInsertRightTarget.range {
-    background-color: #e2f0ff;
-    border-top: 1px solid #0044ff;
-    border-bottom: 1px solid #0044ff;
-    position: absolute;
 }
 
 .deletedCode {
@@ -72,17 +60,18 @@ body {
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
 }
+.deletedCode.lineOnly {
+    height: 0px !important;
+    border-top: 1px solid #ffaa11;
+    border-bottom: 0px;
+    position: absolute;
+}
 .deletedCodeConnector {
     fill: #ffffcc;
     stroke: #ffaa11;
 }
-.diffInsertLeftTarget {
-    height: 1px;
-    border-top: 1px solid #ffaa11;
-    position: absolute;
-}
 
-
+/*
 #optionPanel {
     position: absolute;
     bottom: 10px;
@@ -96,8 +85,4 @@ body {
     color: white;
     z-index: 10;
 }
-
-.divider {
-    color: #999999;
-}
-
+*/

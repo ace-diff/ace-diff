@@ -24,11 +24,17 @@
 
   var Range = require("ace/range").Range;
 
-  // constants from match-patch-diff
-  var DIFF_EQUAL  = 0;
-  var DIFF_DELETE = -1;
-  var DIFF_INSERT = 1;
-  var EDITOR_RIGHT = "right"; // todo
+  var C = {
+    DIFF_EQUAL: 0,
+    DIFF_DELETE: -1,
+    DIFF_INSERT: 1,
+    EDITOR_RIGHT: 'right',
+    EDITOR_LEFT: 'left',
+    RTL: 'rtl',
+    LTR: 'ltr'
+  }
+
+  var EDITOR_RIGHT = "right"; // TODO
   var EDITOR_LEFT  = "left";
 
 
@@ -38,10 +44,11 @@
 
     this.options = extend({
       diffFormat: "text", // text / fullLine [to be removed: for debugging only!]
+      realtime: true, // realtime diffing on/off
       gutterID: "",
       editorLeft: {
         id: "editor1",
-        mode: "ace/mode/javascript",
+        mode: "ace/mode/javascript", // move to top level setting. Weems weird that you'd be diffing files in two different formats
         editable: true
       },
       editorRight: {
@@ -51,18 +58,17 @@
       }
     }, options);
 
-
     // instantiate the editors in an internal data structure that'll store a little info about the diffs and
     // editor content
     this.editors = {
       left: {
         ace: ace.edit(this.options.editorLeft.id),
-        diffs: [], // remove these?
+        markers: [],
         lineLengths: []
       },
       right: {
         ace: ace.edit(this.options.editorRight.id),
-        diffs: [],
+        markers: [],
         lineLengths: []
       }
     };
@@ -86,22 +92,18 @@
     var updateGap = this.updateGap.bind(this);
     this.editors.left.ace.getSession().on("changeScrollTop", updateGap);
     this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
+
+    if (this.options.realtime) {
+      var diff = this.diff.bind(this);
+      this.editors.left.ace.on("change", diff);
+      this.editors.right.ace.on("change", diff);
+    }
   };
 
 
   // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
     this.options = extend(this.options, options);
-  };
-
-
-  AceDiff.prototype.unhighlightDiffs = function() {
-    for (var i = 0; i < this.editors.left.diffs.length; i++) {
-      this.editors.left.ace.getSession().removeMarker(this.editors.left.diffs[i]);
-    }
-    for (var i = 0; i < this.editors.right.diffs.length; i++) {
-      this.editors.right.ace.getSession().removeMarker(this.editors.right.diffs[i]);
-    }
   };
 
 
@@ -115,7 +117,6 @@
 
     return lineLengths;
   };
-
 
   /**
    * Shows a diff in one of the two editors.
@@ -131,7 +132,6 @@
     if (endLine < startLine) {
       endLine = startLine;
     }
-
     var classNames = className;
     if (numRows === 0) {
       classNames += " lineOnly";
@@ -140,13 +140,12 @@
     }
 
     // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
-    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, this.options.diffFormat));
+    editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, this.options.diffFormat));
   };
 
 
   // our main diffing function
   AceDiff.prototype.diff = function() {
-    this.unhighlightDiffs();
 
     // start by doing our actual diffs
     var dmp = new diff_match_patch();
@@ -165,18 +164,20 @@
       right: 0
     };
 
+//    console.log(diff);
+
     diff.forEach(function (chunk) {
-      var op   = chunk[0];
+      var chunkType = chunk[0];
       var text = chunk[1];
 
-      if (op === DIFF_EQUAL) {
+      if (chunkType === C.DIFF_EQUAL) {
         offset.left += text.length;
         offset.right += text.length;
-      } else if (op === DIFF_DELETE) {
-        diffs.rtl.push(this.computeDiff(DIFF_DELETE, offset.left, offset.right, text.length));
+      } else if (chunkType === C.DIFF_DELETE) {
+        diffs.rtl.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
         offset.right += text.length;
-      } else if (op === DIFF_INSERT) {
-        diffs.ltr.push(this.computeDiff(DIFF_INSERT, offset.left, offset.right, text.length));
+      } else if (chunkType === C.DIFF_INSERT) {
+        diffs.ltr.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
         offset.left += text.length;
       }
     }, this);
@@ -184,42 +185,25 @@
     // simplify our computed diffs (i.e. this groups together multiple diffs, if possible)
     diffs = simplifyDiffs(diffs);
 
+    this.clearMarkers();
     this.decorate(diffs);
   };
 
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
-  AceDiff.prototype.updateGap = function () {
+  AceDiff.prototype.updateGap = function() {
     this.diff();
   };
 
 
-  // this one's for stuff that's been REMOVED in the left editor
-  AceDiff.prototype.createCopyToLeftMarker = function(editor1OffsetChars, rightStartLine, rightEndLine) {
-    var line = getLineForCharPosition(this.editors.left, editor1OffsetChars);
-
-    var leftScrollTop = this.editors.left.ace.getSession().getScrollTop();
-    var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
-
-    var p1_x = 0;
-    var p1_y = (line * this.lineHeight) - leftScrollTop;
-
-    var p2_x = this.gutterWidth + 1;
-    var p2_y = rightStartLine * this.lineHeight - rightScrollTop;
-    var p3_x = this.gutterWidth + 1;
-    var p3_y = (rightEndLine * this.lineHeight) + this.lineHeight  - rightScrollTop;
-
-    var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(p3_x, p3_y, p4_x, p4_y);
-
-    var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
-    var verticalLine2 = 'L' + p2_x + "," + p2_y + " " + p3_x + "," + p3_y;
-
-    var path = '<path d="' + curve1 + " " + verticalLine1 + " " +
-      curve2 + ' ' + verticalLine2 + '" class="deletedCodeConnector" />';
-
-    $("#" + this.options.gutterID + " svg").append(path);
-    $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
+  // diffs are implemented as "markers" in Ace terminology
+  AceDiff.prototype.clearMarkers = function() {
+    this.editors.left.markers.forEach(function (marker) {
+      this.editors.left.ace.getSession().removeMarker(marker);
+    }, this);
+    this.editors.right.markers.forEach(function (marker) {
+      this.editors.right.ace.getSession().removeMarker(marker);
+    }, this);
   };
 
 
@@ -229,65 +213,48 @@
 
     /*
     This is what the vars refer to:
-      p1    p2
+      p1   p2
 
-      p3    p4
-
+      p3   p4
     All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     */
 
-    var p1_x = -1;
-    var p1_y = (sourceStartLine * this.lineHeight) - rightScrollTop + 1;
+    if (dir === 'ltr') {
 
-    var p2_x = this.gutterWidth + 1;
-    var p2_y = targetStartLine * this.lineHeight - leftScrollTop + 1;
+      var p1_x = -1;
+      var p1_y = (sourceStartLine * this.lineHeight) - leftScrollTop + 1;
+      var p2_x = this.gutterWidth + 1;
+      var p2_y = targetStartLine * this.lineHeight - rightScrollTop + 1;
+      var p3_x = -1;
+      var p3_y = (sourceEndLine * this.lineHeight) + this.lineHeight - leftScrollTop + 1;
+      var p4_x = this.gutterWidth + 1;
+      var p4_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - rightScrollTop + 1;
+      var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+      var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
+      var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
+      var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
+      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" class="newCodeConnector" />';
 
-    var p3_x = -1;
-    var p3_y = (sourceEndLine * this.lineHeight) + this.lineHeight  - leftScrollTop + 1;
+    } else {
 
-    var p4_x = this.gutterWidth + 1;
-    var p4_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - rightScrollTop + 1;
+      var p1_x = -1;
+      var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop + 1;
+      var p2_x = this.gutterWidth + 1;
+      var p2_y = sourceStartLine * this.lineHeight - rightScrollTop + 1;
+      var p3_x = -1;
+      var p3_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - leftScrollTop + 1;
+      var p4_x = this.gutterWidth + 1;
+      var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop + 1;
+      var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+      var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
+      var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
+      var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
+      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" class="deletedCodeConnector" />';
+    }
 
-    var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
-    var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-
-    var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
-    var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-
-    var path = '<path d="' + curve1 + " " + verticalLine1 + " " + curve2 + ' ' +
-      verticalLine2 + '" class="newCodeConnector" />';
-
+    /// urrrrrrrghhhhh
     $("#" + this.options.gutterID + " svg").append(path);
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
-  };
-
-
-  AceDiff.prototype.createCopyToRightMarker = function(editor2OffsetChars, leftStartLine, leftEndLine) {
-    var line = getLineForCharPosition(this.editors.right, editor2OffsetChars);
-
-    // top right
-  };
-
-
-  AceDiff.prototype.createTargetLine = function(editor, info, className) {
-    var startLine = getLineForCharPosition(editor, info.otherEditorOffsetChars);
-    var endLine = startLine;
-    var classNames = className;
-
-    var multiline = false;
-    if (info.startLine === info.endLine) {
-      if (info.startChar !== 0 && getCharsOnLine(editor, startLine) !== info.endChar) {
-        multiline = true;
-      }
-    }
-
-    if (!multiline) {
-      classNames += " lineOnly";
-    } else {
-      classNames += " range";
-    }
-
-    editor.diffs.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, "fullLine"));
   };
 
   AceDiff.prototype.addCopyArrows = function () {
@@ -313,8 +280,8 @@
   AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
 
     // depending on whether content has been inserted or removed, we
-    var targetEditor           = (diffType === DIFF_INSERT) ? this.editors.left : this.editors.right;
-    var targetEditorCharOffset = (diffType === DIFF_INSERT) ? offsetLeft : offsetRight;
+    var targetEditor           = (diffType === C.DIFF_INSERT) ? this.editors.left : this.editors.right;
+    var targetEditorCharOffset = (diffType === C.DIFF_INSERT) ? offsetLeft : offsetRight;
 
     // if INSERT, these refer to left editor; if DELETE, right
     var startLine,
@@ -329,7 +296,7 @@
 
       if (startLine === undefined && targetEditorCharOffset < runningTotalChars) {
         startLine = lineIndex; // 0-indexed, note
-        endChar = targetEditorCharOffset - runningTotalChars + lineLength;
+        startChar = targetEditorCharOffset - runningTotalChars + lineLength;
       }
 
       if (endLine === undefined && endCharNum <= runningTotalChars) {
@@ -350,26 +317,23 @@
     }
 
     var data = {};
-    if (diffType === DIFF_INSERT) {
+    if (diffType === C.DIFF_INSERT) {
       var currentLineRightEditor = getLineForCharPosition(this.editors.right, offsetRight);
 
       // but! if the offset position was at the very last char of the line, increase it by one
-      if (isLastChar(this.editors.right, offsetRight)) {
+      if (isLastChar(this.editors.right, offsetRight)) { // TODO bug here for completely new lines
         currentLineRightEditor++;
       }
 
       // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
       // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
       // char for the line
-
       var numRows = 0;
 
-      // scenario 1: only one line being inserted, and the line already contained content
+      // only one line being inserted, and the line already contained content
       if (startLine === endLine && (startChar > 0 || endChar < getCharsOnLine(targetEditor, startLine))) {
         numRows++;
       }
-
-      // scenario 2:
 
       data = {
         sourceStartLine: startLine,
@@ -379,12 +343,29 @@
       }
 
     } else {
+      var currentLineLeftEditor = getLineForCharPosition(this.editors.left, offsetLeft);
+
+      // but! if the offset position was at the very last char of the line, increase it by one
+      if (isLastChar(this.editors.left, offsetLeft)) { // TODO bug here for completely new lines
+        currentLineLeftEditor++;
+      }
+
+      // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
+      // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
+      // char for the line
+
+      var numRows = 0;
+
+      // only one line being inserted, and the line already contained content
+      if (startLine === endLine && (startChar > 0 || endChar < getCharsOnLine(targetEditor, startLine))) {
+        numRows++;
+      }
 
       data = {
-//        leftStartLine: startLine,
-//        leftEndLine: endLine
-        rightStartLine: startLine,
-        rightEndLine: endLine
+        sourceStartLine: startLine,
+        sourceEndLine: endLine,
+        targetStartLine: currentLineLeftEditor,
+        targetNumRows: numRows
       }
     }
 
@@ -430,7 +411,6 @@
       }
     }
     return isLastChar;
-
   }
 
   AceDiff.prototype.createGutter = function() {
@@ -438,7 +418,6 @@
 
     var leftHeight = this.editors.left.ace.getSession().getLength() * this.lineHeight;
     var rightHeight = this.editors.right.ace.getSession().getLength() * this.lineHeight;
-
     var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
 
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -448,7 +427,7 @@
     svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
     document.getElementById(this.options.gutterID).appendChild(svg);
-  }
+  };
 
   function clearGutter(id) {
     $("#" + id + " svg").remove();
@@ -477,16 +456,27 @@
   AceDiff.prototype.decorate = function(diffs) {
     this.createGutter();
 
+    // clear our old diffs
+    this.editors.left.diffs = [];
+    this.editors.right.diffs = [];
+
     diffs.ltr.forEach(function(info) {
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
       this.showDiff("left", info.sourceStartLine, numRows, "newCode");
       this.showDiff("right", info.targetStartLine, info.targetNumRows, "newCode");
-
       this.addConnector('ltr', info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+      //this.addCopyArrows(C.LTR);
+    }, this);
 
-//      this.createTargetLine(this.editors.right, info, "diffInsertRightTarget");
+    diffs.rtl.forEach(function(info) {
+      this.showDiff("left", info.targetStartLine, info.targetNumRows, "deletedCode");
+
+      var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+      this.showDiff("right", info.sourceStartLine, numRows, "deletedCode");
+      this.addConnector('rtl', info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
 //      this.addCopyArrows();
     }, this);
+
   };
 
 
@@ -582,8 +572,7 @@
 
     return target;
   };
-
-
+  
   // generates a Bezier curve in SVG format
   function getCurve(startX, startY, endX, endY) {
     var w = endX - startX;

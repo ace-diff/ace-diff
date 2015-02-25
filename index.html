@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Fun with Diffing</title>
+  <title>Ace-diff</title>
   <script src="libs/jquery.js"></script>
   <script src="libs/diff_match_patch.js"></script>
   <link rel=stylesheet href="style.css">
@@ -12,85 +12,181 @@
 <div id="flex-container">
   <div>
 
-<div id="editor1">function testing(items) {
-  var x = "All this is syntax highlighted";
+<div id="editor1">define([
+  'core/base',
+  'core/layout',
+  'core/router',
+  'core/routeObject',
+  'core/utils',
+  'core/store',
+  'flux'
+],
 
-  _.each(items, function(item) {
-    // new line here.
-    return item.something();
+function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
+  FauxtonAPI = _.extend(FauxtonAPI, {
+    Layout: Layout,
+    dispatcher: new Flux.Dispatcher()
   });
 
-  // something else
-  return y;
-}</div>
+  FauxtonAPI.dispatch = _.bind(FauxtonAPI.dispatcher.dispatch, FauxtonAPI.dispatcher);
+
+  FauxtonAPI.navigate = function (url, _opts) {
+    var options = _.extend({trigger: true}, _opts);
+    FauxtonAPI.router.navigate(url, options);
+  };
+
+  FauxtonAPI.beforeUnload = function () {
+    FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
+  };
+
+  FauxtonAPI.removeBeforeUnload = function () {
+    FauxtonAPI.router.removeBeforeUnload.apply(FauxtonAPI.router, arguments);
+  };
+
+  FauxtonAPI.addRoute = function (route) {
+    FauxtonAPI.router.route(route.route, route.name, route.callback);
+  };
+
+  FauxtonAPI.triggerRouteEvent = function (routeEvent, args) {
+    FauxtonAPI.router.triggerRouteEvent('route:' + routeEvent, args);
+  };
+
+  var urlPaths = {};
+
+  FauxtonAPI.registerUrls = function (namespace, urls) {
+    urlPaths[namespace] = urls;
+  };
+
+  //This is a little rough and needs some improvement. But the basic concept is there
+  FauxtonAPI.urls = function (name, context) {
+    var interceptors = FauxtonAPI.getExtensions('urls:interceptors');
+    var url;
+
+    var args = arguments;
+    _.first(interceptors, function (interceptor) {
+      var out = interceptor.apply(null, args);
+
+      if (out) {
+        url = out;
+        return true;
+      }
+      return false;
+    });
+
+    if (!_.isUndefined(url)) { return url; }
+
+    if (!urlPaths[name]) {
+      console.log('could not find name ', name);
+      return '';
+    }
+
+    if (!urlPaths[name][context]) {
+      console.log('could not find context ', context);
+      return '';
+    }
+
+    args = Array.prototype.slice.call(arguments, 2);
+    url = urlPaths[name][context].apply(null, args);
+    return url;
+  };
+
+  return FauxtonAPI;
+});
+</div>
 
 </div>
 <div id="diffGutter"></div>
   <div>
 
-<div id="editor2">function testing(items) {
-  var x = "All this is syntax highlighted";
+<div id="editor2">define([
+  'core/base',
+  'core/layout',
+  'core/routeObject',
+  'core/utils',
+  'core/store',
+  'flux'
+],
 
-  _.each(items, function(item) {
-    return item.something();
+function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
+  FauxtonAPI = _.extend(FauxtonAPI, {
+    Layout: Layout,
+    Router: Router,
+    RouteObject: RouteObject,
+    utils: utils,
+    Store: Store,
+    Events: _.extend({}, Backbone.Events),
+    dispatcher: new Flux.Dispatcher()
   });
 
-  // something else
-  return y;
-}</div>
+  FauxtonAPI.dispatch = _.bind(FauxtonAPI.dispatcher.dispatch, FauxtonAPI.dispatcher);
+
+  FauxtonAPI.navigate = function (url, _opts) {
+    var options = _.extend({trigger: true}, _opts);
+    FauxtonAPI.router.navigate(url, options);
+  };
+
+  FauxtonAPI.addRoute = function (route) {
+    FauxtonAPI.router.route(route.route, route.name, route.callback);
+  };
+
+  FauxtonAPI.triggerRouteEvent = function (routeEvent, args) {
+    FauxtonAPI.router.triggerRouteEvent('route:' + routeEvent, args);
+  };
+
+  var urlPaths = {};
+
+  FauxtonAPI.registerUrls = function (namespace, urls) {
+    urlPaths[namespace] = urls;
+  };
+
+  //This is a little rough and needs some improvement. But the basic concept is there
+  FauxtonAPI.urls = function (name, context) {
+    var interceptors = FauxtonAPI.getExtensions('urls:interceptors');
+    var url;
+
+    var args = arguments;
+    _.first(interceptors, function (interceptor) {
+      var out = interceptor.apply(null, args);
+
+      if (out) {
+        url = out;
+        return true;
+      }
+      return false;
+    });
+
+    if (!_.isUndefined(url)) {
+      return url;
+    }
+
+    if (!urlPaths[name][context]) {
+      console.log('could not find context ', context);
+      return '';
+    }
+
+    args = Array.prototype.slice.call(arguments, 2);
+    url = urlPaths[name][context].apply(null, args);
+    return url;
+  };
+
+  return FauxtonAPI;
+});
+</div>
 
   </div>
 </div>
 
 
 <div id="optionPanel">
-  <input type="checkbox" id="autoDiff" checked="checked" />
-    <label for="autoDiff">Realtime diffing</label>
-
-  <span class="divider">|</span>
-
-  Visualize diffs:
-    <input type="radio" name="diffVisFormat" id="diffVisFormat1" value="fullLine" checked="checked" />
-      <label for="diffVisFormat1">Full Line</label>
-    <input type="radio" name="diffVisFormat" id="diffVisFormat2" value="text" />
-      <label for="diffVisFormat2">Text</label>
+  ...
 </div>
 
 <script>
-
-  // controls
   $(function () {
-
     var aceDiffer = new AceDiff(null, {
       diffFormat: "fullLine",
       gutterID: "diffGutter"
     });
-
-    $("#autoDiff").on("click", function (e) {
-      toggleRealtimeDiffing(e.target.checked);
-    });
-
-    $('[name="diffVisFormat"]').on("change", function (e) {
-      aceDiffer.setOptions({ diffFormat: e.target.value });
-      aceDiffer.diff();
-    });
-
-    function toggleRealtimeDiffing(enabled) {
-      if (enabled) {
-        aceDiffer.editors.left.ace.on("change", diff);
-        aceDiffer.editors.right.ace.on("change", diff);
-        aceDiffer.diff();
-      } else {
-        aceDiffer.editors.left.ace.off("change", diff);
-        aceDiffer.editors.right.ace.off("change", diff);
-      }
-    };
-
-    function diff() {
-      aceDiffer.diff();
-    };
-
-    toggleRealtimeDiffing(true);
   });
 </script>
 
