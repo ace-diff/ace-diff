@@ -24,6 +24,7 @@ body {
     background-color: #fafafa;
     overflow: hidden;
 }
+
 #editor1 {
     position: absolute;
     top: 0;
@@ -37,54 +38,39 @@ body {
     width:100%;
 }
 
-.newCode {
+
+.acediff-new-code {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
     position: absolute;
     z-index: 4;
     background-color: #e2f0ff;
 }
-.newCode.lineOnly {
+.acediff-new-code.lineOnly {
     height: 0px !important;
     border-top: 1px solid #0044ff;
     border-bottom: 0px;
     position: absolute;
 }
-.newCodeConnector {
+.acediff-new-code-connector {
     fill: #e2f0ff;
     stroke: #0044ff;
 }
 
-.deletedCode {
+.ace-diff-deleted-code {
     position: absolute;
     z-index: 4;
     background-color: #ffffcc;
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
 }
-.deletedCode.lineOnly {
+.ace-diff-deleted-code.lineOnly {
     height: 0px !important;
     border-top: 1px solid #ffaa11;
     border-bottom: 0px;
     position: absolute;
 }
-.deletedCodeConnector {
+.ace-diff-deleted-code-connector {
     fill: #ffffcc;
     stroke: #ffaa11;
 }
-
-/*
-#optionPanel {
-    position: absolute;
-    bottom: 10px;
-    left: 10px;
-    z-index: 1;
-    background-color: #0033cc;
-    border-radius: 4px;
-    font-size: 14px;
-    font: 12px/normal 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', 'source-code-pro', monospace;
-    padding: 10px 20px;
-    color: white;
-    z-index: 10;
-}
-*/

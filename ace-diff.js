@@ -36,20 +36,34 @@
 
   // our constructor
   var AceDiff = function(options) {
+
     this.options = $.extend(true, {
-      realtime: true,
+
+      // if an element is passed, AceDiff does the work of creating everything for you: editors,
       element: null,
       gutterID: "",
       mode: null,
       editorLeft: {
         id: "editor1",
-        mode: null,
+        content: null,
+        mode: null, // allow overriding
         editable: true
       },
       editorRight: {
         id: "editor2",
+        content: null,
         mode: null,
         editable: false
+      },
+      classes: {
+        newCode: "acediff-new-code",
+        newCodeConnector: "acediff-new-code-connector",
+        newCodeConnectorLink: "",
+        newCodeConnectorLinkContent: "&raquo;",
+        deletedCode: "acediff-deleted-code",
+        deletedCodeConnector: "acediff-deleted-code-connector",
+        deletedCodeConnectorLink: "",
+        deletedCodeConnectorContent: "&laquo;"
       }
     }, options);
 
@@ -79,6 +93,9 @@
     this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
     this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
 
+    this.editors.left.ace.setReadOnly(!this.options.editorLeft.editable);
+    this.editors.right.ace.setReadOnly(!this.options.editorRight.editable);
+
     this.diff();
   };
 
@@ -88,11 +105,9 @@
     this.editors.left.ace.getSession().on("changeScrollTop", updateGap);
     this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
 
-    if (this.options.realtime) {
-      var diff = this.diff.bind(this);
-      this.editors.left.ace.on("change", diff);
-      this.editors.right.ace.on("change", diff);
-    }
+    var diff = this.diff.bind(this);
+    this.editors.left.ace.on("change", diff);
+    this.editors.right.ace.on("change", diff);
   };
 
 
@@ -138,7 +153,7 @@
     }
     var classNames = className;
     if (numRows === 0) {
-      classNames += " lineOnly";
+      classNames += " lineOnly"; // TODO rename
     } else {
       classNames += " range";
     }
@@ -168,11 +183,14 @@
       right: 0
     };
 
-//    console.log(diff);
-
     diff.forEach(function (chunk) {
       var chunkType = chunk[0];
       var text = chunk[1];
+
+      // oddly, occasionally the algorithm returns a diff with no changes made
+      if (text.length === 0) {
+        return;
+      }
 
       if (chunkType === C.DIFF_EQUAL) {
         offset.left += text.length;
@@ -223,6 +241,8 @@
     All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     */
 
+    // TODO
+
     if (dir === 'ltr') {
 
       var p1_x = -1;
@@ -237,7 +257,8 @@
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
       var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" class="newCodeConnector" />';
+      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" ' +
+          'class="' + this.options.classes.newCodeConnector + '" />';
 
     } else {
 
@@ -253,7 +274,8 @@
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
       var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" class="deletedCodeConnector" />';
+      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" ' +
+          'class="' + this.options.classes.deletedCodeConnector + '" />';
     }
 
     /// urrrrrrrghhhhh
@@ -261,9 +283,8 @@
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
   };
 
-  AceDiff.prototype.addCopyArrows = function(dir) {
-
-
+  AceDiff.prototype.addCopyArrows = function(dir, info) {
+    console.log(info);
   };
 
 
@@ -467,14 +488,14 @@
 
     diffs.ltr.forEach(function(info) {
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-      this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, "newCode");
-      this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, "newCode");
+      this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
+      this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
       this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-      this.addCopyArrows(C.LTR);
+      this.addCopyArrows(C.LTR, info);
     }, this);
 
     diffs.rtl.forEach(function(info) {
-      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, "deletedCode");
+      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes);
 
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
       this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, "deletedCode");
