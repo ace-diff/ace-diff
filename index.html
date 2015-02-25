@@ -185,7 +185,14 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
   $(function () {
     var aceDiffer = new AceDiff(null, {
       diffFormat: "fullLine",
-      gutterID: "diffGutter"
+      gutterID: "diffGutter",
+      mode: "ace/mode/javascript",
+      editorsLeft: {
+        id: "editor1"
+      },
+      editorRight: {
+        id: "editor2"
+      }
     });
   });
 </script>

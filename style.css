@@ -4,6 +4,7 @@ body {
 }
 #flex-container {
     display: flex;
+    display: -webkit-flex;
     flex-direction: row;
     position: absolute;
     bottom: 0;
@@ -12,16 +13,17 @@ body {
 }
 #flex-container>div {
     flex-grow: 1;
+    -webkit-flex-grow: 1;
     position: relative;
 }
 #flex-container>div#diffGutter {
     flex: 0 0 60px;
+    -webkit-flex: 0 0 60px;
     border-left: 1px solid #999999;
     border-right: 1px solid #999999;
     background-color: #fafafa;
     overflow: hidden;
 }
-
 #editor1 {
     position: absolute;
     top: 0;

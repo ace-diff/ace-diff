@@ -44,16 +44,17 @@
 
     this.options = extend({
       diffFormat: "text", // text / fullLine [to be removed: for debugging only!]
-      realtime: true, // realtime diffing on/off
+      realtime: true,
       gutterID: "",
+      mode: null,
       editorLeft: {
         id: "editor1",
-        mode: "ace/mode/javascript", // move to top level setting. Weems weird that you'd be diffing files in two different formats
+        mode: null,
         editable: true
       },
       editorRight: {
         id: "editor2",
-        mode: "ace/mode/javascript",
+        mode: null,
         editable: false
       }
     }, options);
@@ -81,8 +82,8 @@
     this.gutterWidth = $gutter.width();
 
     // set the editor modes
-    this.editors.left.ace.getSession().setMode(this.options.editorLeft.mode);
-    this.editors.right.ace.getSession().setMode(this.options.editorRight.mode);
+    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
 
     this.diff();
   };
@@ -116,6 +117,17 @@
     });
 
     return lineLengths;
+  };
+
+  AceDiff.prototype.getMode = function(editor) {
+    var mode = this.options.mode;
+    if (editor === C.EDITOR_LEFT && this.options.editorLeft.mode !== null) {
+      mode = this.options.editorLeft.mode;
+    }
+    if (editor === C.EDITOR_RIGHT && this.options.editorRight.mode !== null) {
+      mode = this.options.editorRight.mode;
+    }
+    return mode;
   };
 
   /**
