@@ -8,10 +8,10 @@
 
 // UMD pattern from https://github.com/umdjs/umd/blob/master/returnExports.js
 (function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
+  if (typeof define === "function" && define.amd) {
     // AMD. Register as an anonymous module
     define([], factory);
-  } else if (typeof exports === 'object') {
+  } else if (typeof exports === "object") {
     // Node. Does not work with strict CommonJS, but only CommonJS-like environments that support module.exports,
     // like Node
     module.exports = factory(require());
@@ -28,23 +28,17 @@
     DIFF_EQUAL: 0,
     DIFF_DELETE: -1,
     DIFF_INSERT: 1,
-    EDITOR_RIGHT: 'right',
-    EDITOR_LEFT: 'left',
-    RTL: 'rtl',
-    LTR: 'ltr'
-  }
-
-  var EDITOR_RIGHT = "right"; // TODO
-  var EDITOR_LEFT  = "left";
-
+    EDITOR_RIGHT: "right",
+    EDITOR_LEFT: "left",
+    RTL: "rtl",
+    LTR: "ltr"
+  };
 
   // our constructor
-  var AceDiff = function(element, options) {
-    this.element = element;
-
-    this.options = extend({
-      diffFormat: "text", // text / fullLine [to be removed: for debugging only!]
+  var AceDiff = function(options) {
+    this.options = $.extend(true, {
       realtime: true,
+      element: null,
       gutterID: "",
       mode: null,
       editorLeft: {
@@ -104,18 +98,16 @@
 
   // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
-    this.options = extend(this.options, options);
+    this.options = $.extend(true, this.options, options);
   };
 
 
   AceDiff.prototype.getLineLengths = function(editor) {
     var lines = editor.ace.getSession().doc.getAllLines();
-
     var lineLengths = [];
     lines.forEach(function(line) {
       lineLengths.push(line.length + 1); // +1 for the newline char
     });
-
     return lineLengths;
   };
 
@@ -152,7 +144,7 @@
     }
 
     // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
-    editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, this.options.diffFormat));
+    editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, "fullLine"));
   };
 
 

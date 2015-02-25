@@ -177,17 +177,14 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 </div>
 
 
-<div id="optionPanel">
-  ...
-</div>
-
 <script>
   $(function () {
-    var aceDiffer = new AceDiff(null, {
+    var aceDiffer = new AceDiff({
+      //
       diffFormat: "fullLine",
       gutterID: "diffGutter",
       mode: "ace/mode/javascript",
-      editorsLeft: {
+      editorLeft: {
         id: "editor1"
       },
       editorRight: {
