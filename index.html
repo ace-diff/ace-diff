@@ -12,7 +12,7 @@
 <div id="flex-container">
   <div>
 
-<div id="editor1">define([
+<div id="acediff-left-editor">define([
   'core/base',
   'core/layout',
   'core/router',
@@ -95,10 +95,10 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 </div>
 
 </div>
-<div id="diffGutter"></div>
+<div class="acediff-gutter"></div>
   <div>
 
-<div id="editor2">define([
+<div id="acediff-right-editor">define([
   'core/base',
   'core/layout',
   'core/routeObject',
@@ -176,20 +176,10 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
   </div>
 </div>
 
-
 <script>
   $(function () {
     var aceDiffer = new AceDiff({
-      //
-      diffFormat: "fullLine",
-      gutterID: "diffGutter",
-      mode: "ace/mode/javascript",
-      editorLeft: {
-        id: "editor1"
-      },
-      editorRight: {
-        id: "editor2"
-      }
+      mode: "ace/mode/javascript"
     });
   });
 </script>

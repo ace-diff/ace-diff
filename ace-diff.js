@@ -8,10 +8,10 @@
 
 // UMD pattern from https://github.com/umdjs/umd/blob/master/returnExports.js
 (function(root, factory) {
-  if (typeof define === "function" && define.amd) {
+  if (typeof define === 'function' && define.amd) {
     // AMD. Register as an anonymous module
     define([], factory);
-  } else if (typeof exports === "object") {
+  } else if (typeof exports === 'object') {
     // Node. Does not work with strict CommonJS, but only CommonJS-like environments that support module.exports,
     // like Node
     module.exports = factory(require());
@@ -20,18 +20,18 @@
     root.AceDiff = factory(root);
   }
 }(this, function() {
-  "use strict";
+  'use strict';
 
-  var Range = require("ace/range").Range;
+  var Range = require('ace/range').Range;
 
   var C = {
     DIFF_EQUAL: 0,
     DIFF_DELETE: -1,
     DIFF_INSERT: 1,
-    EDITOR_RIGHT: "right",
-    EDITOR_LEFT: "left",
-    RTL: "rtl",
-    LTR: "ltr"
+    EDITOR_RIGHT: 'right',
+    EDITOR_LEFT: 'left',
+    RTL: 'rtl',
+    LTR: 'ltr'
   };
 
   // our constructor
@@ -39,31 +39,37 @@
 
     this.options = $.extend(true, {
 
-      // if an element is passed, AceDiff does the work of creating everything for you: editors,
+      // if an element is passed, AceDiff does the work of creating the whole markup for you: editors, gutter, etc.
+      // otherwise, you need to do it yourself. See the doc.
       element: null,
-      gutterID: "",
+
       mode: null,
       editorLeft: {
-        id: "editor1",
+        id: 'acediff-left-editor',
         content: null,
-        mode: null, // allow overriding
+        mode: null,
         editable: true
       },
       editorRight: {
-        id: "editor2",
+        id: 'acediff-right-editor',
         content: null,
         mode: null,
-        editable: false
+        editable: true
       },
+
+      // all classes are overridable
       classes: {
-        newCode: "acediff-new-code",
-        newCodeConnector: "acediff-new-code-connector",
-        newCodeConnectorLink: "",
-        newCodeConnectorLinkContent: "&raquo;",
-        deletedCode: "acediff-deleted-code",
-        deletedCodeConnector: "acediff-deleted-code-connector",
-        deletedCodeConnectorLink: "",
-        deletedCodeConnectorContent: "&laquo;"
+        gutter: 'acediff-gutter',
+        newCode: 'acediff-new-code',
+        newCodeConnector: 'acediff-new-code-connector',
+        newCodeConnectorLink: 'acediff-new-code-connector-copy',
+        newCodeConnectorLinkContent: '&raquo;',
+        deletedCode: 'acediff-deleted-code',
+        deletedCodeConnector: 'acediff-deleted-code-connector',
+        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+        deletedCodeConnectorLinkContent: '&laquo;',
+        copyRightContainer: 'acediff-copy-right',
+        copyLeftContainer: 'acediff-copy-left'
       }
     }, options);
 
@@ -84,17 +90,22 @@
 
     this.addEventHandlers();
 
+    // TODO
+    //this.createDiffContainer();
+
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
-    var $gutter = $("#" + this.options.gutterID);
+    var $gutter = $("." + this.options.classes.gutter);
     this.gutterHeight = $gutter.height();
     this.gutterWidth = $gutter.width();
 
-    // set the editor modes
+    // set up the editors
     this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
     this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
-
     this.editors.left.ace.setReadOnly(!this.options.editorLeft.editable);
     this.editors.right.ace.setReadOnly(!this.options.editorRight.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
 
     this.diff();
   };
@@ -125,6 +136,7 @@
     });
     return lineLengths;
   };
+
 
   AceDiff.prototype.getMode = function(editor) {
     var mode = this.options.mode;
@@ -214,7 +226,12 @@
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   AceDiff.prototype.updateGap = function() {
+
+    // Naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
     this.diff();
+
+    // reposition the copy containers containing all the arrows
+    this.positionCopyContainers();
   };
 
 
@@ -278,13 +295,38 @@
           'class="' + this.options.classes.deletedCodeConnector + '" />';
     }
 
-    /// urrrrrrrghhhhh
-    $("#" + this.options.gutterID + " svg").append(path);
-    $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
+    /// urrrrrrrghhhhh TODO
+    var $gutterSVG = $("." + this.options.classes.gutter + " svg");
+    $gutterSVG.append(path);
+    $gutterSVG.html($gutterSVG.html());
   };
 
+
   AceDiff.prototype.addCopyArrows = function(dir, info) {
-    console.log(info);
+    var arrowClassName = this.options.classes.newCodeConnectorLink;
+    var arrowContent   = this.options.classes.newCodeConnectorLinkContent;
+
+    // regardless of direction, sourceStartLine will be the one we're interested in
+    var topOffset = info.sourceStartLine * this.lineHeight;
+    var tooltip = "Copy to right";
+
+    var containerClass = this.options.classes.copyRightContainer;
+    if (dir === C.RTL) {
+      arrowClassName = this.options.classes.deletedCodeConnectorLink;
+      arrowContent   = this.options.classes.deletedCodeConnectorLinkContent;
+      containerClass = this.options.classes.copyLeftContainer;
+      tooltip = "Copy to left";
+    }
+    var el = '<div class="' + arrowClassName + '" style="top:' + topOffset + 'px" title="' + tooltip + '">' + arrowContent + '</div>';
+    $('.' + containerClass).append(el);
+  };
+
+  AceDiff.prototype.positionCopyContainers = function () {
+    var leftTopOffset = this.editors.left.ace.getSession().getScrollTop();
+    var rightTopOffset = this.editors.right.ace.getSession().getScrollTop();
+
+    $("." + this.options.classes.copyRightContainer).css({ top: -leftTopOffset + 'px' });
+    $("." + this.options.classes.copyLeftContainer).css({ top: -rightTopOffset + 'px' });
   };
 
 
@@ -440,8 +482,6 @@
   }
 
   AceDiff.prototype.createGutter = function() {
-    clearGutter(this.options.gutterID);
-
     var leftHeight = this.editors.left.ace.getSession().getLength() * this.lineHeight;
     var rightHeight = this.editors.right.ace.getSession().getLength() * this.lineHeight;
     var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
@@ -452,35 +492,37 @@
     svg.setAttribute('style', 'background-color: #efefef');
     svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
-    document.getElementById(this.options.gutterID).appendChild(svg);
+    $("." + this.options.classes.gutter).append(svg);
   };
 
-  function clearGutter(id) {
-    $("#" + id + " svg").remove();
+  // this creates two contains for the copy left + copy right arrows
+  AceDiff.prototype.createCopyContainers = function() {
+    $("." + this.options.classes.gutter).append('<div class="' + this.options.classes.copyRightContainer + '"></div>');
+    $("." + this.options.classes.gutter).append('<div class="' + this.options.classes.copyLeftContainer + '"></div>');
+  };
+
+  function clearGutter(el) {
+    $("." + el + " svg").empty();
   }
+
+  // urgh. Dog's breakfast.
+  function clearArrows(gutter, arrows) {
+    $("." + gutter + " ." + arrows).empty();
+  }
+
 
   /*
    * The purpose of this step is to combine multiple rows where, say, line 1 => line 1, line 2 => line 2,
    * line 3-4 => line 3. That could be reduced to a single connector line 1=4 => line 1-3
    */
   function simplifyDiffs(diffs) {
-//    for (var i=1; i<leftToRight; i++) {
-//      if (leftToRight[i]
-//        }
-
-    // first pass
-    diffs.ltr.forEach(function () {
-
-    }, this);
-
-
-
     return diffs;
   }
 
 
   AceDiff.prototype.decorate = function(diffs) {
-    this.createGutter();
+    clearGutter(this.options.classes.gutter);
+    clearArrows(this.options.classes.gutter, this.options.classes.arrowsContainer);
 
     // clear our old diffs
     this.editors.left.diffs = [];
@@ -491,24 +533,30 @@
       this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
       this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
       this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-      this.addCopyArrows(C.LTR, info);
+
+      if (this.options.editorRight.editable) {
+        this.addCopyArrows(C.LTR, info);
+      }
     }, this);
 
     diffs.rtl.forEach(function(info) {
-      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes);
+      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes.deletedCode);
 
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-      this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, "deletedCode");
+      this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
       this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-//      this.addCopyArrows();
-    }, this);
 
+      if (this.options.editorRight.editable) {
+        this.addCopyArrows(C.RTL, info);
+      }
+    }, this);
   };
 
 
   // ------------------------------------------------ helpers ------------------------------------------------
 
   // taken from jQuery
+  // crap. doesn't seem to do deep extend.
   var extend = function() {
     var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
       i = 1,

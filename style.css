@@ -16,7 +16,7 @@ body {
     -webkit-flex-grow: 1;
     position: relative;
 }
-#flex-container>div#diffGutter {
+#flex-container>div.acediff-gutter {
     flex: 0 0 60px;
     -webkit-flex: 0 0 60px;
     border-left: 1px solid #999999;
@@ -25,20 +25,18 @@ body {
     overflow: hidden;
 }
 
-#editor1 {
+#acediff-left-editor {
     position: absolute;
     top: 0;
     bottom: 0;
     width:100%;
 }
-#editor2 {
+#acediff-right-editor {
     position: absolute;
     top: 0;
     bottom: 0;
     width:100%;
 }
-
-
 .acediff-new-code {
     border-top: 1px solid #0044ff;
     border-bottom: 1px solid #0044ff;
@@ -57,20 +55,75 @@ body {
     stroke: #0044ff;
 }
 
-.ace-diff-deleted-code {
+.acediff-deleted-code {
     position: absolute;
     z-index: 4;
     background-color: #ffffcc;
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
 }
-.ace-diff-deleted-code.lineOnly {
+.acediff-deleted-code.lineOnly {
     height: 0px !important;
     border-top: 1px solid #ffaa11;
     border-bottom: 0px;
     position: absolute;
 }
-.ace-diff-deleted-code-connector {
+.acediff-deleted-code-connector {
     fill: #ffffcc;
     stroke: #ffaa11;
+}
+.acediff-copy-left {
+    float: right;
+}
+.acediff-copy-right,
+.acediff-copy-left {
+    position: relative;
+}
+.acediff-copy-right div {
+    background-color: #5fa6f1;
+    color: #ffffff;
+    opacity: 0.8;
+    border-radius: 7px;
+    padding: 0px 3px;
+    position: absolute;
+    margin: 0px 1px;
+    cursor: pointer;
+    -webkit-transition: background-color 200ms linear;
+    -moz-transition: background-color 200ms linear;
+    -o-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
+}
+.acediff-copy-right div:hover {
+    background-color: #004ea0;
+    -webkit-transition: background-color 200ms linear;
+    -moz-transition: background-color 200ms linear;
+    -o-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
+}
+.acediff-copy-left div {
+    position: absolute;
+    right: 0px;
+    background-color: #ffaa11;
+    color: #ffffff;
+    opacity: 0.8;
+    border-radius: 7px;
+    padding: 0px 3px;
+    position: absolute;
+    margin: 0px 1px;
+    cursor: pointer;
+    -webkit-transition: background-color 200ms linear;
+    -moz-transition: background-color 200ms linear;
+    -o-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
+}
+.acediff-copy-left div:hover {
+    background-color: #c98100;
+    -webkit-transition: background-color 200ms linear;
+    -moz-transition: background-color 200ms linear;
+    -o-transition: background-color 200ms linear;
+    -ms-transition: background-color 200ms linear;
+    transition: background-color 200ms linear;
 }
