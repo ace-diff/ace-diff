@@ -261,7 +261,8 @@
     $("#" + this.options.gutterID).html($("#" + this.options.gutterID).html());
   };
 
-  AceDiff.prototype.addCopyArrows = function () {
+  AceDiff.prototype.addCopyArrows = function(dir) {
+
 
   };
 
@@ -466,18 +467,18 @@
 
     diffs.ltr.forEach(function(info) {
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-      this.showDiff("left", info.sourceStartLine, numRows, "newCode");
-      this.showDiff("right", info.targetStartLine, info.targetNumRows, "newCode");
-      this.addConnector('ltr', info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-      //this.addCopyArrows(C.LTR);
+      this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, "newCode");
+      this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, "newCode");
+      this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+      this.addCopyArrows(C.LTR);
     }, this);
 
     diffs.rtl.forEach(function(info) {
-      this.showDiff("left", info.targetStartLine, info.targetNumRows, "deletedCode");
+      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, "deletedCode");
 
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-      this.showDiff("right", info.sourceStartLine, numRows, "deletedCode");
-      this.addConnector('rtl', info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+      this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, "deletedCode");
+      this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
 //      this.addCopyArrows();
     }, this);
 
@@ -593,4 +594,5 @@
   }
 
   return AceDiff;
+
 }));
