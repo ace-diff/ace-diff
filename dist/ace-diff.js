@@ -38,25 +38,29 @@
   // our constructor
   var AceDiff = function(options) {
 
-    this.options = $.extend(true, {
+    this.options = {};
+    extend(true, this.options, {
 
       // if an element is passed, AceDiff does the work of creating the whole markup for you: editors, gutter, etc.
       // otherwise, you need to do it yourself. See the doc.
       element: null,
       mode: null,
       lockScrolling: true,
-      editorLeft: {
+      left: {
         id: 'acediff-left-editor',
         content: null,
         mode: null,
         editable: true
       },
-      editorRight: {
+      right: {
         id: 'acediff-right-editor',
         content: null,
         mode: null,
         editable: false
       },
+      copyRTL: true,
+      copyLTR: true,
+      maxDiffs: 10000,
 
       // all classes are overridable
       classes: {
@@ -78,16 +82,17 @@
     // editor content
     this.editors = {
       left: {
-        ace: ace.edit(this.options.editorLeft.id),
+        ace: ace.edit(this.options.left.id),
         markers: [],
         lineLengths: []
       },
       right: {
-        ace: ace.edit(this.options.editorRight.id),
+        ace: ace.edit(this.options.right.id),
         markers: [],
         lineLengths: []
       }
     };
+
 
     this.addEventHandlers();
 
@@ -102,8 +107,8 @@
     // set up the editors
     this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
     this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
-    this.editors.left.ace.setReadOnly(!this.options.editorLeft.editable);
-    this.editors.right.ace.setReadOnly(!this.options.editorRight.editable);
+    this.editors.left.ace.setReadOnly(!this.options.left.editable);
+    this.editors.right.ace.setReadOnly(!this.options.right.editable);
 
     this.createCopyContainers();
     this.createGutter();
@@ -157,7 +162,9 @@
 
   // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
-    this.options = $.extend(true, this.options, options);
+
+    // TODO check
+    extend(true, this.options, options);
   };
 
 
@@ -173,11 +180,11 @@
 
   AceDiff.prototype.getMode = function(editor) {
     var mode = this.options.mode;
-    if (editor === C.EDITOR_LEFT && this.options.editorLeft.mode !== null) {
-      mode = this.options.editorLeft.mode;
+    if (editor === C.EDITOR_LEFT && this.options.left.mode !== null) {
+      mode = this.options.left.mode;
     }
-    if (editor === C.EDITOR_RIGHT && this.options.editorRight.mode !== null) {
-      mode = this.options.editorRight.mode;
+    if (editor === C.EDITOR_RIGHT && this.options.right.mode !== null) {
+      mode = this.options.right.mode;
     }
     return mode;
   };
@@ -583,11 +590,12 @@
 
     diffs.ltr.forEach(function(info) {
       var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+
       this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
       this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
       this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
 
-      if (this.options.editorRight.editable) {
+      if (this.options.right.editable) {
         this.addCopyArrows(C.LTR, info);
       }
     }, this);
@@ -599,7 +607,7 @@
       this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
       this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
 
-      if (this.options.editorLeft.editable) {
+      if (this.options.left.editable) {
         this.addCopyArrows(C.RTL, info);
       }
     }, this);
@@ -608,7 +616,6 @@
 
 
   // taken from jQuery
-  // crap. doesn't seem to do deep extend.
   var extend = function() {
     var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
       i = 1,

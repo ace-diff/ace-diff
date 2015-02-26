@@ -1,0 +1,26 @@
+{
+  "name": "ace-diff",
+  "version": "0.1.0",
+  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
+  "main": "dist/ace-diff.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benkeen/ace-diff.git"
+  },
+  "keywords": [
+    "ace",
+    "diffing",
+    "merging",
+    "ace",
+    "editor"
+  ],
+  "author": "Ben Keen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/benkeen/ace-diff/issues"
+  },
+  "homepage": "https://github.com/benkeen/ace-diff"
+}
