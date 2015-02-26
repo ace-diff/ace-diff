@@ -24,6 +24,9 @@ body {
     background-color: #fafafa;
     overflow: hidden;
 }
+.acediff-gutter svg {
+    background-color: #efefef;
+}
 
 #acediff-left-editor {
     position: absolute;
@@ -44,7 +47,7 @@ body {
     z-index: 4;
     background-color: #e2f0ff;
 }
-.acediff-new-code.lineOnly {
+.acediff-new-code.targetOnly {
     height: 0px !important;
     border-top: 1px solid #0044ff;
     border-bottom: 0px;

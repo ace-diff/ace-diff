@@ -42,8 +42,8 @@
       // if an element is passed, AceDiff does the work of creating the whole markup for you: editors, gutter, etc.
       // otherwise, you need to do it yourself. See the doc.
       element: null,
-
       mode: null,
+      lockScrolling: true,
       editorLeft: {
         id: 'acediff-left-editor',
         content: null,
@@ -113,12 +113,61 @@
 
   AceDiff.prototype.addEventHandlers = function () {
     var updateGap = this.updateGap.bind(this);
-    this.editors.left.ace.getSession().on("changeScrollTop", updateGap);
-    this.editors.right.ace.getSession().on("changeScrollTop", updateGap);
+    this.editors.left.ace.getSession().on("changeScrollTop", function(scroll) {
+      updateGap('left', scroll);
+    });
+    this.editors.right.ace.getSession().on("changeScrollTop", function(scroll) {
+      updateGap('right', scroll);
+    });
 
     var diff = this.diff.bind(this);
     this.editors.left.ace.on("change", diff);
     this.editors.right.ace.on("change", diff);
+
+    // event delegated click handlers for the copy-to-right/left buttons
+    var callback = function(e) {
+
+      // this contains the char index where the
+      var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
+      var charIndex = parseInt(e.target.getAttribute('data-char-index'), 10);
+      var rightEditorContent = this.editors.right.ace.getSession().getValue();
+      var contentToInsert = this.rawDiff[diffIndex][1];
+      var newContent = rightEditorContent.substr(0, charIndex) + contentToInsert + rightEditorContent.substr(charIndex);
+
+      // keep track of the scroll height
+      var h = this.editors.right.ace.getSession().getScrollTop();
+      this.editors.right.ace.getSession().setValue(newContent);
+      this.editors.right.ace.getSession().setScrollTop(parseInt(h));
+
+      this.diff();
+
+    }.bind(this);
+
+    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, callback);
+
+
+    // TODOoooo
+    var callback2 = function(e) {
+
+      // this contains the char index where the
+      var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
+      var charIndex = parseInt(e.target.getAttribute('data-char-index'), 10);
+
+      var leftEditorContent = this.editors.left.ace.getSession().getValue();
+      var contentToInsert = this.rawDiff[diffIndex][1];
+      var newContent = leftEditorContent.substr(0, charIndex) + contentToInsert + leftEditorContent.substr(charIndex);
+
+      // keep track of the scroll height
+      var h = this.editors.left.ace.getSession().getScrollTop();
+      this.editors.left.ace.getSession().setValue(newContent);
+      this.editors.left.ace.getSession().setScrollTop(parseInt(h));
+
+      this.diff();
+
+    }.bind(this);
+
+    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, callback2);
+    
   };
 
 
@@ -165,9 +214,9 @@
     }
     var classNames = className;
     if (numRows === 0) {
-      classNames += " lineOnly"; // TODO rename
+      classNames += " targetOnly";
     } else {
-      classNames += " range";
+      classNames += " lines";
     }
 
     // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
@@ -185,6 +234,8 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
+    this.rawDiff = diff;
+
     this.editors.left.lineLengths  = this.getLineLengths(this.editors.left);
     this.editors.right.lineLengths = this.getLineLengths(this.editors.right);
 
@@ -195,7 +246,7 @@
       right: 0
     };
 
-    diff.forEach(function (chunk) {
+    diff.forEach(function (chunk, index) {
       var chunkType = chunk[0];
       var text = chunk[1];
 
@@ -208,10 +259,20 @@
         offset.left += text.length;
         offset.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        diffs.rtl.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
+        var diffInfo = this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length);
+
+        // this kind of sucks. Maybe put charIndex into new rawDiff?
+        diffInfo.diffIndex = index;
+        diffInfo.charIndex = offset.left;
+
+        diffs.rtl.push(diffInfo);
         offset.right += text.length;
       } else if (chunkType === C.DIFF_INSERT) {
-        diffs.ltr.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
+        var diffInfo = this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length)
+        diffInfo.diffIndex = index;
+        diffInfo.charIndex = offset.right;
+
+        diffs.ltr.push(diffInfo);
         offset.left += text.length;
       }
     }, this);
@@ -225,7 +286,19 @@
 
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
-  AceDiff.prototype.updateGap = function() {
+  AceDiff.prototype.updateGap = function(editor, scroll) {
+
+    // needs to take into account the diffs
+    /*
+    if (this.options.lockScrolling) {
+      if (editor === 'left') {
+        this.editors.right.ace.getSession().setScrollTop(parseInt(scroll) || 0);
+      }
+      if (editor === 'right') {
+        this.editors.left.ace.getSession().setScrollTop(parseInt(scroll) || 0);
+      }
+    }
+    */
 
     // Naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
     this.diff();
@@ -317,7 +390,9 @@
       containerClass = this.options.classes.copyLeftContainer;
       tooltip = "Copy to left";
     }
-    var el = '<div class="' + arrowClassName + '" style="top:' + topOffset + 'px" title="' + tooltip + '">' + arrowContent + '</div>';
+
+    var el = '<div class="' + arrowClassName + '" style="top:' + topOffset + 'px" title="' + tooltip + '" ' +
+      'data-char-index="' + info.charIndex + '" data-diff-index="' + info.diffIndex + '">' + arrowContent + '</div>';
     $('.' + containerClass).append(el);
   };
 
@@ -489,7 +564,6 @@
     var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     svg.setAttribute('width', this.gutterWidth);
     svg.setAttribute('height', height);
-    svg.setAttribute('style', 'background-color: #efefef');
     svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
     $("." + this.options.classes.gutter).append(svg);
@@ -497,19 +571,18 @@
 
   // this creates two contains for the copy left + copy right arrows
   AceDiff.prototype.createCopyContainers = function() {
-    $("." + this.options.classes.gutter).append('<div class="' + this.options.classes.copyRightContainer + '"></div>');
-    $("." + this.options.classes.gutter).append('<div class="' + this.options.classes.copyLeftContainer + '"></div>');
+    $("." + this.options.classes.gutter)
+      .append('<div class="' + this.options.classes.copyRightContainer + '"></div>')
+      .append('<div class="' + this.options.classes.copyLeftContainer + '"></div>');
   };
 
   function clearGutter(el) {
     $("." + el + " svg").empty();
   }
 
-  // urgh. Dog's breakfast.
-  function clearArrows(gutter, arrows) {
-    $("." + gutter + " ." + arrows).empty();
-  }
-
+  AceDiff.prototype.clearArrows = function() {
+    $("." + this.options.classes.copyLeftContainer + ", ." + this.options.classes.copyRightContainer).empty();
+  };
 
   /*
    * The purpose of this step is to combine multiple rows where, say, line 1 => line 1, line 2 => line 2,
@@ -522,9 +595,9 @@
 
   AceDiff.prototype.decorate = function(diffs) {
     clearGutter(this.options.classes.gutter);
-    clearArrows(this.options.classes.gutter, this.options.classes.arrowsContainer);
+    this.clearArrows();
 
-    // clear our old diffs
+    // clear our old diffs [nope... for efficiency, we'll need to do a compare TODO]
     this.editors.left.diffs = [];
     this.editors.right.diffs = [];
 
@@ -661,6 +734,30 @@
 
     return curve;
   }
+
+
+  function on(elSelector, eventName, selector, fn) {
+    var element = document.querySelector(elSelector);
+
+    element.addEventListener(eventName, function(event) {
+      var possibleTargets = element.querySelectorAll(selector);
+      var target = event.target;
+
+      for (var i = 0, l = possibleTargets.length; i < l; i++) {
+        var el = target;
+        var p = possibleTargets[i];
+
+        while(el && el !== element) {
+          if (el === p) {
+            return fn.call(p, event);
+          }
+
+          el = el.parentNode;
+        }
+      }
+    });
+  }
+
 
   return AceDiff;
 
