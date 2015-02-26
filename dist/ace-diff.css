@@ -89,19 +89,9 @@ body {
     margin: 1px;
     padding: 0px 3px;
     cursor: pointer;
-    -webkit-transition: background-color 200ms linear;
-    -moz-transition: background-color 200ms linear;
-    -o-transition: background-color 200ms linear;
-    -ms-transition: background-color 200ms linear;
-    transition: background-color 200ms linear;
 }
 .acediff-copy-right div:hover {
     color: #004ea0;
-    -webkit-transition: background-color 200ms linear;
-    -moz-transition: background-color 200ms linear;
-    -o-transition: background-color 200ms linear;
-    -ms-transition: background-color 200ms linear;
-    transition: background-color 200ms linear;
 }
 .acediff-copy-left div {
     color: #000000;

@@ -113,10 +113,14 @@
 
   AceDiff.prototype.addEventHandlers = function () {
     var updateGap = this.updateGap.bind(this);
+
+    //var re = this.editors.right.ace;
     this.editors.left.ace.getSession().on("changeScrollTop", function(scroll) {
       updateGap('left', scroll);
     });
+
     this.editors.right.ace.getSession().on("changeScrollTop", function(scroll) {
+      //console.log(re.getFirstVisibleRow());
       updateGap('right', scroll);
     });
 
@@ -124,50 +128,30 @@
     this.editors.left.ace.on("change", diff);
     this.editors.right.ace.on("change", diff);
 
-    // event delegated click handlers for the copy-to-right/left buttons
-    var callback = function(e) {
-
-      // this contains the char index where the
-      var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-      var charIndex = parseInt(e.target.getAttribute('data-char-index'), 10);
-      var rightEditorContent = this.editors.right.ace.getSession().getValue();
-      var contentToInsert = this.rawDiff[diffIndex][1];
-      var newContent = rightEditorContent.substr(0, charIndex) + contentToInsert + rightEditorContent.substr(charIndex);
-
-      // keep track of the scroll height
-      var h = this.editors.right.ace.getSession().getScrollTop();
-      this.editors.right.ace.getSession().setValue(newContent);
-      this.editors.right.ace.getSession().setScrollTop(parseInt(h));
-
-      this.diff();
-
-    }.bind(this);
-
-    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, callback);
-
-
-    // TODOoooo
-    var callback2 = function(e) {
-
-      // this contains the char index where the
+    var onCopy = function(e, dir) {
       var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
       var charIndex = parseInt(e.target.getAttribute('data-char-index'), 10);
 
-      var leftEditorContent = this.editors.left.ace.getSession().getValue();
+      var editor = (dir === C.LTR) ? this.editors.right.ace : this.editors.left.ace;
+      var editorContent = editor.getSession().getValue();
       var contentToInsert = this.rawDiff[diffIndex][1];
-      var newContent = leftEditorContent.substr(0, charIndex) + contentToInsert + leftEditorContent.substr(charIndex);
+      var newContent = editorContent.substr(0, charIndex) + contentToInsert + editorContent.substr(charIndex);
 
       // keep track of the scroll height
-      var h = this.editors.left.ace.getSession().getScrollTop();
-      this.editors.left.ace.getSession().setValue(newContent);
-      this.editors.left.ace.getSession().setScrollTop(parseInt(h));
+      var h = editor.getSession().getScrollTop();
+      editor.getSession().setValue(newContent);
+      editor.getSession().setScrollTop(parseInt(h));
 
       this.diff();
-
     }.bind(this);
 
-    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, callback2);
-    
+
+    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, function(e) {
+      onCopy(e, C.LTR);
+    });
+    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, function(e) {
+      onCopy(e, C.RTL);
+    });
   };
 
 
@@ -289,7 +273,6 @@
   AceDiff.prototype.updateGap = function(editor, scroll) {
 
     // needs to take into account the diffs
-    /*
     if (this.options.lockScrolling) {
       if (editor === 'left') {
         this.editors.right.ace.getSession().setScrollTop(parseInt(scroll) || 0);
@@ -298,7 +281,6 @@
         this.editors.left.ace.getSession().setScrollTop(parseInt(scroll) || 0);
       }
     }
-    */
 
     // Naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
     this.diff();
@@ -758,6 +740,21 @@
     });
   }
 
+//  function debounce(func, wait, immediate) {
+//    var timeout;
+//    return function() {
+//      var context = this, args = arguments;
+//      var later = function() {
+//        timeout = null;
+//        if (!immediate) func.apply(context, args);
+//      };
+//      var callNow = immediate && !timeout;
+//      clearTimeout(timeout);
+//      timeout = setTimeout(later, wait);
+//      if (callNow) func.apply(context, args);
+//    };
+//  };
+//  var myEfficientFn = debounce(function() { }, 250);
 
   return AceDiff;
 
