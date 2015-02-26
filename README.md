@@ -16,15 +16,37 @@ is very much a work in progress; I'll update the demo when I finish off the lib.
 
 ### How to install
 
-You can use the script in two ways, depending on your needs. 
+You can use the script in two ways, depending on your needs. The simplest way to do it is to let the script 
+do *everything*: you just pass a target element and it inserts all the appropriate markup for the diffing pane. 
+Let's see how that looks. 
 
+```html
+<div id="differ"></div>
+<script>
+var differ = new AceDiff({ 
+  element: document.getElementById("differ");
+  mode: "ace/mode/javascript",
+  left: {
+    content: "your first file content here"
+  },
+  right: {
+    content: "your second file content here"
+  }
+});
+</script>
+```
+
+Pretty simple. [demo of this here, link]
 
 
 ### Configuration
 
-The script offers a lot of customizability. 
+You can customize your AceDiff instances in a number of ways. 
+
 
 #### Default settings
+
+Here are all the default settings. I'll explain each below.
 
 ```javascript
 {
@@ -35,17 +57,20 @@ The script offers a lot of customizability.
     id: 'acediff-left-editor',
     content: null,
     mode: null,
-    editable: true
+    editable: true,
+    showDiffs: true,
+    showCopyLTR: true,
+    showLTRConnectors: true
   },
   right: {
     id: 'acediff-right-editor',
     content: null,
     mode: null,
-    editable: false
+    editable: true,
+    showDiffs: true,
+    showCopyRTL: true,
+    showRTLConnectors: true
   },
-  copyRTL: true,
-  copyLTR: true,
-  showConnectors: true,
   maxDiffs: 5000,
   classes: {
     gutter: 'acediff-gutter',
@@ -60,8 +85,20 @@ The script offers a lot of customizability.
     copyRightContainer: 'acediff-copy-right',
     copyLeftContainer: 'acediff-copy-left'
   }
-}
 ```
+
+
+### API
+
+
+
+
+### Styling
+
+
+
+### Browser Support
+
 
 ___________________
 
@@ -75,13 +112,12 @@ Features to add for version 1:
 - go to next/previous diff
 - optional scroll locking (horizontal + vertical)
 - copy all to right/left
-- simplifyDiffs()
-- documentation
+- undo method
 
 #### Appalling slow stuff that can be improved
 - don't diff on updateGap()
 - diffs the diffs to know when to redraw gap + arrows
-- cap out the diffs if > N?  
+- really need to debounce scrolling
 
 ### Known limitations
 - only one AceDiff per page

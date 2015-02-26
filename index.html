@@ -15,9 +15,9 @@
 <div id="acediff-left-editor">define([
   'core/base',
   'core/layout',
-  'core/router',
-  'core/routeObject',
-  'core/utils',
+  'core/router1',
+  'core/routeObject1',
+  'core/utils1',
   'core/store',
   'flux'
 ],
@@ -101,6 +101,7 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 <div id="acediff-right-editor">define([
   'core/base',
   'core/layout',
+  'core/router',
   'core/routeObject',
   'core/utils',
   'core/store',
@@ -110,11 +111,6 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
   FauxtonAPI = _.extend(FauxtonAPI, {
     Layout: Layout,
-    Router: Router,
-    RouteObject: RouteObject,
-    utils: utils,
-    Store: Store,
-    Events: _.extend({}, Backbone.Events),
     dispatcher: new Flux.Dispatcher()
   });
 
@@ -123,6 +119,14 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
   FauxtonAPI.navigate = function (url, _opts) {
     var options = _.extend({trigger: true}, _opts);
     FauxtonAPI.router.navigate(url, options);
+  };
+
+  FauxtonAPI.beforeUnload = function () {
+    FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
+  };
+
+  FauxtonAPI.removeBeforeUnload = function () {
+    FauxtonAPI.router.removeBeforeUnload.apply(FauxtonAPI.router, arguments);
   };
 
   FauxtonAPI.addRoute = function (route) {
@@ -155,8 +159,11 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
       return false;
     });
 
-    if (!_.isUndefined(url)) {
-      return url;
+    if (!_.isUndefined(url)) { return url; }
+
+    if (!urlPaths[name]) {
+      console.log('could not find name ', name);
+      return '';
     }
 
     if (!urlPaths[name][context]) {
@@ -179,13 +186,7 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 <script>
   $(function () {
     var aceDiffer = new AceDiff({
-      mode: "ace/mode/javascript",
-      left: {
-        editable: false
-      },
-      right: {
-        editable: true
-      }
+      mode: "ace/mode/javascript"
     });
   });
 </script>

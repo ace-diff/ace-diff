@@ -12,15 +12,24 @@
   },
   "keywords": [
     "ace",
+    "dif",
     "diffing",
+    "merge",
     "merging",
-    "ace",
-    "editor"
+    "ace editor",
+    "syntax highlighting"
   ],
   "author": "Ben Keen",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/benkeen/ace-diff/issues"
   },
-  "homepage": "https://github.com/benkeen/ace-diff"
+  "homepage": "https://github.com/benkeen/ace-diff",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "^0.10.0"
+  }
 }

@@ -1,22 +1,16 @@
 /*!
  * ace-diff
  * @author Ben Keen
- * @version 0.0.1
- * @date Feb 24 2015
+ * @version 0.1.0
+ * @date Feb 26 2015
  * @repo http://github.com/benkeen/ace-diff
  */
-
-// UMD pattern from https://github.com/umdjs/umd/blob/master/returnExports.js
 (function(root, factory) {
   if (typeof define === 'function' && define.amd) {
-    // AMD. Register as an anonymous module
     define([], factory);
   } else if (typeof exports === 'object') {
-    // Node. Does not work with strict CommonJS, but only CommonJS-like environments that support module.exports,
-    // like Node
     module.exports = factory(require());
   } else {
-    // browser globals (root is window)
     root.AceDiff = factory(root);
   }
 }(this, function() {
@@ -40,9 +34,6 @@
 
     this.options = {};
     extend(true, this.options, {
-
-      // if an element is passed, AceDiff does the work of creating the whole markup for you: editors, gutter, etc.
-      // otherwise, you need to do it yourself. See the doc.
       element: null,
       mode: null,
       lockScrolling: false,
@@ -50,17 +41,20 @@
         id: 'acediff-left-editor',
         content: null,
         mode: null,
-        editable: true
+        editable: true,
+        showDiffs: true,
+        showCopyLTR: true,
+        showLTRConnectors: true
       },
       right: {
         id: 'acediff-right-editor',
         content: null,
         mode: null,
-        editable: false
+        editable: true,
+        showDiffs: true,
+        showCopyRTL: true,
+        showRTLConnectors: true
       },
-      copyRTL: true,
-      copyLTR: true,
-      showConnectors: true,
       maxDiffs: 5000,
       classes: {
         gutter: 'acediff-gutter',
@@ -92,7 +86,6 @@
       }
     };
 
-
     this.addEventHandlers();
 
     // TODO
@@ -120,11 +113,11 @@
     var updateGap = this.updateGap.bind(this);
 
     //var re = this.editors.right.ace;
-    this.editors.left.ace.getSession().on("changeScrollTop", function(scroll) {
+    this.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
       updateGap('left', scroll);
     });
 
-    this.editors.right.ace.getSession().on("changeScrollTop", function(scroll) {
+    this.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
       //console.log(re.getFirstVisibleRow());
       updateGap('right', scroll);
     });
@@ -133,36 +126,74 @@
     this.editors.left.ace.on("change", diff);
     this.editors.right.ace.on("change", diff);
 
-    var onCopy = function(e, dir) {
-      var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-      var charIndex = parseInt(e.target.getAttribute('data-char-index'), 10);
+    // TODO necessary?
+    var onCopy = copy.bind(this);
 
-      var editor = (dir === C.LTR) ? this.editors.right.ace : this.editors.left.ace;
-      var editorContent = editor.getSession().getValue();
-      var contentToInsert = this.rawDiff[diffIndex][1];
-      var newContent = editorContent.substr(0, charIndex) + contentToInsert + editorContent.substr(charIndex);
-
-      // keep track of the scroll height
-      var h = editor.getSession().getScrollTop();
-      editor.getSession().setValue(newContent);
-      editor.getSession().setScrollTop(parseInt(h));
-
-      this.diff();
-    }.bind(this);
-
-    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, function(e) {
-      onCopy(e, C.LTR);
-    });
-    on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, function(e) {
-      onCopy(e, C.RTL);
-    });
+    if (this.options.left.showCopyLTR) {
+      on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, function (e) {
+        onCopy(e, C.LTR);
+      });
+    }
+    if (this.options.right.showCopyRTL) {
+      on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, function (e) {
+        onCopy(e, C.RTL);
+      });
+    }
   };
+
+
+  function copy(e, dir) {
+    var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
+//    console.log(this.diffs[diffIndex]);
+
+    return;
+
+    var startLine      = this.diffs[diffIndex].sourceStartLine;
+    var endLine        = this.diffs[diffIndex].sourceEndLine;
+    var targetLine     = this.diffs[diffIndex].targetStartLine;
+    var targetNumLines = this.diffs[diffIndex].targetNumRows;
+
+    var sourceEditor, targetEditor;
+
+    if (dir === C.LTR) {
+      sourceEditor = this.editors.left;
+      targetEditor = this.editors.right;
+    } else {
+      sourceEditor = this.editors.right;
+      targetEditor = this.editors.left;
+    }
+
+    // probably should be an array for speed (is that still correct in mod browsers?)
+    var contentToInsert = '';
+    for (var i=startLine; i<=endLine; i++) {
+      contentToInsert += getLine(sourceEditor, i) + "\n";
+    }
+
+    var editorContent = targetEditor.ace.getSession().getValue();
+
+
+    // if this isn't replacing anything, just do a simple insert-at-char-pos
+    var newContent;
+    if (targetNumLines === 0) {
+
+      //targetCharPos
+
+      newContent = editorContent.substr(0, targetCharPos) + contentToInsert + editorContent.substr(targetCharPos);
+    } else {
+
+    }
+
+    // keep track of the scroll height
+    var h = targetEditor.ace.getSession().getScrollTop();
+    targetEditor.ace.getSession().setValue(newContent);
+    targetEditor.ace.getSession().setScrollTop(parseInt(h));
+
+    this.diff();
+  }
 
 
   // allows on-the-fly changes to the AceDiff instance settings
   AceDiff.prototype.setOptions = function (options) {
-
-    // TODO check
     extend(true, this.options, options);
   };
 
@@ -188,6 +219,7 @@
     return mode;
   };
 
+
   /**
    * Shows a diff in one of the two editors.
    * @param editor
@@ -210,7 +242,7 @@
     }
 
     // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
-    editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, "fullLine"));
+    editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, 'fullLine'));
   };
 
 
@@ -224,8 +256,6 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    this.rawDiff = diff;
-
     this.editors.left.lineLengths  = this.getLineLengths(this.editors.left);
     this.editors.right.lineLengths = this.getLineLengths(this.editors.right);
 
@@ -236,7 +266,7 @@
       right: 0
     };
 
-    diff.forEach(function (chunk, index) {
+    diff.forEach(function(chunk) {
       var chunkType = chunk[0];
       var text = chunk[1];
 
@@ -249,29 +279,32 @@
         offset.left += text.length;
         offset.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        var diffInfo = this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length);
-
-        // this kind of sucks. Maybe put charIndex into new rawDiff?
-        diffInfo.diffIndex = index;
-        diffInfo.charIndex = offset.left;
-
-        diffs.rtl.push(diffInfo);
+        diffs.rtl.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
         offset.right += text.length;
       } else if (chunkType === C.DIFF_INSERT) {
-        var diffInfo = this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length)
-        diffInfo.diffIndex = index;
-        diffInfo.charIndex = offset.right;
-
-        diffs.ltr.push(diffInfo);
+        diffs.ltr.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
         offset.left += text.length;
       }
     }, this);
 
-    // simplify our computed diffs (i.e. this groups together multiple diffs, if possible)
-    diffs = simplifyDiffs(diffs);
+    // simplify our computed diffs (i.e. this groups together multiple diffs, if possible), and store it for later use
+    this.diffs = simplifyDiffs(diffs);
+
+    // if we're dealing with too many diffs, fail silently
+    if (this.diffs.ltr.length + this.diffs.rtl.length > this.options.maxDiffs) {
+      return;
+    }
 
     this.clearMarkers();
-    this.decorate(diffs);
+    this.decorate(this.diffs);
+  };
+
+
+  AceDiff.prototype.getNumDiffs = function () {
+    return {
+      rtl: this.diffs.ltr.length,
+      ltr: this.diffs.ltr.length
+    }
   };
 
 
@@ -308,10 +341,6 @@
 
 
   AceDiff.prototype.addConnector = function(dir, sourceStartLine, sourceEndLine, targetStartLine, targetNumRows) {
-    if (!this.options.showConnectors) {
-      return;
-    }
-
     var leftScrollTop  = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
@@ -367,7 +396,7 @@
   };
 
 
-  AceDiff.prototype.addCopyArrows = function(dir, info) {
+  AceDiff.prototype.addCopyArrows = function(dir, info, diffIndex) {
     var arrowClassName = this.options.classes.newCodeConnectorLink;
     var arrowContent   = this.options.classes.newCodeConnectorLinkContent;
 
@@ -384,7 +413,8 @@
     }
 
     var el = '<div class="' + arrowClassName + '" style="top:' + topOffset + 'px" title="' + tooltip + '" ' +
-      'data-char-index="' + info.charIndex + '" data-diff-index="' + info.diffIndex + '">' + arrowContent + '</div>';
+      'data-diff-index="' + diffIndex + '">' + arrowContent + '</div>';
+
     $('.' + containerClass).append(el);
   };
 
@@ -510,9 +540,12 @@
 
   // note that this and everything else in this script uses 0-indexed row numbers
   function getCharsOnLine(editor, line) {
-    return editor.ace.getSession().doc.getLine(line).length;
+    return getLine(editor, line).length;
   }
 
+  function getLine(editor, line) {
+    return editor.ace.getSession().doc.getLine(line);
+  }
 
   function getLineForCharPosition(editor, offsetChars) {
     var lines = editor.ace.getSession().doc.getAllLines(),
@@ -553,8 +586,8 @@
     var svg = document.createElementNS(C.SVG_NS, 'svg');
     svg.setAttribute('width', this.gutterWidth);
     svg.setAttribute('height', height);
-    //svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
+    // TODO
     $("." + this.options.classes.gutter).append(svg);
   };
 
@@ -574,13 +607,37 @@
   };
 
   /*
-   * The purpose of this step is to combine multiple rows where, say, line 1 => line 1, line 2 => line 2,
-   * line 3-4 => line 3. That could be reduced to a single connector line 1=4 => line 1-3
+   * This combines multiple rows where, say, line 1 => line 1, line 2 => line 2, line 3-4 => line 3. That could be
+   * reduced to a single connector line 1=4 => line 1-3
    */
   function simplifyDiffs(diffs) {
-    return diffs;
+    return {
+      rtl: groupDiffs(diffs.rtl),
+      ltr: groupDiffs(diffs.ltr)
+    };
   }
 
+  function groupDiffs(diffs) {
+    var groupedDiffs = [];
+    diffs.forEach(function(diff, index) {
+      if (index === 0) {
+        groupedDiffs.push(diff);
+        return;
+      }
+      var lastDiff = groupedDiffs[groupedDiffs.length-1];
+
+      // compare the current line with the last (possibly grouped) item added to groupedDiffs
+      if (diff.sourceStartLine === lastDiff.sourceEndLine+1 &&
+        diff.targetStartLine === (lastDiff.targetStartLine + lastDiff.targetNumRows)) {
+        groupedDiffs[groupedDiffs.length-1].sourceEndLine = diff.sourceEndLine;
+        groupedDiffs[groupedDiffs.length-1].targetNumRows += diff.targetNumRows;
+      } else {
+        groupedDiffs.push(diff);
+      }
+    });
+
+    return groupedDiffs;
+  }
 
   AceDiff.prototype.decorate = function(diffs) {
     clearGutter(this.options.classes.gutter);
@@ -590,31 +647,36 @@
     this.editors.left.diffs = [];
     this.editors.right.diffs = [];
 
-    diffs.ltr.forEach(function(info) {
-      var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+    diffs.ltr.forEach(function(info, diffIndex) {
+      if (this.options.left.showDiffs) {
+        var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+        this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
+        this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
 
-      this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
-      this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
-      this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-
-      if (this.options.right.editable) {
-        this.addCopyArrows(C.LTR, info);
+        if (this.options.left.showLTRConnectors) {
+          this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+        }
+        if (this.options.left.showCopyLTR) {
+          this.addCopyArrows(C.LTR, info, diffIndex);
+        }
       }
     }, this);
 
-    diffs.rtl.forEach(function(info) {
-      this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes.deletedCode);
+    diffs.rtl.forEach(function(info, diffIndex) {
+      if (this.options.right.showDiffs) {
+        this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes.deletedCode);
+        var numRows = info.sourceEndLine - info.sourceStartLine + 1;
+        this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
 
-      var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-      this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
-      this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-
-      if (this.options.left.editable) {
-        this.addCopyArrows(C.RTL, info);
+        if (this.options.right.showRTLConnectors) {
+          this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+        }
+        if (this.options.right.showCopyRTL) {
+          this.addCopyArrows(C.RTL, info, diffIndex);
+        }
       }
     }, this);
   };
-
 
 
   // taken from jQuery
