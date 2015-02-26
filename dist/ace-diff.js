@@ -45,7 +45,7 @@
       // otherwise, you need to do it yourself. See the doc.
       element: null,
       mode: null,
-      lockScrolling: true,
+      lockScrolling: false,
       left: {
         id: 'acediff-left-editor',
         content: null,
@@ -60,9 +60,8 @@
       },
       copyRTL: true,
       copyLTR: true,
-      maxDiffs: 10000,
-
-      // all classes are overridable
+      showConnectors: true,
+      maxDiffs: 5000,
       classes: {
         gutter: 'acediff-gutter',
         newCode: 'acediff-new-code',
@@ -309,9 +308,12 @@
 
 
   AceDiff.prototype.addConnector = function(dir, sourceStartLine, sourceEndLine, targetStartLine, targetNumRows) {
+    if (!this.options.showConnectors) {
+      return;
+    }
+
     var leftScrollTop  = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
-
 
     // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     //  p1   p2
