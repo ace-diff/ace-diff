@@ -65,7 +65,7 @@ body {
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
 }
-.acediff-deleted-code.lineOnly {
+.acediff-deleted-code.targetOnly {
     height: 0px !important;
     border-top: 1px solid #ffaa11;
     border-bottom: 0px;
