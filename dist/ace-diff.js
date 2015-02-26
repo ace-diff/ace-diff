@@ -31,7 +31,8 @@
     EDITOR_RIGHT: 'right',
     EDITOR_LEFT: 'left',
     RTL: 'rtl',
-    LTR: 'ltr'
+    LTR: 'ltr',
+    SVG_NS: 'http://www.w3.org/2000/svg'
   };
 
   // our constructor
@@ -144,7 +145,6 @@
 
       this.diff();
     }.bind(this);
-
 
     on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, function(e) {
       onCopy(e, C.LTR);
@@ -315,6 +315,7 @@
 
     // TODO
 
+    var d, c;
     if (dir === 'ltr') {
 
       var p1_x = -1;
@@ -329,8 +330,8 @@
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
       var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" ' +
-          'class="' + this.options.classes.newCodeConnector + '" />';
+      d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
+      c = this.options.classes.newCodeConnector;
 
     } else {
 
@@ -346,14 +347,18 @@
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
       var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-      var path = '<path d="' + curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2 + '" ' +
-          'class="' + this.options.classes.deletedCodeConnector + '" />';
+
+      d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
+      c = this.options.classes.deletedCodeConnector;
     }
 
-    /// urrrrrrrghhhhh TODO
-    var $gutterSVG = $("." + this.options.classes.gutter + " svg");
-    $gutterSVG.append(path);
-    $gutterSVG.html($gutterSVG.html());
+    var gutterSVG = $("." + this.options.classes.gutter + " svg")[0];
+
+    // need to
+    var el = document.createElementNS(C.SVG_NS, "path");
+    el.setAttribute("d", d);
+    el.setAttribute("class", c);
+    gutterSVG.appendChild(el);
   };
 
 
@@ -543,7 +548,7 @@
     var rightHeight = this.editors.right.ace.getSession().getLength() * this.lineHeight;
     var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
 
-    var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    var svg = document.createElementNS(C.SVG_NS, 'svg');
     svg.setAttribute('width', this.gutterWidth);
     svg.setAttribute('height', height);
     svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
@@ -588,6 +593,7 @@
       this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
       this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
       this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+      console.log("4");
 
       if (this.options.editorRight.editable) {
         this.addCopyArrows(C.LTR, info);
