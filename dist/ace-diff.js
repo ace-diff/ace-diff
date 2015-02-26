@@ -63,11 +63,11 @@
         newCode: 'acediff-new-code',
         newCodeConnector: 'acediff-new-code-connector',
         newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&raquo;',
+        newCodeConnectorLinkContent: '&#8594;',
         deletedCode: 'acediff-deleted-code',
         deletedCodeConnector: 'acediff-deleted-code-connector',
         deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&laquo;',
+        deletedCodeConnectorLinkContent: '&#8592;',
         copyRightContainer: 'acediff-copy-right',
         copyLeftContainer: 'acediff-copy-left'
       }
