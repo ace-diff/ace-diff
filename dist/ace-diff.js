@@ -55,7 +55,7 @@
         id: 'acediff-right-editor',
         content: null,
         mode: null,
-        editable: true
+        editable: false
       },
 
       // all classes are overridable
@@ -305,18 +305,14 @@
     var leftScrollTop  = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
-    /*
-    This is what the vars refer to:
-      p1   p2
 
-      p3   p4
-    All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
-    */
-
-    // TODO
+    // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
+    //  p1   p2
+    //
+    //  p3   p4
 
     var d, c;
-    if (dir === 'ltr') {
+    if (dir === C.LTR) {
 
       var p1_x = -1;
       var p1_y = (sourceStartLine * this.lineHeight) - leftScrollTop + 1;
@@ -510,12 +506,11 @@
 
 
   function getLineForCharPosition(editor, offsetChars) {
-    var lines = editor.ace.getSession().doc.getAllLines();
-
-    var foundLine = 0,
+    var lines = editor.ace.getSession().doc.getAllLines(),
+        foundLine = 0,
         runningTotal = 0;
 
-    for (var i = 0; i < lines.length; i++) {
+    for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
       if (offsetChars <= runningTotal) {
@@ -523,16 +518,14 @@
         break;
       }
     }
-
     return foundLine;
   }
 
   function isLastChar(editor, char) {
-    var lines = editor.ace.getSession().doc.getAllLines();
-
-    var runningTotal = 0,
+    var lines = editor.ace.getSession().doc.getAllLines(),
+        runningTotal = 0,
         isLastChar = false;
-    for (var i = 0; i < lines.length; i++) {
+    for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
       if (char === runningTotal) {
@@ -551,7 +544,7 @@
     var svg = document.createElementNS(C.SVG_NS, 'svg');
     svg.setAttribute('width', this.gutterWidth);
     svg.setAttribute('height', height);
-    svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
+    //svg.setAttributeNS("http://www.w3.org/2000/xmlns/", "xmlns:xlink", "http://www.w3.org/1999/xlink");
 
     $("." + this.options.classes.gutter).append(svg);
   };
@@ -593,7 +586,6 @@
       this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
       this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
       this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-      console.log("4");
 
       if (this.options.editorRight.editable) {
         this.addCopyArrows(C.LTR, info);
@@ -607,14 +599,13 @@
       this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
       this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
 
-      if (this.options.editorRight.editable) {
+      if (this.options.editorLeft.editable) {
         this.addCopyArrows(C.RTL, info);
       }
     }, this);
   };
 
 
-  // ------------------------------------------------ helpers ------------------------------------------------
 
   // taken from jQuery
   // crap. doesn't seem to do deep extend.

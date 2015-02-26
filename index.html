@@ -179,7 +179,13 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
 <script>
   $(function () {
     var aceDiffer = new AceDiff({
-      mode: "ace/mode/javascript"
+      mode: "ace/mode/javascript",
+      editorLeft: {
+        editable: false
+      },
+      editorRight: {
+        editable: true
+      }
     });
   });
 </script>

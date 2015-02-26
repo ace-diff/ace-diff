@@ -16,7 +16,6 @@ but less control for devs (you sure?)) or require devs to set up markup, etc.~~
 - place only the appropriate stuff in the prototype
 
 Features to add for version 1:
-
 - <<, >> options for the diffs
 - go to next/previous diff
 - optional scroll locking (horizontal + vertical)
@@ -28,8 +27,7 @@ Features to add for version 1:
 #### Appalling slow stuff that can be improved
 - don't diff on updateGap()
 - diffs the diffs to know when to redraw gap + arrows
-
+- cap out the diffs if > N?  
 
 ### Known limitations
-
 - only one AceDiff per page
