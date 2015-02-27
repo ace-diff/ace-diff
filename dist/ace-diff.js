@@ -170,7 +170,11 @@
     var endContent = '';
     var totalLines = targetEditor.ace.getSession().getLength();
     for (var i=diff.targetStartLine+diff.targetNumRows; i<totalLines; i++) {
-      endContent += getLine(targetEditor, i) + "\n";
+      endContent += getLine(targetEditor, i);
+
+      if (i<totalLines-1) {
+        endContent += "\n";
+      }
     }
     endContent = endContent.replace(/\s*$/, "");
 
@@ -278,11 +282,13 @@
       }
     }, this);
 
+
+
     // simplify our computed diffs (i.e. this groups together multiple diffs, if possible), and store it for later use
     this.diffs = simplifyDiffs(diffs);
 
-    // remove conflicting diffs
-    this.diffs = dropConflictingDiffs(this.diffs);
+    // combine conflicting diffs on either side into a single connector
+    this.diffs = combineConflicts(this.diffs);
 
     // if we're dealing with too many diffs, fail silently
     if (this.diffs.ltr.length + this.diffs.rtl.length > this.options.maxDiffs) {
@@ -343,42 +349,33 @@
     //
     //  p3   p4
 
-    var d, c;
-    if (dir === C.LTR) {
+    var c;
+    var p1_x = -1;
+    var p2_x = this.gutterWidth + 1;
+    var p3_x = -1;
+    var p4_x = this.gutterWidth + 1;
 
-      var p1_x = -1;
+    if (dir === C.LTR) {
       var p1_y = (sourceStartLine * this.lineHeight) - leftScrollTop + 1;
-      var p2_x = this.gutterWidth + 1;
       var p2_y = targetStartLine * this.lineHeight - rightScrollTop + 1;
-      var p3_x = -1;
       var p3_y = (sourceEndLine * this.lineHeight) + this.lineHeight - leftScrollTop + 1;
-      var p4_x = this.gutterWidth + 1;
       var p4_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - rightScrollTop + 1;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
-      var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-      d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
       c = this.options.classes.newCodeConnector;
-
     } else {
-
-      var p1_x = -1;
       var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop + 1;
-      var p2_x = this.gutterWidth + 1;
       var p2_y = sourceStartLine * this.lineHeight - rightScrollTop + 1;
-      var p3_x = -1;
       var p3_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - leftScrollTop + 1;
-      var p4_x = this.gutterWidth + 1;
       var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop + 1;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
-      var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
-
-      d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
       c = this.options.classes.deletedCodeConnector;
     }
+
+    var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
+    var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
+    var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
 
     var gutterSVG = $("." + this.options.classes.gutter + " svg")[0];
 
@@ -433,16 +430,22 @@
    *
    * That's all the info we need to highlight the appropriate lines in the left + right editor, add the SVG
    * connectors, and include the appropriate <<, >> arrows.
-   *
-   * Note: to keep the returned object simple & to allow
-   *
-   * TODO refactor this function. It hurts my eyes.
    */
   AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
 
     // depending on whether content has been inserted or removed, we
-    var targetEditor           = (diffType === C.DIFF_INSERT) ? this.editors.left : this.editors.right;
-    var targetEditorCharOffset = (diffType === C.DIFF_INSERT) ? offsetLeft : offsetRight;
+    var targetEditor, otherEditor, targetEditorCharOffset, otherEditorCharOffset;
+    if (diffType === C.DIFF_INSERT) {
+      targetEditor = this.editors.left;
+      otherEditor = this.editors.right;
+      targetEditorCharOffset = offsetLeft;
+      otherEditorCharOffset = offsetRight;
+    } else {
+      targetEditor = this.editors.right;
+      otherEditor = this.editors.left;
+      targetEditorCharOffset = offsetRight;
+      otherEditorCharOffset = offsetLeft;
+    }
 
     // if INSERT, these refer to left editor; if DELETE, right
     var startLine,
@@ -454,12 +457,10 @@
     var runningTotalChars = 0;
     targetEditor.lineLengths.forEach(function(lineLength, lineIndex) {
       runningTotalChars += lineLength;
-
       if (startLine === undefined && targetEditorCharOffset < runningTotalChars) {
         startLine = lineIndex; // 0-indexed, note
         startChar = targetEditorCharOffset - runningTotalChars + lineLength;
       }
-
       if (endLine === undefined && endCharNum <= runningTotalChars) {
         endLine = lineIndex;
         endChar = endCharNum - runningTotalChars + lineLength;
@@ -477,34 +478,19 @@
       endLine--;
     }
 
-    var otherEditor, currentLineOtherEditor;
-
-    if (diffType === C.DIFF_INSERT) {
-      otherEditor = this.editors.right;
-      currentLineOtherEditor = getLineForCharPosition(otherEditor, offsetRight);
-
-      // but! if the offset position was at the very last char of the line, increase it by one
-      if (isLastChar(otherEditor, offsetRight)) {
-        currentLineOtherEditor++;
-      }
-    } else {
-      var otherEditor = this.editors.left;
-      currentLineOtherEditor = getLineForCharPosition(otherEditor, offsetLeft);
-
-      // but! if the offset position was at the very last char of the line, increase it by one
-      if (isLastChar(otherEditor, offsetLeft)) {
-        currentLineOtherEditor++;
-      }
+    // find the line of the other editor, according to it's char offset position
+    var currentLineOtherEditor = getLineForCharPosition(otherEditor, otherEditorCharOffset);
+    if (isLastChar(otherEditor, otherEditorCharOffset)) {
+      currentLineOtherEditor++;
     }
-
 
     // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
     // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
     // char for the line
     var numRows = 0;
-
     var numCharsOnLine = getCharsOnLine(targetEditor, startLine);
     var numCharsOnLineOtherEditor = getCharsOnLine(otherEditor, currentLineOtherEditor);
+
     if (startLine === endLine && ( (startChar > 0 || endChar < numCharsOnLine) || (numCharsOnLineOtherEditor === 0)) ) {
       numRows++;
     }
@@ -549,6 +535,7 @@
         isLastChar = false;
     for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
+
       runningTotal += lineLength;
       if (char === runningTotal) {
         isLastChar = true;
@@ -620,20 +607,25 @@
   }
 
   // grouping diff lines can result in conflicts where one diff can be copied into the middle of another. This
-  // removes them
-  function dropConflictingDiffs(diffs) {
+  // combines them to allow copying from one to the other
+  function combineConflicts(diffs) {
     var removeRightIndexes = [];
     diffs.ltr.forEach(function (leftDiff) {
       diffs.rtl.forEach(function (rightDiff, rightIndex) {
+
         if (rightDiff.targetStartLine > leftDiff.sourceStartLine &&
             rightDiff.targetStartLine < leftDiff.sourceEndLine) {
           removeRightIndexes.push(rightIndex);
         }
       });
     });
-    removeRightIndexes.forEach(function(index) {
-      diffs.rtl.splice(index, 1);
-    });
+
+
+
+
+//    removeRightIndexes.forEach(function(index) {
+//      diffs.rtl.splice(index, 1);
+//    });
 
     var removeLeftIndexes = [];
     diffs.rtl.forEach(function (rightDiff) {
