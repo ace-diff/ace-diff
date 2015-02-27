@@ -142,17 +142,10 @@
   };
 
 
+  // this seems woefully inefficient, but since it only occurs on a copy action by the user, I'll refactor it last
   function copy(e, dir) {
     var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-//    console.log(this.diffs[diffIndex]);
-
-    return;
-
-    var startLine      = this.diffs[diffIndex].sourceStartLine;
-    var endLine        = this.diffs[diffIndex].sourceEndLine;
-    var targetLine     = this.diffs[diffIndex].targetStartLine;
-    var targetNumLines = this.diffs[diffIndex].targetNumRows;
-
+    var diff = this.diffs[dir][diffIndex];
     var sourceEditor, targetEditor;
 
     if (dir === C.LTR) {
@@ -165,27 +158,24 @@
 
     // probably should be an array for speed (is that still correct in mod browsers?)
     var contentToInsert = '';
-    for (var i=startLine; i<=endLine; i++) {
+    for (var i=diff.sourceStartLine; i<=diff.sourceEndLine; i++) {
       contentToInsert += getLine(sourceEditor, i) + "\n";
     }
 
-    var editorContent = targetEditor.ace.getSession().getValue();
+    var startContent = '';
+    for (var i=0; i<diff.targetStartLine; i++) {
+      startContent += getLine(targetEditor, i) + "\n";
+    }
 
-
-    // if this isn't replacing anything, just do a simple insert-at-char-pos
-    var newContent;
-    if (targetNumLines === 0) {
-
-      //targetCharPos
-
-      newContent = editorContent.substr(0, targetCharPos) + contentToInsert + editorContent.substr(targetCharPos);
-    } else {
-
+    var endContent = '';
+    var totalLines = targetEditor.ace.getSession().getLength();
+    for (var i=diff.targetStartLine+diff.targetNumRows; i<totalLines; i++) {
+      endContent += getLine(targetEditor, i) + "\n";
     }
 
     // keep track of the scroll height
     var h = targetEditor.ace.getSession().getScrollTop();
-    targetEditor.ace.getSession().setValue(newContent);
+    targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
     targetEditor.ace.getSession().setScrollTop(parseInt(h));
 
     this.diff();
@@ -321,7 +311,7 @@
       }
     }
 
-    // Naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
+    // naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
     this.diff();
 
     // reposition the copy containers containing all the arrows
@@ -786,6 +776,7 @@
   }
 
 
+  // IE-friendly? Doesn't look it
   function on(elSelector, eventName, selector, fn) {
     var element = document.querySelector(elSelector);
 
@@ -801,7 +792,6 @@
           if (el === p) {
             return fn.call(p, event);
           }
-
           el = el.parentNode;
         }
       }

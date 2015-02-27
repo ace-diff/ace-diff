@@ -113,6 +113,7 @@ Features to add for version 1:
 - optional scroll locking (horizontal + vertical)
 - copy all to right/left
 - undo method
+- it's pretty opinionated about newline chars. Bug, or acceptable?
 
 #### Appalling slow stuff that can be improved
 - don't diff on updateGap()
