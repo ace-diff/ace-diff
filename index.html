@@ -12,110 +12,23 @@
 <div id="flex-container">
   <div>
 
-<div id="acediff-left-editor">define([
-  'core/base',
-  'core/layout',
-  'core/router1',
-  'core/routeObject1',
-  'core/utils1',
-  'core/store',
-  'flux'
-],
-
-function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
-  FauxtonAPI = _.extend(FauxtonAPI, {
-    Layout: Layout,
-    dispatcher: new Flux.Dispatcher()
-  });
-
-  FauxtonAPI.dispatch = _.bind(FauxtonAPI.dispatcher.dispatch, FauxtonAPI.dispatcher);
-
+<div id="acediff-left-editor">
   FauxtonAPI.navigate = function (url, _opts) {
     var options = _.extend({trigger: true}, _opts);
-    FauxtonAPI.router.navigate(url, options);
-  };
+    FauxtonAPI.router.navigatdsdsdsasdasdae(url, options);
+    sdasdasdasdasdasdlasjhdkasjhdlakjshdlkjhfa slkjfhsadlkfjhasdlkfjh
+  };d
 
   FauxtonAPI.beforeUnload = function () {
     FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
   };
-
-  FauxtonAPI.removeBeforeUnload = function () {
-    FauxtonAPI.router.removeBeforeUnload.apply(FauxtonAPI.router, arguments);
-  };
-
-  FauxtonAPI.addRoute = function (route) {
-    FauxtonAPI.router.route(route.route, route.name, route.callback);
-  };
-
-  FauxtonAPI.triggerRouteEvent = function (routeEvent, args) {
-    FauxtonAPI.router.triggerRouteEvent('route:' + routeEvent, args);
-  };
-
-  var urlPaths = {};
-
-  FauxtonAPI.registerUrls = function (namespace, urls) {
-    urlPaths[namespace] = urls;
-  };
-
-  //This is a little rough and needs some improvement. But the basic concept is there
-  FauxtonAPI.urls = function (name, context) {
-    var interceptors = FauxtonAPI.getExtensions('urls:interceptors');
-    var url;
-
-    var args = arguments;
-    _.first(interceptors, function (interceptor) {
-      var out = interceptor.apply(null, args);
-
-      if (out) {
-        url = out;
-        return true;
-      }
-      return false;
-    });
-
-    if (!_.isUndefined(url)) { return url; }
-
-    if (!urlPaths[name]) {
-      console.log('could not find name ', name);
-      return '';
-    }
-
-    if (!urlPaths[name][context]) {
-      console.log('could not find context ', context);
-      return '';
-    }
-
-    args = Array.prototype.slice.call(arguments, 2);
-    url = urlPaths[name][context].apply(null, args);
-    return url;
-  };
-
-  return FauxtonAPI;
-});
 </div>
 
 </div>
 <div class="acediff-gutter"></div>
   <div>
 
-<div id="acediff-right-editor">define([
-  'core/base',
-  'core/layout',
-  'core/router',
-  'core/routeObject',
-  'core/utils',
-  'core/store',
-  'flux'
-],
-
-function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
-  FauxtonAPI = _.extend(FauxtonAPI, {
-    Layout: Layout,
-    dispatcher: new Flux.Dispatcher()
-  });
-
-  FauxtonAPI.dispatch = _.bind(FauxtonAPI.dispatcher.dispatch, FauxtonAPI.dispatcher);
-
+<div id="acediff-right-editor">
   FauxtonAPI.navigate = function (url, _opts) {
     var options = _.extend({trigger: true}, _opts);
     FauxtonAPI.router.navigate(url, options);
@@ -124,60 +37,6 @@ function(FauxtonAPI, Layout, Router, RouteObject, utils, Store, Flux) {
   FauxtonAPI.beforeUnload = function () {
     FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
   };
-
-  FauxtonAPI.removeBeforeUnload = function () {
-    FauxtonAPI.router.removeBeforeUnload.apply(FauxtonAPI.router, arguments);
-  };
-
-  FauxtonAPI.addRoute = function (route) {
-    FauxtonAPI.router.route(route.route, route.name, route.callback);
-  };
-
-  FauxtonAPI.triggerRouteEvent = function (routeEvent, args) {
-    FauxtonAPI.router.triggerRouteEvent('route:' + routeEvent, args);
-  };
-
-  var urlPaths = {};
-
-  FauxtonAPI.registerUrls = function (namespace, urls) {
-    urlPaths[namespace] = urls;
-  };
-
-  //This is a little rough and needs some improvement. But the basic concept is there
-  FauxtonAPI.urls = function (name, context) {
-    var interceptors = FauxtonAPI.getExtensions('urls:interceptors');
-    var url;
-
-    var args = arguments;
-    _.first(interceptors, function (interceptor) {
-      var out = interceptor.apply(null, args);
-
-      if (out) {
-        url = out;
-        return true;
-      }
-      return false;
-    });
-
-    if (!_.isUndefined(url)) { return url; }
-
-    if (!urlPaths[name]) {
-      console.log('could not find name ', name);
-      return '';
-    }
-
-    if (!urlPaths[name][context]) {
-      console.log('could not find context ', context);
-      return '';
-    }
-
-    args = Array.prototype.slice.call(arguments, 2);
-    url = urlPaths[name][context].apply(null, args);
-    return url;
-  };
-
-  return FauxtonAPI;
-});
 </div>
 
   </div>

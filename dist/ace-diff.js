@@ -172,6 +172,7 @@
     for (var i=diff.targetStartLine+diff.targetNumRows; i<totalLines; i++) {
       endContent += getLine(targetEditor, i) + "\n";
     }
+    endContent = endContent.replace(/\s*$/, "");
 
     // keep track of the scroll height
     var h = targetEditor.ace.getSession().getScrollTop();
@@ -279,6 +280,9 @@
 
     // simplify our computed diffs (i.e. this groups together multiple diffs, if possible), and store it for later use
     this.diffs = simplifyDiffs(diffs);
+
+    // remove conflicting diffs
+    this.diffs = dropConflictingDiffs(this.diffs);
 
     // if we're dealing with too many diffs, fail silently
     if (this.diffs.ltr.length + this.diffs.rtl.length > this.options.maxDiffs) {
@@ -431,6 +435,8 @@
    * connectors, and include the appropriate <<, >> arrows.
    *
    * Note: to keep the returned object simple & to allow
+   *
+   * TODO refactor this function. It hurts my eyes.
    */
   AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
 
@@ -471,60 +477,44 @@
       endLine--;
     }
 
-    var data = {};
+    var otherEditor, currentLineOtherEditor;
+
     if (diffType === C.DIFF_INSERT) {
-      var currentLineRightEditor = getLineForCharPosition(this.editors.right, offsetRight);
+      otherEditor = this.editors.right;
+      currentLineOtherEditor = getLineForCharPosition(otherEditor, offsetRight);
 
       // but! if the offset position was at the very last char of the line, increase it by one
-      if (isLastChar(this.editors.right, offsetRight)) { // TODO bug here for completely new lines
-        currentLineRightEditor++;
+      if (isLastChar(otherEditor, offsetRight)) {
+        currentLineOtherEditor++;
       }
-
-      // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
-      // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
-      // char for the line
-      var numRows = 0;
-
-      // only one line being inserted, and the line already contained content
-      if (startLine === endLine && (startChar > 0 || endChar < getCharsOnLine(targetEditor, startLine))) {
-        numRows++;
-      }
-
-      data = {
-        sourceStartLine: startLine,
-        sourceEndLine: endLine,
-        targetStartLine: currentLineRightEditor,
-        targetNumRows: numRows
-      }
-
     } else {
-      var currentLineLeftEditor = getLineForCharPosition(this.editors.left, offsetLeft);
+      var otherEditor = this.editors.left;
+      currentLineOtherEditor = getLineForCharPosition(otherEditor, offsetLeft);
 
       // but! if the offset position was at the very last char of the line, increase it by one
-      if (isLastChar(this.editors.left, offsetLeft)) { // TODO bug here for completely new lines
-        currentLineLeftEditor++;
-      }
-
-      // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
-      // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
-      // char for the line
-
-      var numRows = 0;
-
-      // only one line being inserted, and the line already contained content
-      if (startLine === endLine && (startChar > 0 || endChar < getCharsOnLine(targetEditor, startLine))) {
-        numRows++;
-      }
-
-      data = {
-        sourceStartLine: startLine,
-        sourceEndLine: endLine,
-        targetStartLine: currentLineLeftEditor,
-        targetNumRows: numRows
+      if (isLastChar(otherEditor, offsetLeft)) {
+        currentLineOtherEditor++;
       }
     }
 
-    return data;
+
+    // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
+    // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
+    // char for the line
+    var numRows = 0;
+
+    var numCharsOnLine = getCharsOnLine(targetEditor, startLine);
+    var numCharsOnLineOtherEditor = getCharsOnLine(otherEditor, currentLineOtherEditor);
+    if (startLine === endLine && ( (startChar > 0 || endChar < numCharsOnLine) || (numCharsOnLineOtherEditor === 0)) ) {
+      numRows++;
+    }
+
+    return {
+      sourceStartLine: startLine,
+      sourceEndLine: endLine,
+      targetStartLine: currentLineOtherEditor,
+      targetNumRows: numRows
+    };
   };
 
 
@@ -628,6 +618,39 @@
 
     return groupedDiffs;
   }
+
+  // grouping diff lines can result in conflicts where one diff can be copied into the middle of another. This
+  // removes them
+  function dropConflictingDiffs(diffs) {
+    var removeRightIndexes = [];
+    diffs.ltr.forEach(function (leftDiff) {
+      diffs.rtl.forEach(function (rightDiff, rightIndex) {
+        if (rightDiff.targetStartLine > leftDiff.sourceStartLine &&
+            rightDiff.targetStartLine < leftDiff.sourceEndLine) {
+          removeRightIndexes.push(rightIndex);
+        }
+      });
+    });
+    removeRightIndexes.forEach(function(index) {
+      diffs.rtl.splice(index, 1);
+    });
+
+    var removeLeftIndexes = [];
+    diffs.rtl.forEach(function (rightDiff) {
+      diffs.ltr.forEach(function (leftDiff, leftIndex) {
+        if (leftDiff.targetStartLine > rightDiff.sourceStartLine &&
+            leftDiff.targetStartLine < rightDiff.sourceEndLine) {
+          removeLeftIndexes.push(leftIndex);
+        }
+      });
+    });
+    removeLeftIndexes.forEach(function(index) {
+      diffs.rtl.splice(index, 1);
+    });
+
+    return diffs;
+  }
+
 
   AceDiff.prototype.decorate = function(diffs) {
     clearGutter(this.options.classes.gutter);
