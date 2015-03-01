@@ -5,27 +5,28 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks("grunt-contrib-watch");
   grunt.loadNpmTasks("grunt-contrib-uglify");
 
+  var packageFile = grunt.file.readJSON("package.json");
 
   var config = {
     watch: {
       scripts: {
-        files: "d3pie-source/*.js",
-        tasks: ["min"]
+        files: "dist/*.js",
+        tasks: ["uglify:lib"]
       }
     },
 
     uglify: {
-      d3pie: {
+      lib: {
         files: {
-          "d3pie/d3pie.min.js": "d3pie/d3pie.js"
+          "dist/ace-diff.min.js": "dist/ace-diff.js"
         },
         options: {
           banner: "/*!\n" +
-          "* d3pie\n" +
+          "* ace-diff\n" +
           "* @author Ben Keen\n" +
           "* @version " + packageFile.version + "\n" +
-          "* @date June 2014\n" +
-          "* @repo http://github.com/benkeen/d3pie\n" +
+          "* @date Mar 1st, 2015\n" +
+          "* @repo http://github.com/benkeen/ace-diff\n" +
           "*/\n"
         }
       }
@@ -33,6 +34,4 @@ module.exports = function(grunt) {
   };
 
   grunt.initConfig(config);
-  grunt.registerTask("generate", _generate);
-
 };

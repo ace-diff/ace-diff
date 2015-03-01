@@ -1,10 +1,3 @@
-/*!
- * ace-diff
- * @author Ben Keen
- * @version 0.1.0
- * @date Mar 1st 2015
- * @repo http://github.com/benkeen/ace-diff
- */
 (function(root, factory) {
   if (typeof define === 'function' && define.amd) {
     define([], factory);
@@ -258,6 +251,9 @@
       right: 0
     };
 
+//    console.log(diff);
+
+
     diff.forEach(function(chunk) {
       var chunkType = chunk[0];
       var text = chunk[1];
@@ -268,13 +264,18 @@
       }
 
       if (chunkType === C.DIFF_EQUAL) {
+        //console.log("[", text, "]");
         offset.left += text.length;
         offset.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        diffs.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
+        diffs.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text));
         offset.right += text.length;
+
       } else if (chunkType === C.DIFF_INSERT) {
-        diffs.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
+        //console.log("OFFSET RIGHT: ", offset.right);
+        //console.log("[", text, "]");
+
+        diffs.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text));
         offset.left += text.length;
       }
     }, this);
@@ -430,29 +431,33 @@
    * rightEndLine, it means that new content from the other editor is being inserted and a single 1px line will be
    * drawn.
    */
-  AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
+  AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, diffText) {
     var lineInfo = {};
 
     if (diffType === C.DIFF_INSERT) {
-      var info = getSingleDiffInfo(this.editors.left, offsetLeft, strLength);
-
-      // find the line of the other editor, according to its char offset position
+      var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText.length);
       var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
+      var newContentStartsWithNewline = /^\n/.test(diffText);
 
-      // if the position is the very last character, bump it up a row
-      if (isLastChar(this.editors.right, offsetRight)) {
+      if (isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
         currentLineOtherEditor++;
       }
 
-      var numRows = 0;
       var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
 
-      // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work.
+      // TODO one more clause here. Check when the new row being added has nothing on it.
+
+
+      console.log(numCharsOnLine);
+
+      // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work to
+      // figure out.
+      var numRows = 0;
       if (
-        (info.startChar > 0 ||
-        (info.startLine == info.endLine && info.endChar < numCharsOnLine)) ||
-        (numCharsOnLineOtherEditor === 0)) {
+        numCharsOnLineOtherEditor > 0 &&
+        info.startLine === info.endLine && info.endChar < numCharsOnLine ) {
+
         numRows++;
       }
 
@@ -464,7 +469,7 @@
       };
 
     } else {
-      var info = getSingleDiffInfo(this.editors.right, offsetRight, strLength);
+      var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText.length);
 
       var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
       if (isLastChar(this.editors.left, offsetLeft)) {
@@ -565,15 +570,26 @@
     return foundLine;
   }
 
-  function isLastChar(editor, char) {
+
+  function isLastChar(editor, char, startsWithNewline) {
     var lines = editor.ace.getSession().doc.getAllLines(),
         runningTotal = 0,
         isLastChar = false;
+
     for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
 
       runningTotal += lineLength;
-      if (char === runningTotal) {
+
+//      console.log(char, runningTotal);
+
+      // we MUST compare it with - 1, since char
+      var comparison = runningTotal;
+      if (startsWithNewline) {
+        comparison--;
+      }
+
+      if (char === comparison) {
         isLastChar = true;
         break;
       }
