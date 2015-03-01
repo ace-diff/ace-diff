@@ -40,41 +40,24 @@ body {
     bottom: 0;
     width:100%;
 }
-.acediff-new-code {
-    border-top: 1px solid #0044ff;
-    border-bottom: 1px solid #0044ff;
-    position: absolute;
-    z-index: 4;
-    background-color: #e2f0ff;
-}
-.acediff-new-code.targetOnly {
-    height: 0px !important;
-    border-top: 1px solid #0044ff;
-    border-bottom: 0px;
-    position: absolute;
-}
-.acediff-new-code-connector {
-    fill: #e2f0ff;
-    stroke: #0044ff;
-}
-
-.acediff-deleted-code {
-    position: absolute;
-    z-index: 4;
+.acediff-diff {
     background-color: #ffffcc;
     border-top: 1px solid #ffaa11;
     border-bottom: 1px solid #ffaa11;
+    position: absolute;
+    z-index: 4;
 }
-.acediff-deleted-code.targetOnly {
+.acediff-diff.targetOnly {
     height: 0px !important;
     border-top: 1px solid #ffaa11;
     border-bottom: 0px;
     position: absolute;
 }
-.acediff-deleted-code-connector {
+.acediff-connector {
     fill: #ffffcc;
     stroke: #ffaa11;
 }
+
 .acediff-copy-left {
     float: right;
 }

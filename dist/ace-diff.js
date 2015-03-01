@@ -2,7 +2,7 @@
  * ace-diff
  * @author Ben Keen
  * @version 0.1.0
- * @date Feb 26 2015
+ * @date Mar 1st 2015
  * @repo http://github.com/benkeen/ace-diff
  */
 (function(root, factory) {
@@ -42,28 +42,24 @@
         content: null,
         mode: null,
         editable: true,
-        showDiffs: true,
-        showCopyLTR: true,
-        showLTRConnectors: true
+        showCopyLTR: true
       },
       right: {
         id: 'acediff-right-editor',
         content: null,
         mode: null,
         editable: true,
-        showDiffs: true,
-        showCopyRTL: true,
-        showRTLConnectors: true
+        showCopyRTL: true
       },
+      showDiffs: true,
+      showConnectors: true,
       maxDiffs: 5000,
       classes: {
         gutter: 'acediff-gutter',
-        newCode: 'acediff-new-code',
-        newCodeConnector: 'acediff-new-code-connector',
+        diff: 'acediff-diff',
+        connector: 'acediff-connector',
         newCodeConnectorLink: 'acediff-new-code-connector-copy',
         newCodeConnectorLinkContent: '&#8594;',
-        deletedCode: 'acediff-deleted-code',
-        deletedCodeConnector: 'acediff-deleted-code-connector',
         deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
         deletedCodeConnectorLinkContent: '&#8592;',
         copyRightContainer: 'acediff-copy-right',
@@ -217,26 +213,18 @@
 
   /**
    * Shows a diff in one of the two editors.
-   * @param editor
-   * @param startLine the 0-indexed start line
-   * @param numRows the number of rows to highlight. 0 means just a line will appear
-   * @param highlightClass
    */
-  AceDiff.prototype.showDiff = function(editor, startLine, numRows, className) {
+  AceDiff.prototype.showDiff = function(editor, startLine, endLine, className) {
     var editor = this.editors[editor];
 
-    var endLine = (startLine + numRows) - 1;
-    if (endLine < startLine) {
+    if (endLine < startLine) { // can this occur? Just in case.
       endLine = startLine;
     }
-    var classNames = className;
-    if (numRows === 0) {
-      classNames += " targetOnly";
-    } else {
-      classNames += " lines";
-    }
 
-    // the start/end chars don't matter. We always highlight the full row. So we just sent them to 0 and 1
+    var classNames = className + " " + ((endLine > startLine) ? "lines" : "targetOnly");
+    endLine--; // because endLine is always + 1
+
+    // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
     editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, 'fullLine'));
   };
 
@@ -255,7 +243,7 @@
     this.editors.right.lineLengths = this.getLineLengths(this.editors.right);
 
     // parse the raw diff into something a little more palatable
-    var diffs = { rtl: [], ltr: [] };
+    var diffs = [];
     var offset = {
       left: 0,
       right: 0
@@ -274,24 +262,22 @@
         offset.left += text.length;
         offset.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
-        diffs.rtl.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
+        diffs.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text.length));
         offset.right += text.length;
       } else if (chunkType === C.DIFF_INSERT) {
-        diffs.ltr.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
+        diffs.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text.length));
         offset.left += text.length;
       }
     }, this);
 
-
-
-    // simplify our computed diffs (i.e. this groups together multiple diffs, if possible), and store it for later use
+    // simplify our computed diffs; this groups together multiple diffs on subsequent lines
     this.diffs = simplifyDiffs(diffs);
 
-    // combine conflicting diffs on either side into a single connector
-    this.diffs = combineConflicts(this.diffs);
+    // removes diff conflicts from either side
+    this.diffs = combineDiffs(this.diffs);
 
     // if we're dealing with too many diffs, fail silently
-    if (this.diffs.ltr.length + this.diffs.rtl.length > this.options.maxDiffs) {
+    if (this.diffs.length > this.options.maxDiffs) {
       return;
     }
 
@@ -301,10 +287,7 @@
 
 
   AceDiff.prototype.getNumDiffs = function () {
-    return {
-      rtl: this.diffs.ltr.length,
-      ltr: this.diffs.ltr.length
-    }
+    return this.diffs.length;
   };
 
 
@@ -340,7 +323,7 @@
   };
 
 
-  AceDiff.prototype.addConnector = function(dir, sourceStartLine, sourceEndLine, targetStartLine, targetNumRows) {
+  AceDiff.prototype.addConnector = function(dir, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
     var leftScrollTop  = this.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
 
@@ -356,13 +339,13 @@
     var p4_x = this.gutterWidth + 1;
 
     if (dir === C.LTR) {
-      var p1_y = (sourceStartLine * this.lineHeight) - leftScrollTop + 1;
-      var p2_y = targetStartLine * this.lineHeight - rightScrollTop + 1;
-      var p3_y = (sourceEndLine * this.lineHeight) + this.lineHeight - leftScrollTop + 1;
-      var p4_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - rightScrollTop + 1;
+      var p1_y = (leftStartLine * this.lineHeight) - leftScrollTop + 1;
+      var p2_y = rightStartLine * this.lineHeight - rightScrollTop + 1;
+      var p3_y = (leftEndLine * this.lineHeight) - leftScrollTop + 1;
+      var p4_y = (rightEndLine * this.lineHeight) - rightScrollTop + 1;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = this.options.classes.newCodeConnector;
+      c = this.options.classes.connector;
     } else {
       var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop + 1;
       var p2_y = sourceStartLine * this.lineHeight - rightScrollTop + 1;
@@ -370,7 +353,7 @@
       var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop + 1;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = this.options.classes.deletedCodeConnector;
+      c = this.options.classes.connector;
     }
 
     var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
@@ -422,86 +405,130 @@
    * This method takes the raw diffing info from the Google lib and returns a nice clean object of the following
    * form:
    * {
-   *   sourceStartLine:
-   *   sourceEndLine:
-   *   targetStartLine:
-   *   targetNumRows:
+   *   leftStartLine:
+   *   leftEndLine:
+   *   rightStartLine:
+   *   rightEndLine:
    * }
    *
-   * That's all the info we need to highlight the appropriate lines in the left + right editor, add the SVG
-   * connectors, and include the appropriate <<, >> arrows.
+   * Ultimately, that's all the info we need to highlight the appropriate lines in the left + right editor, add the
+   * SVG connectors, and include the appropriate <<, >> arrows.
+   *
+   * Note: leftEndLine and rightEndLine are always the start of the NEXT line, so for a single line diff, there will
+   * be 1 separating the startLine and endLine values. So if leftStartLine === leftEndLine or rightStartLine ===
+   * rightEndLine, it means that new content from the other editor is being inserted and a single 1px line will be
+   * drawn.
    */
   AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, strLength) {
+    var lineInfo = {};
 
-    // depending on whether content has been inserted or removed, we
-    var targetEditor, otherEditor, targetEditorCharOffset, otherEditorCharOffset;
     if (diffType === C.DIFF_INSERT) {
-      targetEditor = this.editors.left;
-      otherEditor = this.editors.right;
-      targetEditorCharOffset = offsetLeft;
-      otherEditorCharOffset = offsetRight;
+      var info = getSingleDiffInfo(this.editors.left, offsetLeft, strLength);
+
+      // find the line of the other editor, according to its char offset position
+      var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
+
+      // if the position is the very last character, bump it up a row
+      if (isLastChar(this.editors.right, offsetRight)) {
+        currentLineOtherEditor++;
+      }
+
+      var numRows = 0;
+      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
+      var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
+
+      //var info = {
+      //  startLine: info.startLine,
+      //  endLine: info.endLine,
+      //  startChar: info.startChar,
+      //  endChar: info.endChar,
+      //  numCharsOnLine: numCharsOnLine,
+      //  numCharsOnLineOtherEditor: numCharsOnLineOtherEditor,
+      //  currentLineOtherEditor: currentLineOtherEditor
+      //};
+
+      // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work.
+      if (
+        (info.startChar > 0 ||
+        (info.startLine == info.endLine && info.endChar < numCharsOnLine)) ||
+        (numCharsOnLineOtherEditor === 0)) {
+        numRows++;
+      }
+
+      lineInfo = {
+        leftStartLine: info.startLine,
+        leftEndLine: info.endLine + 1,
+        rightStartLine: currentLineOtherEditor,
+        rightEndLine: currentLineOtherEditor + numRows
+      };
+
     } else {
-      targetEditor = this.editors.right;
-      otherEditor = this.editors.left;
-      targetEditorCharOffset = offsetRight;
-      otherEditorCharOffset = offsetLeft;
+      var info = getSingleDiffInfo(this.editors.right, offsetRight, strLength);
+
+      var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
+      if (isLastChar(this.editors.left, offsetLeft)) {
+        currentLineOtherEditor++;
+      }
+
+      var numRows = 0;
+      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
+      var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
+
+      if ((info.startChar > 0 || (info.startLine == info.endLine && info.endChar < numCharsOnLine)) || (numCharsOnLineOtherEditor === 0)) {
+        numRows++;
+      }
+
+      lineInfo = {
+        leftStartLine: currentLineOtherEditor,
+        leftEndLine: currentLineOtherEditor + numRows,
+        rightStartLine: info.startLine,
+        rightEndLine: info.endLine + 1
+      };
     }
 
-    // if INSERT, these refer to left editor; if DELETE, right
-    var startLine,
-        startChar,
-        endLine,
-        endChar,
-        endCharNum = targetEditorCharOffset + strLength;
+    return lineInfo;
+  };
 
-    var runningTotalChars = 0;
-    targetEditor.lineLengths.forEach(function(lineLength, lineIndex) {
-      runningTotalChars += lineLength;
-      if (startLine === undefined && targetEditorCharOffset < runningTotalChars) {
-        startLine = lineIndex; // 0-indexed, note
-        startChar = targetEditorCharOffset - runningTotalChars + lineLength;
+
+  // helper to return the startline, endline, startChar and endChar for a diff in a particular editor
+  function getSingleDiffInfo(editor, offset, strLength) {
+    var info = {
+      startLine: 0,
+      startChar: 0,
+      endLine: 0,
+      endChar: 0
+    };
+    var endCharNum = offset + strLength;
+    var runningTotal = 0;
+    var startLineSet = false, endLineSet = false;
+
+    editor.lineLengths.forEach(function(lineLength, lineIndex) {
+      runningTotal += lineLength;
+      if (!startLineSet && offset < runningTotal) {
+        info.startLine = lineIndex;
+        info.startChar = offset - runningTotal + lineLength;
+        startLineSet = true;
       }
-      if (endLine === undefined && endCharNum <= runningTotalChars) {
-        endLine = lineIndex;
-        endChar = endCharNum - runningTotalChars + lineLength;
+      if (!endLineSet && endCharNum <= runningTotal) {
+        info.endLine = lineIndex;
+        info.endChar = endCharNum - runningTotal + lineLength;
+        endLineSet = true;
       }
-    }, this);
+    });
 
     // if the start char is the final char on the line, it's a newline & we ignore it
-    if (startChar > 0 && getCharsOnLine(targetEditor, startLine) === startChar) {
-      startLine++;
-      startChar = 0;
+    if (info.startChar > 0 && getCharsOnLine(editor, info.startLine) === info.startChar) {
+      info.startLine++;
+      info.startChar = 0;
     }
 
     // if the end char is the first char on the line, we don't want to highlight that extra line
-    if (endChar === 0) {
-      endLine--;
+    if (info.endChar === 0) {
+      info.endLine--;
     }
 
-    // find the line of the other editor, according to it's char offset position
-    var currentLineOtherEditor = getLineForCharPosition(otherEditor, otherEditorCharOffset);
-    if (isLastChar(otherEditor, otherEditorCharOffset)) {
-      currentLineOtherEditor++;
-    }
-
-    // to determine if the highlightRightEndLine should be the same line (i.e. stuff is being
-    // inserted + it'll show a single px line) or replacing the line, we just look at the start + end
-    // char for the line
-    var numRows = 0;
-    var numCharsOnLine = getCharsOnLine(targetEditor, startLine);
-    var numCharsOnLineOtherEditor = getCharsOnLine(otherEditor, currentLineOtherEditor);
-
-    if (startLine === endLine && ( (startChar > 0 || endChar < numCharsOnLine) || (numCharsOnLineOtherEditor === 0)) ) {
-      numRows++;
-    }
-
-    return {
-      sourceStartLine: startLine,
-      sourceEndLine: endLine,
-      targetStartLine: currentLineOtherEditor,
-      targetNumRows: numRows
-    };
-  };
+    return info;
+  }
 
 
   // note that this and everything else in this script uses 0-indexed row numbers
@@ -578,13 +605,6 @@
    * reduced to a single connector line 1=4 => line 1-3
    */
   function simplifyDiffs(diffs) {
-    return {
-      rtl: groupDiffs(diffs.rtl),
-      ltr: groupDiffs(diffs.ltr)
-    };
-  }
-
-  function groupDiffs(diffs) {
     var groupedDiffs = [];
     diffs.forEach(function(diff, index) {
       if (index === 0) {
@@ -593,39 +613,58 @@
       }
       var lastDiff = groupedDiffs[groupedDiffs.length-1];
 
-      // compare the current line with the last (possibly grouped) item added to groupedDiffs
-      if (diff.sourceStartLine === lastDiff.sourceEndLine+1 &&
-        diff.targetStartLine === (lastDiff.targetStartLine + lastDiff.targetNumRows)) {
-        groupedDiffs[groupedDiffs.length-1].sourceEndLine = diff.sourceEndLine;
-        groupedDiffs[groupedDiffs.length-1].targetNumRows += diff.targetNumRows;
+      // TODO RTL
+      if ((diff.leftStartLine - lastDiff.leftEndLine <= 1) &&
+          (diff.rightStartLine - lastDiff.rightEndLine <= 1)) {
+        groupedDiffs[groupedDiffs.length-1].leftEndLine = diff.leftEndLine;
+        groupedDiffs[groupedDiffs.length-1].rightEndLine = diff.rightEndLine;
       } else {
         groupedDiffs.push(diff);
       }
     });
-
     return groupedDiffs;
   }
 
-  // grouping diff lines can result in conflicts where one diff can be copied into the middle of another. This
-  // combines them to allow copying from one to the other
-  function combineConflicts(diffs) {
+
+  /**
+   * Our diff object contains diffs from either side: LTR and RTL. For all intensive purposes, every diff is
+   * unidirectional spanning both editors; some just happen to be reduced to no lines on the other editor (i.e.
+   * an insert or delete). This function eliminates diffs
+   * @param diffs
+   * @returns {*}
+   */
+  function combineDiffs(diffs) {
+
+    // we DO know they're ordered from top of the editor to the bottom. How can that help us?
+
+    var combined = [];
+    diffs.forEach(function(diff, index) {
+      if (index === 0) {
+        combined.push(diff);
+        return;
+      }
+      var lastDiff = combined[combined.length - 1];
+
+    });
+
+
+    return diffs;
+
+    /*
     var removeRightIndexes = [];
     diffs.ltr.forEach(function (leftDiff) {
       diffs.rtl.forEach(function (rightDiff, rightIndex) {
-
-        if (rightDiff.targetStartLine > leftDiff.sourceStartLine &&
-            rightDiff.targetStartLine < leftDiff.sourceEndLine) {
+        if (rightDiff.targetStartLine >= leftDiff.sourceStartLine &&
+            rightDiff.targetStartLine <= leftDiff.sourceEndLine) {
           removeRightIndexes.push(rightIndex);
+          leftDiff.source
         }
       });
     });
 
-
-
-
-//    removeRightIndexes.forEach(function(index) {
-//      diffs.rtl.splice(index, 1);
-//    });
+    removeRightIndexes.forEach(function(index) {
+      diffs.rtl.splice(index, 1);
+    });
 
     var removeLeftIndexes = [];
     diffs.rtl.forEach(function (rightDiff) {
@@ -639,8 +678,7 @@
     removeLeftIndexes.forEach(function(index) {
       diffs.rtl.splice(index, 1);
     });
-
-    return diffs;
+*/
   }
 
 
@@ -648,39 +686,26 @@
     clearGutter(this.options.classes.gutter);
     this.clearArrows();
 
-    // clear our old diffs [nope... for efficiency, we'll need to do a compare TODO]
-    this.editors.left.diffs = [];
-    this.editors.right.diffs = [];
+// clear our old diffs [nope... for efficiency, we'll need to do a compare TODO]
+//    this.diffs = [];
 
-    diffs.ltr.forEach(function(info, diffIndex) {
-      if (this.options.left.showDiffs) {
-        var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-        this.showDiff(C.EDITOR_LEFT, info.sourceStartLine, numRows, this.options.classes.newCode);
-        this.showDiff(C.EDITOR_RIGHT, info.targetStartLine, info.targetNumRows, this.options.classes.newCode);
+    diffs.forEach(function(info, diffIndex) {
+      if (this.options.showDiffs) { // why even make this an option?
 
-        if (this.options.left.showLTRConnectors) {
-          this.addConnector(C.LTR, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
+        this.showDiff(C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
+        this.showDiff(C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
+
+        if (this.options.showConnectors) {
+          this.addConnector(C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
         }
-        if (this.options.left.showCopyLTR) {
-          this.addCopyArrows(C.LTR, info, diffIndex);
-        }
+
+        //if (this.options.left.showCopyLTR) {
+        //  this.addCopyArrows(C.LTR, info, diffIndex);
+        //}
+
       }
     }, this);
 
-    diffs.rtl.forEach(function(info, diffIndex) {
-      if (this.options.right.showDiffs) {
-        this.showDiff(C.EDITOR_LEFT, info.targetStartLine, info.targetNumRows, this.options.classes.deletedCode);
-        var numRows = info.sourceEndLine - info.sourceStartLine + 1;
-        this.showDiff(C.EDITOR_RIGHT, info.sourceStartLine, numRows, this.options.classes.deletedCode);
-
-        if (this.options.right.showRTLConnectors) {
-          this.addConnector(C.RTL, info.sourceStartLine, info.sourceEndLine, info.targetStartLine, info.targetNumRows);
-        }
-        if (this.options.right.showCopyRTL) {
-          this.addCopyArrows(C.RTL, info, diffIndex);
-        }
-      }
-    }, this);
   };
 
 
