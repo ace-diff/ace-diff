@@ -67,7 +67,7 @@
       }
     }, options);
 
-    // instantiate the editors in an internal data structure that'll store a little info about the diffs and
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
     // editor content
     this.editors = {
       left: {
@@ -141,37 +141,46 @@
   // this seems woefully inefficient, but since it only occurs on a copy action by the user, I'll refactor it last
   function copy(e, dir) {
     var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-    var diff = this.diffs[dir][diffIndex];
+    var diff = this.diffs[diffIndex];
     var sourceEditor, targetEditor;
 
+    var startLine, endLine, targetStartLine, targetEndLine;
     if (dir === C.LTR) {
       sourceEditor = this.editors.left;
       targetEditor = this.editors.right;
+      startLine = diff.leftStartLine;
+      endLine = diff.leftEndLine;
+      targetStartLine = diff.rightStartLine;
+      targetEndLine = diff.rightEndLine;
     } else {
       sourceEditor = this.editors.right;
       targetEditor = this.editors.left;
+      startLine = diff.rightStartLine;
+      endLine = diff.rightEndLine;
+      targetStartLine = diff.leftStartLine;
+      targetEndLine = diff.leftEndLine;
     }
 
-    // probably should be an array for speed (is that still correct in mod browsers?)
     var contentToInsert = '';
-    for (var i=diff.sourceStartLine; i<=diff.sourceEndLine; i++) {
+    for (var i=startLine; i<endLine; i++) {
       contentToInsert += getLine(sourceEditor, i) + "\n";
     }
 
     var startContent = '';
-    for (var i=0; i<diff.targetStartLine; i++) {
+    for (var i=0; i<targetStartLine; i++) {
       startContent += getLine(targetEditor, i) + "\n";
     }
 
     var endContent = '';
     var totalLines = targetEditor.ace.getSession().getLength();
-    for (var i=diff.targetStartLine+diff.targetNumRows; i<totalLines; i++) {
+    for (var i=targetEndLine; i<totalLines; i++) {
       endContent += getLine(targetEditor, i);
-
       if (i<totalLines-1) {
         endContent += "\n";
       }
     }
+
+    // meh.
     endContent = endContent.replace(/\s*$/, "");
 
     // keep track of the scroll height
@@ -370,26 +379,28 @@
   };
 
 
-  AceDiff.prototype.addCopyArrows = function(dir, info, diffIndex) {
-    var arrowClassName = this.options.classes.newCodeConnectorLink;
-    var arrowContent   = this.options.classes.newCodeConnectorLinkContent;
-
-    // regardless of direction, sourceStartLine will be the one we're interested in
-    var topOffset = info.sourceStartLine * this.lineHeight;
-    var tooltip = "Copy to right";
-
-    var containerClass = this.options.classes.copyRightContainer;
-    if (dir === C.RTL) {
-      arrowClassName = this.options.classes.deletedCodeConnectorLink;
-      arrowContent   = this.options.classes.deletedCodeConnectorLinkContent;
-      containerClass = this.options.classes.copyLeftContainer;
-      tooltip = "Copy to left";
+  AceDiff.prototype.addCopyArrows = function(info, diffIndex) {
+    if (info.leftEndLine > info.leftStartLine) {
+      var arrow = createArrow({
+        className: this.options.classes.newCodeConnectorLink,
+        topOffset: info.leftStartLine * this.lineHeight,
+        tooltip: 'Copy to right',
+        diffIndex: diffIndex,
+        arrowContent: this.options.classes.newCodeConnectorLinkContent
+      });
+      $('.' + this.options.classes.copyRightContainer).append(arrow);
     }
 
-    var el = '<div class="' + arrowClassName + '" style="top:' + topOffset + 'px" title="' + tooltip + '" ' +
-      'data-diff-index="' + diffIndex + '">' + arrowContent + '</div>';
-
-    $('.' + containerClass).append(el);
+    if (info.rightEndLine > info.rightStartLine) {
+      var arrow = createArrow({
+        className: this.options.classes.deletedCodeConnectorLink,
+        topOffset: info.rightStartLine * this.lineHeight,
+        tooltip: 'Copy to left',
+        diffIndex: diffIndex,
+        arrowContent: this.options.classes.deletedCodeConnectorLinkContent
+      });
+      $('.' + this.options.classes.copyLeftContainer).append(arrow);
+    }
   };
 
   AceDiff.prototype.positionCopyContainers = function () {
@@ -436,16 +447,6 @@
       var numRows = 0;
       var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
-
-      //var info = {
-      //  startLine: info.startLine,
-      //  endLine: info.endLine,
-      //  startChar: info.startChar,
-      //  endChar: info.endChar,
-      //  numCharsOnLine: numCharsOnLine,
-      //  numCharsOnLineOtherEditor: numCharsOnLineOtherEditor,
-      //  currentLineOtherEditor: currentLineOtherEditor
-      //};
 
       // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work.
       if (
@@ -548,11 +549,19 @@
     for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
+
+      //if (i===lines.length-1 && offsetChars === runningTotal-1) {
+      //  foundLine = i+1;
+      //  break;
+      //} else {
+
       if (offsetChars <= runningTotal) {
         foundLine = i;
         break;
       }
+
     }
+
     return foundLine;
   }
 
@@ -570,6 +579,11 @@
       }
     }
     return isLastChar;
+  }
+
+  function createArrow(info) {
+    return '<div class="' + info.className + '" style="top:' + info.topOffset + 'px" title="' + info.tooltip + '" ' +
+      'data-diff-index="' + info.diffIndex + '">' + info.arrowContent + '</div>';
   }
 
   AceDiff.prototype.createGutter = function() {
@@ -622,7 +636,17 @@
         groupedDiffs.push(diff);
       }
     });
-    return groupedDiffs;
+
+    // clear our any single line diffs (i.e. single line on both editors)
+    var fullDiffs = [];
+    groupedDiffs.forEach(function(diff) {
+      if (diff.leftStartLine === diff.leftEndLine && diff.rightStartLine === diff.rightEndLine) {
+        return;
+      }
+      fullDiffs.push(diff);
+    });
+
+    return fullDiffs;
   }
 
 
@@ -647,38 +671,7 @@
 
     });
 
-
     return diffs;
-
-    /*
-    var removeRightIndexes = [];
-    diffs.ltr.forEach(function (leftDiff) {
-      diffs.rtl.forEach(function (rightDiff, rightIndex) {
-        if (rightDiff.targetStartLine >= leftDiff.sourceStartLine &&
-            rightDiff.targetStartLine <= leftDiff.sourceEndLine) {
-          removeRightIndexes.push(rightIndex);
-          leftDiff.source
-        }
-      });
-    });
-
-    removeRightIndexes.forEach(function(index) {
-      diffs.rtl.splice(index, 1);
-    });
-
-    var removeLeftIndexes = [];
-    diffs.rtl.forEach(function (rightDiff) {
-      diffs.ltr.forEach(function (leftDiff, leftIndex) {
-        if (leftDiff.targetStartLine > rightDiff.sourceStartLine &&
-            leftDiff.targetStartLine < rightDiff.sourceEndLine) {
-          removeLeftIndexes.push(leftIndex);
-        }
-      });
-    });
-    removeLeftIndexes.forEach(function(index) {
-      diffs.rtl.splice(index, 1);
-    });
-*/
   }
 
 
@@ -686,7 +679,6 @@
     clearGutter(this.options.classes.gutter);
     this.clearArrows();
 
-// clear our old diffs [nope... for efficiency, we'll need to do a compare TODO]
 //    this.diffs = [];
 
     diffs.forEach(function(info, diffIndex) {
@@ -699,13 +691,9 @@
           this.addConnector(C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
         }
 
-        //if (this.options.left.showCopyLTR) {
-        //  this.addCopyArrows(C.LTR, info, diffIndex);
-        //}
-
+        this.addCopyArrows(info, diffIndex);
       }
     }, this);
-
   };
 
 
