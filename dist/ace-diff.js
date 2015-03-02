@@ -251,9 +251,6 @@
       right: 0
     };
 
-//    console.log(diff);
-
-
     diff.forEach(function(chunk) {
       var chunkType = chunk[0];
       var text = chunk[1];
@@ -262,9 +259,7 @@
       if (text.length === 0) {
         return;
       }
-
       if (chunkType === C.DIFF_EQUAL) {
-        //console.log("[", text, "]");
         offset.left += text.length;
         offset.right += text.length;
       } else if (chunkType === C.DIFF_DELETE) {
@@ -272,9 +267,6 @@
         offset.right += text.length;
 
       } else if (chunkType === C.DIFF_INSERT) {
-        //console.log("OFFSET RIGHT: ", offset.right);
-        //console.log("[", text, "]");
-
         diffs.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text));
         offset.left += text.length;
       }
@@ -434,30 +426,28 @@
   AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, diffText) {
     var lineInfo = {};
 
+    // this was added in to hack around an oddity with the Google lib. Sometimes it would include a newline
+    // as the first char for a diff, other times not - and it would change when you were typing on-the-fly. This
+    // is used to level things out so the diffs don't appear to shift around
+    var newContentStartsWithNewline = /^\n/.test(diffText);
+
     if (diffType === C.DIFF_INSERT) {
       var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText.length);
       var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
-      var newContentStartsWithNewline = /^\n/.test(diffText);
+      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
 
+      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
+        newContentStartsWithNewline = false;
+      }
       if (isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
         currentLineOtherEditor++;
       }
-
-      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
-
-      // TODO one more clause here. Check when the new row being added has nothing on it.
-
-
-      console.log(numCharsOnLine);
 
       // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work to
       // figure out.
       var numRows = 0;
-      if (
-        numCharsOnLineOtherEditor > 0 &&
-        info.startLine === info.endLine && info.endChar < numCharsOnLine ) {
-
+      if (numCharsOnLineOtherEditor > 0 && info.startLine === info.endLine && info.endChar < numCharsOnLine) {
         numRows++;
       }
 
@@ -470,17 +460,20 @@
 
     } else {
       var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText.length);
-
       var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
-      if (isLastChar(this.editors.left, offsetLeft)) {
+      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
+
+      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
+        newContentStartsWithNewline = false;
+      }
+      if (isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
         currentLineOtherEditor++;
       }
-
-      var numRows = 0;
-      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
 
-      if ((info.startChar > 0 || (info.startLine == info.endLine && info.endChar < numCharsOnLine)) || (numCharsOnLineOtherEditor === 0)) {
+
+      var numRows = 0;
+      if (numCharsOnLineOtherEditor > 0 && info.startLine === info.endLine && info.endChar < numCharsOnLine) {
         numRows++;
       }
 
@@ -580,8 +573,6 @@
       var lineLength = lines[i].length + 1; // +1 needed for newline char
 
       runningTotal += lineLength;
-
-//      console.log(char, runningTotal);
 
       // we MUST compare it with - 1, since char
       var comparison = runningTotal;
@@ -698,15 +689,13 @@
 //    this.diffs = [];
 
     diffs.forEach(function(info, diffIndex) {
-      if (this.options.showDiffs) { // why even make this an option?
-
+      if (this.options.showDiffs) {
         this.showDiff(C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
         this.showDiff(C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
 
         if (this.options.showConnectors) {
           this.addConnector(C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
         }
-
         this.addCopyArrows(info, diffIndex);
       }
     }, this);
