@@ -12,32 +12,201 @@
 <div id="flex-container">
   <div>
 
-<div id="acediff-left-editor">
-  FauxtonAPI.navigate = function (url, _opts) {
-    var options = _.extend({trigger: true}, _opts);
+<div id="acediff-left-editor">(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require());
+  } else {
+    root.AceDiff = factory(root);
+  }
+}(this, function() {
+  var Range = require('ace/range').Range;
 
-    FauxtonAPI.router.navigate(url, options);
+  var C = {
+    DIFF_EQUAL: 0,
+    DIFF_DELETE: -1,
+    DIFF_INSERT: 1,
+    EDITOR_LEFT: 'left',
+    EDITOR_RIGHT: 'right',
+    RTL: 'rtl',
+    LTR: 'ltr',
+    SVG_NS: 'http://www.w3.org/2000/svg'
   };
 
-  FauxtonAPI.beforeUnload = function () {
-    FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
+  // our constructor
+  var AceDiff = function(options) {
+    this.options = {};
+    extend(true, this.options, {
+      element: null,
+      mode: null,
+      lockScrolling: false,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true,
+        showCopyLTR: true
+      },
+      right: {
+        id: 'acediff-right-editor',
+        content: null,
+        mode: null,
+        editable: true,
+        showCopyRTL: true
+      },
+      showDiffs: true,
+      showConnectors: true,
+      maxDiffs: 5000,
+      classes: {
+        gutter: 'acediff-gutter',
+        diff: 'acediff-diff',
+        connector: 'acediff-connector',
+        newCodeConnectorLink: 'acediff-new-code-connector-copy',
+        newCodeConnectorLinkContent: '&#8594;',
+        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+        deletedCodeConnectorLinkContent: '&#8592;',
+        copyRightContainer: 'acediff-copy-right',
+        copyLeftContainer: 'acediff-copy-left'
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      },
+      right: {
+        ace: ace.edit(this.options.right.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+
+    this.addEventHandlers();
+
+    // TODO
+    //this.createDiffContainer();
+
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
+    var $gutter = $("." + this.options.classes.gutter);
+    this.gutterHeight = $gutter.height();
+    this.gutterWidth = $gutter.width();
+
+    // set up the editors
+    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
+    this.editors.left.ace.setReadOnly(!this.options.left.editable);
+    this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
+
+    this.diff();
   };
-</div>
+});</div>
 
 </div>
 <div class="acediff-gutter"></div>
   <div>
 
-<div id="acediff-right-editor">
-  FauxtonAPI.navigate = function (url, _opts) {
-    var options = _.extend({trigger: true}, _opts);
-    FauxtonAPI.router.navigate(url, options);
+<div id="acediff-right-editor">(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require());
+  } else {
+    root.AceDiff = factory(root);
+  }
+}(this, function() {
+  'use strict';
+
+  var Range = require('ace/range').Range;
+
+  var C = {
+    DIFF_EQUAL: 0,
+    DIFF_DELETE: -1,
+    DIFF_INSERT: 1,
+    EDITOR_RIGHT: 'right',
+    EDITOR_LEFT: 'left',
+    RTL: 'rtl',
+    LTR: 'ltr',
+    SVG_NS: 'http://www.w3.org/2000/svg'
   };
 
-  FauxtonAPI.beforeUnload = function () {
-    FauxtonAPI.router.beforeUnload.apply(FauxtonAPI.router, arguments);
+  // our constructor
+  var AceDiff = function(options) {
+
+    this.options = {};
+    extend(true, this.options, {
+      element: null,
+      mode: null,
+      lockScrolling: false,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true
+      },
+      right: {
+        id: 'acediff-right-editor',
+        content: null,
+        mode: null,
+        editable: false
+      },
+      showDiffs: true,
+      showConnectors: true,
+      maxDiffs: 5000,
+      classes: {
+        gutter: 'acediff-gutter',
+        diff: 'acediff-diff',
+        connector: 'acediff-connector',
+        newCodeConnectorLink: 'acediff-new-code-connector-copy',
+        newCodeConnectorLinkContent: '&#8594;',
+        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+        deletedCodeConnectorLinkContent: '&#8592;',
+        copyRightContainer: 'acediff-copy-right',
+        copyLeftContainer: 'acediff-copy-left'
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      },
+      right: {
+        ace: ace.edit(this.options.right.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+
+    this.addEventHandlers();
+
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
+    var $gutter = $("." + this.options.classes.gutter);
+    this.gutterHeight = $gutter.height();
+    this.gutterWidth = $gutter.width();
+
+    // set up the editors
+    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
+    this.editors.left.ace.setReadOnly(!this.options.left.editable);
+    this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
+
+    this.diff();
   };
-</div>
+}));</div>
 
   </div>
 </div>

@@ -41,21 +41,21 @@ body {
     width:100%;
 }
 .acediff-diff {
-    background-color: #ffffcc;
-    border-top: 1px solid #ffaa11;
-    border-bottom: 1px solid #ffaa11;
+    background-color: #d8f2ff;
+    border-top: 1px solid #a2d7f2;
+    border-bottom: 1px solid #a2d7f2;
     position: absolute;
     z-index: 4;
 }
 .acediff-diff.targetOnly {
     height: 0px !important;
-    border-top: 1px solid #ffaa11;
+    border-top: 1px solid #a2d7f2;
     border-bottom: 0px;
     position: absolute;
 }
 .acediff-connector {
-    fill: #ffffcc;
-    stroke: #ffaa11;
+    fill: #d8f2ff;
+    stroke: #a2d7f2;
 }
 
 .acediff-copy-left {
