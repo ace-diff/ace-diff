@@ -255,6 +255,8 @@
       var chunkType = chunk[0];
       var text = chunk[1];
 
+      console.log(chunk);
+
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
         return;
@@ -274,9 +276,6 @@
 
     // simplify our computed diffs; this groups together multiple diffs on subsequent lines
     this.diffs = simplifyDiffs(diffs);
-
-    // removes diff conflicts from either side
-    this.diffs = combineDiffs(this.diffs);
 
     // if we're dealing with too many diffs, fail silently
     if (this.diffs.length > this.options.maxDiffs) {
@@ -432,48 +431,100 @@
     var newContentStartsWithNewline = /^\n/.test(diffText);
 
     if (diffType === C.DIFF_INSERT) {
-      var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText.length);
-      var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
-      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
 
-      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
-        newContentStartsWithNewline = false;
-      }
-      if (isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
-        currentLineOtherEditor++;
-      }
+      // pretty confident this returns the right stuff for the left editor: start & end line & char
+      var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText);
+
+
+      // **************** NOW TO THE HARD PART! The other editor! ******************
+
+      // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
+      // going to be used as the start line for the diff though.
+      var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
+      var numCharsOnLeftEditorStartLine = getCharsOnLine(this.editors.left, info.startLine);
+
+      //if (numCharsOnLeftEditorStartLine === 0 && newContentStartsWithNewline) {
+      //  newContentStartsWithNewline = false;
+      //}
+
+      // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
+      // back from google as being on the last char of the previous line so we need to bump it up one
+      var rightStartLine = currentLineOtherEditor;
+      if (info.startChar === 0 && isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
+        //console.log("???");
+        rightStartLine = currentLineOtherEditor + 1;
+      }
+
+      var sameLineInsert = info.startLine === info.endLine;
+      
 
       // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work to
-      // figure out.
+      // figure out. This feels like the hardest part of the entire script.
       var numRows = 0;
-      if (numCharsOnLineOtherEditor > 0 && info.startLine === info.endLine && info.endChar < numCharsOnLine) {
+      if (
+
+        // dense, but this accommodates two scenarios:
+        // 1. where a completely fresh new line is being inserted in left editor, we want the line on right to stay a 1px line
+        // 2. where a new character is inserted at the start of a newline on the left but the line contains other stuff,
+        //    we DO want to make it a full line
+        (info.startChar > 0 || (sameLineInsert && diffText.length < numCharsOnLeftEditorStartLine)) &&
+
+        // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
+        numCharsOnLineOtherEditor > 0 &&
+
+        // if the text being inserted starts mid-line
+        (info.startChar < numCharsOnLeftEditorStartLine)) {
+
+        console.log("increase on right");
         numRows++;
       }
 
       lineInfo = {
         leftStartLine: info.startLine,
         leftEndLine: info.endLine + 1,
-        rightStartLine: currentLineOtherEditor,
-        rightEndLine: currentLineOtherEditor + numRows
+        rightStartLine: rightStartLine,
+        rightEndLine: rightStartLine + numRows
       };
 
-    } else {
-      var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText.length);
-      var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
-      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
+      console.log("ltr", lineInfo);
 
-      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
-        newContentStartsWithNewline = false;
-      }
-      if (isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
-        currentLineOtherEditor++;
-      }
+    } else {
+
+      var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText);
+      //var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
+      //var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
+      //
+      //if (numCharsOnLine === 0 && newContentStartsWithNewline) {
+      //  newContentStartsWithNewline = false;
+      //}
+      //
+      //var leftStartPointIsLastChar = false;
+      //if (isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
+      //  leftStartPointIsLastChar = true;
+      //  currentLineOtherEditor++;
+      //}
+      //var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
+      //
+      //var numRows = 0;
+      //if (numCharsOnLineOtherEditor > 0 &&
+      //  ((info.startLine === info.endLine && info.endChar < numCharsOnLine)) || !leftStartPointIsLastChar) {
+      //  numRows++;
+      //}
+
+      var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
+      var numCharsOnRightEditorStartLine = getCharsOnLine(this.editors.right, info.startLine);
 
 
       var numRows = 0;
-      if (numCharsOnLineOtherEditor > 0 && info.startLine === info.endLine && info.endChar < numCharsOnLine) {
+      if (
+
+        // if the left editor line was empty, it's ALWAYS a single line insert
+        numCharsOnLineOtherEditor > 0 &&
+
+        // if the text being inserted starts mid-line, we know that
+        (info.startChar < numCharsOnRightEditorStartLine)) {
         numRows++;
       }
 
@@ -483,6 +534,8 @@
         rightStartLine: info.startLine,
         rightEndLine: info.endLine + 1
       };
+
+      console.log("RTL", lineInfo);
     }
 
     return lineInfo;
@@ -490,24 +543,27 @@
 
 
   // helper to return the startline, endline, startChar and endChar for a diff in a particular editor
-  function getSingleDiffInfo(editor, offset, strLength) {
+  function getSingleDiffInfo(editor, offset, diffString) {
     var info = {
       startLine: 0,
       startChar: 0,
       endLine: 0,
       endChar: 0
     };
-    var endCharNum = offset + strLength;
+    var endCharNum = offset + diffString.length;
     var runningTotal = 0;
-    var startLineSet = false, endLineSet = false;
+    var startLineSet = false,
+        endLineSet = false;
 
     editor.lineLengths.forEach(function(lineLength, lineIndex) {
       runningTotal += lineLength;
+
       if (!startLineSet && offset < runningTotal) {
         info.startLine = lineIndex;
         info.startChar = offset - runningTotal + lineLength;
         startLineSet = true;
       }
+
       if (!endLineSet && endCharNum <= runningTotal) {
         info.endLine = lineIndex;
         info.endChar = endCharNum - runningTotal + lineLength;
@@ -524,6 +580,11 @@
     // if the end char is the first char on the line, we don't want to highlight that extra line
     if (info.endChar === 0) {
       info.endLine--;
+    }
+
+    var endsWithNewline = /\n$/.test(diffString);
+    if (info.startChar > 0 && endsWithNewline) {
+      info.endLine++;
     }
 
     return info;
@@ -557,9 +618,7 @@
         foundLine = i;
         break;
       }
-
     }
-
     return foundLine;
   }
 
@@ -627,24 +686,36 @@
    */
   function simplifyDiffs(diffs) {
     var groupedDiffs = [];
+
     diffs.forEach(function(diff, index) {
       if (index === 0) {
         groupedDiffs.push(diff);
         return;
       }
-      var lastDiff = groupedDiffs[groupedDiffs.length-1];
 
-      // TODO RTL
-      if ((diff.leftStartLine - lastDiff.leftEndLine <= 1) &&
-          (diff.rightStartLine - lastDiff.rightEndLine <= 1)) {
-        groupedDiffs[groupedDiffs.length-1].leftEndLine = diff.leftEndLine;
-        groupedDiffs[groupedDiffs.length-1].rightEndLine = diff.rightEndLine;
-      } else {
+      // loop through all grouped diffs. If this new diff lies between an existing one, we'll just add to it, rather
+      // than create a new one
+      var isGrouped = false;
+      for (var i=0; i<groupedDiffs.length; i++) {
+        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) < 1) &&
+            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) < 1)) {
+
+          // update the existing grouped diff to expand its horizons to include this new diff start + end lines
+          groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
+          groupedDiffs[i].rightStartLine = Math.min(diff.rightStartLine, groupedDiffs[i].rightStartLine);
+          groupedDiffs[i].leftEndLine = Math.max(diff.leftEndLine, groupedDiffs[i].leftEndLine);
+          groupedDiffs[i].rightEndLine = Math.max(diff.rightEndLine, groupedDiffs[i].rightEndLine);
+          isGrouped = true;
+          break;
+        }
+      }
+
+      if (!isGrouped) {
         groupedDiffs.push(diff);
       }
     });
 
-    // clear our any single line diffs (i.e. single line on both editors)
+    // clear out any single line diffs (i.e. single line on both editors)
     var fullDiffs = [];
     groupedDiffs.forEach(function(diff) {
       if (diff.leftStartLine === diff.leftEndLine && diff.rightStartLine === diff.rightEndLine) {
@@ -657,36 +728,9 @@
   }
 
 
-  /**
-   * Our diff object contains diffs from either side: LTR and RTL. For all intensive purposes, every diff is
-   * unidirectional spanning both editors; some just happen to be reduced to no lines on the other editor (i.e.
-   * an insert or delete). This function eliminates diffs
-   * @param diffs
-   * @returns {*}
-   */
-  function combineDiffs(diffs) {
-
-    // we DO know they're ordered from top of the editor to the bottom. How can that help us?
-
-    var combined = [];
-    diffs.forEach(function(diff, index) {
-      if (index === 0) {
-        combined.push(diff);
-        return;
-      }
-      var lastDiff = combined[combined.length - 1];
-
-    });
-
-    return diffs;
-  }
-
-
   AceDiff.prototype.decorate = function(diffs) {
     clearGutter(this.options.classes.gutter);
     this.clearArrows();
-
-//    this.diffs = [];
 
     diffs.forEach(function(info, diffIndex) {
       if (this.options.showDiffs) {
