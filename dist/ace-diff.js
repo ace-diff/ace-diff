@@ -94,6 +94,13 @@
     this.createCopyContainers();
     this.createGutter();
 
+    if (this.options.left.content) {
+      this.editors.left.ace.setValue(this.options.left.content, -1);
+    }
+    if (this.options.right.content) {
+      this.editors.right.ace.setValue(this.options.right.content, -1);
+    }
+
     this.diff();
   };
 
@@ -173,7 +180,6 @@
       }
     }
 
-    // meh.
     endContent = endContent.replace(/\s*$/, "");
 
     // keep track of the scroll height
@@ -682,8 +688,8 @@
       // than create a new one
       var isGrouped = false;
       for (var i=0; i<groupedDiffs.length; i++) {
-        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) < 1) &&
-            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) < 1)) {
+        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) <= 1) &&
+            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) <= 1)) {
 
           // update the existing grouped diff to expand its horizons to include this new diff start + end lines
           groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);

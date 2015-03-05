@@ -27,13 +27,13 @@
     position: absolute;
     top: 0;
     bottom: 0;
-    width:100%;
+    width: 100%;
 }
 #acediff-right-editor {
     position: absolute;
     top: 0;
     bottom: 0;
-    width:100%;
+    width: 100%;
 }
 .acediff-diff {
     background-color: #d8f2ff;
@@ -75,8 +75,7 @@
     text-shadow: 1px 1px #ffffff;
     position: absolute;
     right: 0px;
-    padding: 0px 3px;
-    margin: 1px;
+    margin: -3px 2px;
     cursor: pointer;
 }
 .acediff-copy-left div:hover {
