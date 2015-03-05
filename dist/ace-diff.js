@@ -255,7 +255,7 @@
       var chunkType = chunk[0];
       var text = chunk[1];
 
-      console.log(chunk);
+//      console.log(chunk);
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -340,18 +340,18 @@
     var p4_x = this.gutterWidth + 1;
 
     if (dir === C.LTR) {
-      var p1_y = (leftStartLine * this.lineHeight) - leftScrollTop + 1;
-      var p2_y = rightStartLine * this.lineHeight - rightScrollTop + 1;
-      var p3_y = (leftEndLine * this.lineHeight) - leftScrollTop + 1;
-      var p4_y = (rightEndLine * this.lineHeight) - rightScrollTop + 1;
+      var p1_y = (leftStartLine * this.lineHeight) - leftScrollTop;
+      var p2_y = rightStartLine * this.lineHeight - rightScrollTop;
+      var p3_y = (leftEndLine * this.lineHeight) - leftScrollTop;
+      var p4_y = (rightEndLine * this.lineHeight) - rightScrollTop;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       c = this.options.classes.connector;
     } else {
-      var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop + 1;
-      var p2_y = sourceStartLine * this.lineHeight - rightScrollTop + 1;
-      var p3_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - leftScrollTop + 1;
-      var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop + 1;
+      var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop;
+      var p2_y = sourceStartLine * this.lineHeight - rightScrollTop;
+      var p3_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - leftScrollTop;
+      var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       c = this.options.classes.connector;
@@ -363,7 +363,6 @@
 
     var gutterSVG = $("." + this.options.classes.gutter + " svg")[0];
 
-    // need to
     var el = document.createElementNS(C.SVG_NS, "path");
     el.setAttribute("d", d);
     el.setAttribute("class", c);
@@ -435,29 +434,24 @@
       // pretty confident this returns the right stuff for the left editor: start & end line & char
       var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText);
 
-
-      // **************** NOW TO THE HARD PART! The other editor! ******************
-
       // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
       // going to be used as the start line for the diff though.
       var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
       var numCharsOnLeftEditorStartLine = getCharsOnLine(this.editors.left, info.startLine);
-
-      //if (numCharsOnLeftEditorStartLine === 0 && newContentStartsWithNewline) {
-      //  newContentStartsWithNewline = false;
-      //}
+      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
 
       // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
       // back from google as being on the last char of the previous line so we need to bump it up one
       var rightStartLine = currentLineOtherEditor;
+      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
+        newContentStartsWithNewline = false;
+      }
       if (info.startChar === 0 && isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
-        //console.log("???");
         rightStartLine = currentLineOtherEditor + 1;
       }
 
       var sameLineInsert = info.startLine === info.endLine;
-      
 
       // whether or not this diff is a plain INSERT into the other editor, or overwrites a line take a little work to
       // figure out. This feels like the hardest part of the entire script.
@@ -475,8 +469,6 @@
 
         // if the text being inserted starts mid-line
         (info.startChar < numCharsOnLeftEditorStartLine)) {
-
-        console.log("increase on right");
         numRows++;
       }
 
@@ -487,55 +479,48 @@
         rightEndLine: rightStartLine + numRows
       };
 
-      console.log("ltr", lineInfo);
-
     } else {
-
       var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText);
-      //var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
-      //var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
-      //
-      //if (numCharsOnLine === 0 && newContentStartsWithNewline) {
-      //  newContentStartsWithNewline = false;
-      //}
-      //
-      //var leftStartPointIsLastChar = false;
-      //if (isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
-      //  leftStartPointIsLastChar = true;
-      //  currentLineOtherEditor++;
-      //}
-      //var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
-      //
-      //var numRows = 0;
-      //if (numCharsOnLineOtherEditor > 0 &&
-      //  ((info.startLine === info.endLine && info.endChar < numCharsOnLine)) || !leftStartPointIsLastChar) {
-      //  numRows++;
-      //}
 
       var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
       var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
       var numCharsOnRightEditorStartLine = getCharsOnLine(this.editors.right, info.startLine);
+      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
 
+      // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
+      // back from google as being on the last char of the previous line so we need to bump it up one
+      var leftStartLine = currentLineOtherEditor;
+      if (numCharsOnLine === 0 && newContentStartsWithNewline) {
+        newContentStartsWithNewline = false;
+      }
+      if (info.startChar === 0 && isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
+        leftStartLine = currentLineOtherEditor + 1;
+      }
 
+      var sameLineInsert = info.startLine === info.endLine;
       var numRows = 0;
       if (
 
-        // if the left editor line was empty, it's ALWAYS a single line insert
+        // dense, but this accommodates two scenarios:
+        // 1. where a completely fresh new line is being inserted in left editor, we want the line on right to stay a 1px line
+        // 2. where a new character is inserted at the start of a newline on the left but the line contains other stuff,
+        //    we DO want to make it a full line
+        (info.startChar > 0 || (sameLineInsert && diffText.length < numCharsOnRightEditorStartLine)) &&
+
+          // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
         numCharsOnLineOtherEditor > 0 &&
 
-        // if the text being inserted starts mid-line, we know that
+          // if the text being inserted starts mid-line
         (info.startChar < numCharsOnRightEditorStartLine)) {
-        numRows++;
+          numRows++;
       }
 
       lineInfo = {
-        leftStartLine: currentLineOtherEditor,
-        leftEndLine: currentLineOtherEditor + numRows,
+        leftStartLine: leftStartLine,
+        leftEndLine: leftStartLine + numRows,
         rightStartLine: info.startLine,
         rightEndLine: info.endLine + 1
       };
-
-      console.log("RTL", lineInfo);
     }
 
     return lineInfo;

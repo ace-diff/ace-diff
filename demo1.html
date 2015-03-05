@@ -4,9 +4,9 @@
     <title>Ace-diff</title>
     <script src="libs/jquery.js"></script>
     <script src="libs/diff_match_patch.js"></script>
-    <link rel=stylesheet href="dist/ace-diff.css">
     <link rel=stylesheet href="site/bootstrap.min.css">
     <link rel=stylesheet href="site/styles.css">
+    <link rel=stylesheet href="site/demo1/styles.css">
 </head>
 <body>
 
@@ -49,8 +49,7 @@
 <div id="flex-container">
   <div>
 
-<div id="acediff-left-editor">
-  // our constructor
+<div id="acediff-left-editor">  // our constructor
   var AceDiff = function(options) {
     this.options = {};
     extend(true, this.options, {
@@ -72,18 +71,7 @@
       },
       showDiffs: true,
       showConnectors: true,
-      maxDiffs: 5000,
-      classes: {
-        gutter: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
+      maxDiffs: 5000
     }, options);
 
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
@@ -125,8 +113,7 @@
 <div class="acediff-gutter"></div>
   <div>
 
-<div id="acediff-right-editor">
-  // our constructor
+<div id="acediff-right-editor">  // our constructor
   var AceDiff = function(options) {
     this.options = {};
     extend(true, this.options, {
@@ -147,18 +134,7 @@
       },
       showDiffs: true,
       showConnectors: true,
-      maxDiffs: 5000,
-      classes: {
-        gutter: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
+      maxDiffs: 5000
     }, options);
 
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
@@ -209,7 +185,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
 <script src="dist/ace-diff.js"></script>
-
 <script src="site/js/bootstrap.min.js"></script>
 
 </body>

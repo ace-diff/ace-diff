@@ -64,8 +64,7 @@
     color: #000000;
     text-shadow: 1px 1px #ffffff;
     position: absolute;
-    margin: 1px;
-    padding: 0px 3px;
+    margin: -3px 2px;
     cursor: pointer;
 }
 .acediff-copy-right div:hover {
