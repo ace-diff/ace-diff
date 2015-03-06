@@ -106,16 +106,43 @@
 
 
   AceDiff.prototype.addEventHandlers = function () {
-    var updateGap = this.updateGap.bind(this);
 
-    //var re = this.editors.right.ace;
+    var acediff = this;
+
+    //if (acediff.options.lockScrolling) {
+
     this.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-      updateGap('left', scroll);
+      // output the middle line on each side
+      var info = getScrollingInfo(acediff);
+      var leftVisibleRow = acediff.editors.left.ace.getFirstVisibleRow();
+      var rightVisibleRow = acediff.editors.right.ace.getFirstVisibleRow();
+      var numVisibleRows = info.editorHeight / acediff.lineHeight;
+      var leftMiddleLine = Math.ceil(leftVisibleRow + (numVisibleRows / 2));
+      var rightMiddleLine = Math.floor(rightVisibleRow + (numVisibleRows / 2));
+
+      // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
+      var offsets = getDiffRowOffsets(acediff, acediff.editors.left, leftMiddleLine);
+
+      var rowDiff = offsets.totalInserts - offsets.totalDeletes;
+
+      // if positive, the left editor has more diffs than the right. If 0 or negative,
+      if (rowDiff > 0) {
+//        console.log("!", rowDiff);
+      } else {
+        var rightScrollHeight = parseInt(scroll) - (acediff.lineHeight * rowDiff);
+
+        // like to do something sweet here......
+
+
+
+        acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
+      }
+
+      updateGap(acediff, 'left', scroll);
     });
 
     this.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
-      //console.log(re.getFirstVisibleRow());
-      updateGap('right', scroll);
+      updateGap(acediff, 'right', scroll);
     });
 
     var diff = this.diff.bind(this);
@@ -135,6 +162,32 @@
         onCopy(e, C.RTL);
       });
     }
+  };
+
+  function getDiffRowOffsets(acediff, editor, line) {
+    var totalInserts = 0, totalDeletes = 0;
+    for (var i=0; i<acediff.diffs.length; i++) {
+
+      if (acediff.diffs[i].leftStartLine < line) {
+        if (acediff.diffs[i].leftEndLine < line) {
+          totalInserts += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
+        } else {
+          // here we're in a diff on the left. This'll probably be useful
+        }
+      }
+
+      if (acediff.diffs[i].rightStartLine < line) {
+        if (acediff.diffs[i].rightEndLine < line) {
+          totalDeletes += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
+        } else {
+        }
+      }
+    }
+
+    return {
+      totalInserts: totalInserts,
+      totalDeletes: totalDeletes,
+    };
   };
 
 
@@ -197,7 +250,7 @@
   };
 
 
-  AceDiff.prototype.getLineLengths = function(editor) {
+  function getLineLengths(editor) {
     var lines = editor.ace.getSession().doc.getAllLines();
     var lineLengths = [];
     lines.forEach(function(line) {
@@ -247,8 +300,8 @@
     var diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    this.editors.left.lineLengths  = this.getLineLengths(this.editors.left);
-    this.editors.right.lineLengths = this.getLineLengths(this.editors.right);
+    this.editors.left.lineLengths  = getLineLengths(this.editors.left);
+    this.editors.right.lineLengths = getLineLengths(this.editors.right);
 
     // parse the raw diff into something a little more palatable
     var diffs = [];
@@ -288,8 +341,8 @@
       return;
     }
 
-    this.clearMarkers();
-    this.decorate(this.diffs);
+    clearDiffs(this);
+    decorate(this);
   };
 
 
@@ -299,34 +352,31 @@
 
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
-  AceDiff.prototype.updateGap = function(editor, scroll) {
-
-    // needs to take into account the diffs
-    if (this.options.lockScrolling) {
-      if (editor === 'left') {
-        this.editors.right.ace.getSession().setScrollTop(parseInt(scroll) || 0);
-      }
-      if (editor === 'right') {
-        this.editors.left.ace.getSession().setScrollTop(parseInt(scroll) || 0);
-      }
-    }
-
+  function updateGap(acediff, editor, scroll) {
     // naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
-    this.diff();
+    acediff.diff();
 
     // reposition the copy containers containing all the arrows
-    this.positionCopyContainers();
+    acediff.positionCopyContainers();
   };
 
 
-  // diffs are implemented as "markers" in Ace terminology
-  AceDiff.prototype.clearMarkers = function() {
-    this.editors.left.markers.forEach(function (marker) {
+  function clearDiffs(acediff) {
+    acediff.editors.left.markers.forEach(function (marker) {
       this.editors.left.ace.getSession().removeMarker(marker);
-    }, this);
-    this.editors.right.markers.forEach(function (marker) {
+    }, acediff);
+    acediff.editors.right.markers.forEach(function (marker) {
       this.editors.right.ace.getSession().removeMarker(marker);
-    }, this);
+    }, acediff);
+  };
+
+  AceDiff.prototype.scrollEditors = function (editor) {
+    if (editor === 'left') {
+      this.editors.right.ace.getSession().setScrollTop(parseInt(scroll) || 0);
+    }
+    if (editor === 'right') {
+      this.editors.left.ace.getSession().setScrollTop(parseInt(scroll) || 0);
+    }
   };
 
 
@@ -688,8 +738,8 @@
       // than create a new one
       var isGrouped = false;
       for (var i=0; i<groupedDiffs.length; i++) {
-        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) <= 1) &&
-            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) <= 1)) {
+        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) < 1) &&
+            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) < 1)) {
 
           // update the existing grouped diff to expand its horizons to include this new diff start + end lines
           groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
@@ -719,11 +769,11 @@
   }
 
 
-  AceDiff.prototype.decorate = function(diffs) {
-    clearGutter(this.options.classes.gutter);
-    this.clearArrows();
+  function decorate(acediff) {
+    clearGutter(acediff.options.classes.gutter);
 
-    diffs.forEach(function(info, diffIndex) {
+    acediff.clearArrows();
+    acediff.diffs.forEach(function(info, diffIndex) {
       if (this.options.showDiffs) {
         this.showDiff(C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
         this.showDiff(C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
@@ -733,12 +783,12 @@
         }
         this.addCopyArrows(info, diffIndex);
       }
-    }, this);
+    }, acediff);
   };
 
 
   // taken from jQuery
-  var extend = function() {
+  function extend() {
     var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
       i = 1,
       length = arguments.length,
@@ -826,8 +876,20 @@
     }
 
     return target;
-  };
-  
+  }
+
+
+  // helper to return pertinent info about
+  function getScrollingInfo(acediff) {
+    return {
+      leftScrollTop: acediff.editors.left.ace.getSession().getScrollTop(),
+      rightScrollTop: acediff.editors.right.ace.getSession().getScrollTop(),
+
+      // assumed same for both
+      editorHeight: $("#" + acediff.options.left.id).height()
+    };
+  }
+
   // generates a Bezier curve in SVG format
   function getCurve(startX, startY, endX, endY) {
     var w = endX - startX;

@@ -7,55 +7,15 @@
     <link rel=stylesheet href="site/bootstrap.min.css">
     <link rel=stylesheet href="site/styles.css">
     <link rel=stylesheet href="site/demo1/styles.css">
+    <style type="text/css">
+        #flex-container {
+            top: 0px !important;
+        }
+    </style>
 </head>
 <body>
 
-<nav class="navbar navbar-default navbar-fixed-top">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
-            <a class="navbar-brand" href="#">ace-diff</a>
-        </div>
-
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-            <ul class="nav navbar-nav">
-                <li><a href="index.html">About</a></li>
-                <li><a href="doc.html">Documentation</a></li>
-                <li class="active dropdown">
-                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Demos <span class="caret"></span></a>
-                    <ul class="dropdown-menu" role="menu">
-                        <li><a href="#">Simple demo</a></li>
-                        <li><a href="#">Another action</a></li>
-                        <li><a href="#">Something else here</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#">Separated link</a></li>
-                        <li class="divider"></li>
-                        <li><a href="#">One more separated link</a></li>
-                    </ul>
-                </li>
-            </ul>
-            <ul class="nav navbar-nav navbar-right">
-                <li><a href="https://github.com/benkeen/ace-diff">Github</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-
 <div id="flex-container">
-    <div class="left-panel">
-        <h2>Basic Use</h2>
-        <p>
-            This illustrates basic use of Ace-diff. Both editors
-            are editable. Try playing around with the text.
-        </p>
-        <button class="btn btn-primary">View code</button>
-    </div>
     <div><div id="acediff-left-editor"></div></div>
     <div class="acediff-gutter"></div>
     <div>
@@ -84,6 +44,53 @@ $(function () {
 
 <!-- for illustration purposes -->
 <div id="content1" style="display:none">
+  var AceDiff = function(options) {
+    this.options = {};
+    extend(true, this.options, {
+      element: null,
+      mode: null,
+      lockScrolling: false,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true
+      },
+      right: {
+        id: 'acediff-right-editor',
+        content: null,
+        mode: null,
+        editable: false
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+
+    this.addEventHandlers();
+
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
+    var $gutter = $("." + this.options.classes.gutter);
+    this.gutterHeight = $gutter.height();
+    this.gutterWidth = $gutter.width();
+
+    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
+    this.editors.left.ace.setReadOnly(!this.options.left.editable);
+    this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
+
+    this.diff();
+  };
   var AceDiff = function(options) {
     this.options = {};
     extend(true, this.options, {
@@ -182,6 +189,53 @@ $(function () {
     this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
+  };
+  var AceDiff = function(options) {
+    this.options = {};
+    extend(true, this.options, {
+      element: null,
+      mode: null,
+      lockScrolling: false,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true
+      },
+      right: {
+        id: 'acediff-right-editor',
+        content: null,
+        mode: null,
+        editable: false
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+
+    this.addEventHandlers();
+
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
+    var $gutter = $("." + this.options.classes.gutter);
+    this.gutterHeight = $gutter.height();
+    this.gutterWidth = $gutter.width();
+
+    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
+    this.editors.left.ace.setReadOnly(!this.options.left.editable);
+    this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
+
+    this.diff();
   };
 </div>
 </body>
