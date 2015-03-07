@@ -109,34 +109,50 @@
 
     var acediff = this;
 
-    //if (acediff.options.lockScrolling) {
+    // acediff.options.lockScrolling
 
     this.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-      // output the middle line on each side
+
+      // find the middle line in the left editor
       var info = getScrollingInfo(acediff);
-      var leftVisibleRow = acediff.editors.left.ace.getFirstVisibleRow();
-      var rightVisibleRow = acediff.editors.right.ace.getFirstVisibleRow();
-      var numVisibleRows = info.editorHeight / acediff.lineHeight;
-      var leftMiddleLine = Math.ceil(leftVisibleRow + (numVisibleRows / 2));
-      var rightMiddleLine = Math.floor(rightVisibleRow + (numVisibleRows / 2));
+      var halfEditorHeight = info.editorHeight / 2;
+      var leftMiddleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
+
+      /// _______________________________________________
+
 
       // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
-      var offsets = getDiffRowOffsets(acediff, acediff.editors.left, leftMiddleLine);
-
+      var offsets = getDiffRowOffsets(acediff, leftMiddleLine);
       var rowDiff = offsets.totalInserts - offsets.totalDeletes;
 
-      // if positive, the left editor has more diffs than the right. If 0 or negative,
-      if (rowDiff > 0) {
-//        console.log("!", rowDiff);
-      } else {
-        var rightScrollHeight = parseInt(scroll) - (acediff.lineHeight * rowDiff);
 
-        // like to do something sweet here......
+      // our default right scroll height is the current scroll height in the left editor + the height of all deletes
+      // in the RIGHT editor
+      var rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight);
 
 
+      // left editor has more diffs at this point
+      if (rowDiff <= 0) {
+        rightScrollHeight = parseInt(scroll) - (acediff.lineHeight * rowDiff);
 
-        acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
+        if (offsets.inLeftDiff) {
+          var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
+
+          if (offsets.inRightDiff) {
+            var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
+
+            var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
+            console.log(ratio);
+
+            var numRightDiffRows = offsets.rightDiffEndLine - offsets.rightDiffStartLine;
+            var numRightDiffRowsInPixels = numRightDiffRows * acediff.lineHeight;
+
+            rightScrollHeight = parseInt(scroll) + (ratio * numRightDiffRowsInPixels);
+          }
+        }
       }
+
+      acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
 
       updateGap(acediff, 'left', scroll);
     });
@@ -164,29 +180,61 @@
     }
   };
 
-  function getDiffRowOffsets(acediff, editor, line) {
-    var totalInserts = 0, totalDeletes = 0;
-    for (var i=0; i<acediff.diffs.length; i++) {
+  // rename
+  function getDiffRowOffsets(acediff, line) {
+    var totalInserts = 0,
+        totalDeletes = 0,
+        inLeftDiff = false,
+        inRightDiff = false;
 
+    var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine;
+
+    /*
+    scenario I want to code for here is this:
+    - we've just passed the first 1-line-high diff.
+    - we want to return the RIGHT start + end line as though the
+     */
+
+    var rightOffset = 0;
+    for (var i=0; i<acediff.diffs.length; i++) {
       if (acediff.diffs[i].leftStartLine < line) {
         if (acediff.diffs[i].leftEndLine < line) {
           totalInserts += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
+          rightOffset += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         } else {
-          // here we're in a diff on the left. This'll probably be useful
+          inLeftDiff = true;
+          leftDiffStartLine = acediff.diffs[i].leftStartLine;
+          leftDiffEndLine = acediff.diffs[i].leftEndLine;
         }
       }
 
       if (acediff.diffs[i].rightStartLine < line) {
         if (acediff.diffs[i].rightEndLine < line) {
+
+      //    console.log("we have passed a right diff", acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine );
+
           totalDeletes += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         } else {
+        //  console.log("in right diff");
+
+          inRightDiff = true;
+          rightDiffStartLine = acediff.diffs[i].rightStartLine;
+          rightDiffEndLine = acediff.diffs[i].rightEndLine;
         }
       }
     }
 
     return {
       totalInserts: totalInserts,
+      inLeftDiff: inLeftDiff,
+      leftDiffStartLine: leftDiffStartLine,
+      leftDiffEndLine: leftDiffEndLine,
       totalDeletes: totalDeletes,
+      inRightDiff: inRightDiff,
+      rightDiffStartLine: rightDiffStartLine,
+      rightDiffEndLine: rightDiffEndLine,
+
+      rightOffset: rightOffset - totalInserts
     };
   };
 

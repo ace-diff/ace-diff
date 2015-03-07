@@ -15,13 +15,14 @@
 </head>
 <body>
 
+<div id="testLine" style="position: absolute; border-bottom:1px solid black; top: 50%; width:100%; z-index: 1000"></div>
+
 <div id="flex-container">
     <div><div id="acediff-left-editor"></div></div>
     <div class="acediff-gutter"></div>
     <div>
     <div><div id="acediff-right-editor"></div></div>
 </div>
-
 
 <script>
 $(function () {
@@ -43,8 +44,7 @@ $(function () {
 
 
 <!-- for illustration purposes -->
-<div id="content1" style="display:none">
-  var AceDiff = function(options) {
+<div id="content1" style="display:none">  var AceDiff = function(options) {
     this.options = {};
     extend(true, this.options, {
       element: null,
@@ -107,7 +107,6 @@ $(function () {
         id: 'acediff-right-editor',
         content: null,
         mode: null,
-        editable: false
       }
     }, options);
 
@@ -140,14 +139,15 @@ $(function () {
   };
 </div>
 
-<div id="content2" style="display:none">
-  var AceDiff = function(options) {
+<div id="content2" style="display:none">  var AceDiff = function(options) {
     this.options = {};
     extend(true, this.options, {
+      element: null,
+      mode: null,
+      lockScrolling: false,
       left: {
         id: 'acediff-left-editor',
         content: null,
-
         mode: null,
         editable: true
       },
@@ -156,22 +156,24 @@ $(function () {
         content: null,
         mode: null,
         editable: false
-      },
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000
+      }
     }, options);
 
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
     // editor content
-    this.editors = {
+    this.editors = {dfdf
+        sdfsdfsdfsdfsdfs
+        sdf
+        sdf
+        sdf
+        sdf
+        sdf
+        sdfsd
+        fsdf
+        sdfsd
+        f
       left: {
         ace: ace.edit(this.options.left.id),
-        markers: [],
-        lineLengths: []
-      },
-      right: {
-        ace: ace.edit(this.options.right.id),
         markers: [],
         lineLengths: []
       }
@@ -184,11 +186,15 @@ $(function () {
     this.gutterHeight = $gutter.height();
     this.gutterWidth = $gutter.width();
 
-    // set up the editors
     this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
     this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.createCopyContainers();
+    this.createGutter();
+
+    this.diff();
   };
   var AceDiff = function(options) {
     this.options = {};
