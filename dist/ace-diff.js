@@ -19,7 +19,9 @@
     EDITOR_LEFT: 'left',
     RTL: 'rtl',
     LTR: 'ltr',
-    SVG_NS: 'http://www.w3.org/2000/svg'
+    SVG_NS: 'http://www.w3.org/2000/svg',
+    DIFF_GRANULARITY_NORMAL: 'normal',
+    DIFF_GRANULARITY_BROAD: 'broad'
   };
 
   // our constructor
@@ -27,6 +29,7 @@
     this.options = {};
     extend(true, this.options, {
       mode: null,
+      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
       lockScrolling: true,
       left: {
         id: 'acediff-left-editor',
@@ -172,6 +175,11 @@
 
       clearDiffs(this);
       decorate(this);
+    },
+
+    // TODO
+    destroy: function () {
+
     }
   };
 
@@ -191,8 +199,8 @@
 
     //
     var diff = acediff.diff.bind(acediff);
-    acediff.editors.left.ace.on("change", diff);
-    acediff.editors.right.ace.on("change", diff);
+    acediff.editors.left.ace.on('change', diff);
+    acediff.editors.right.ace.on('change', diff);
 
     if (acediff.options.left.showCopyLTR) {
       on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function (e) {
@@ -327,12 +335,12 @@
 
     var contentToInsert = '';
     for (var i=startLine; i<endLine; i++) {
-      contentToInsert += getLine(sourceEditor, i) + "\n";
+      contentToInsert += getLine(sourceEditor, i) + '\n';
     }
 
     var startContent = '';
     for (var i=0; i<targetStartLine; i++) {
-      startContent += getLine(targetEditor, i) + "\n";
+      startContent += getLine(targetEditor, i) + '\n';
     }
 
     var endContent = '';
@@ -340,7 +348,7 @@
     for (var i=targetEndLine; i<totalLines; i++) {
       endContent += getLine(targetEditor, i);
       if (i<totalLines-1) {
-        endContent += "\n";
+        endContent += '\n';
       }
     }
 
@@ -373,7 +381,7 @@
       endLine = startLine;
     }
 
-    var classNames = className + " " + ((endLine > startLine) ? "lines" : "targetOnly");
+    var classNames = className + ' ' + ((endLine > startLine) ? 'lines' : 'targetOnly');
     endLine--; // because endLine is always + 1
 
     // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
@@ -435,8 +443,8 @@
       c = acediff.options.classes.connector;
     }
 
-    var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
-    var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
+    var verticalLine1 = 'L' + p2_x + ',' + p2_y + ' ' + p4_x + ',' + p4_y;
+    var verticalLine2 = 'L' + p3_x + "," + p3_y + ' ' + p1_x + ',' + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
 
     var gutterSVG = $("#" + acediff.options.classes.gutterID + " svg")[0];
