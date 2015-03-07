@@ -27,7 +27,6 @@
 
     this.options = {};
     extend(true, this.options, {
-      element: null,
       mode: null,
       lockScrolling: false,
       left: {
@@ -77,9 +76,6 @@
 
     this.addEventHandlers();
 
-    // TODO
-    //this.createDiffContainer();
-
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
     var $gutter = $("." + this.options.classes.gutter);
     this.gutterHeight = $gutter.height();
@@ -106,7 +102,6 @@
 
 
   AceDiff.prototype.addEventHandlers = function () {
-
     var acediff = this;
 
     // acediff.options.lockScrolling
@@ -118,38 +113,26 @@
       var halfEditorHeight = info.editorHeight / 2;
       var leftMiddleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
 
-      /// _______________________________________________
-
-
       // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
       var offsets = getDiffRowOffsets(acediff, leftMiddleLine);
-      var rowDiff = offsets.totalInserts - offsets.totalDeletes;
-
 
       // our default right scroll height is the current scroll height in the left editor + the height of all deletes
-      // in the RIGHT editor
-      var rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight);
+      // in the RIGHT editor (surely it should left offsets too?)
+      var rightOffsetInPixels = offsets.rightOffset * acediff.lineHeight;
+      var rightScrollHeight = parseInt(scroll) + rightOffsetInPixels;
 
+      // the only time we need to do smooth scrolling on the right if when we're in a left diff
+      if (offsets.inLeftDiff) {
+        var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
+        var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
+        var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
 
-      // left editor has more diffs at this point
-      if (rowDiff <= 0) {
-        rightScrollHeight = parseInt(scroll) - (acediff.lineHeight * rowDiff);
+        var hmm = getDiffRowOffsets(acediff, leftMiddleLine + offsets.rightOffset);
 
-        if (offsets.inLeftDiff) {
-          var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
+        var rightDiffInPixels = (hmm.rightDiffEndLine - hmm.rightDiffStartLine) * acediff.lineHeight;
+        var leftDiffInPixels = (offsets.leftDiffEndLine - offsets.leftDiffStartLine) * acediff.lineHeight;
 
-          if (offsets.inRightDiff) {
-            var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
-
-            var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
-            console.log(ratio);
-
-            var numRightDiffRows = offsets.rightDiffEndLine - offsets.rightDiffStartLine;
-            var numRightDiffRowsInPixels = numRightDiffRows * acediff.lineHeight;
-
-            rightScrollHeight = parseInt(scroll) + (ratio * numRightDiffRowsInPixels);
-          }
-        }
+        rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight) + (ratio * rightDiffInPixels) - (ratio * leftDiffInPixels);
       }
 
       acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
@@ -157,9 +140,11 @@
       updateGap(acediff, 'left', scroll);
     });
 
+
     this.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
       updateGap(acediff, 'right', scroll);
     });
+
 
     var diff = this.diff.bind(this);
     this.editors.left.ace.on("change", diff);
@@ -178,7 +163,16 @@
         onCopy(e, C.RTL);
       });
     }
+
+
+    var onResize = debounce(function() {
+      // TODO this should re-init the acediff to ensure the gutter is the right size
+      acediff.diff();
+    }, 250);
+
+    window.addEventListener('resize', onResize);
   };
+
 
   // rename
   function getDiffRowOffsets(acediff, line) {
@@ -193,13 +187,15 @@
     scenario I want to code for here is this:
     - we've just passed the first 1-line-high diff.
     - we want to return the RIGHT start + end line as though the
-     */
+    */
 
     var rightOffset = 0;
     for (var i=0; i<acediff.diffs.length; i++) {
       if (acediff.diffs[i].leftStartLine < line) {
         if (acediff.diffs[i].leftEndLine < line) {
           totalInserts += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
+          //  console.log(acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine);
+
           rightOffset += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         } else {
           inLeftDiff = true;
@@ -208,21 +204,22 @@
         }
       }
 
+      // problem: this returns TRUE when we have a long diff on the right, even though visually it looks like
+      // we've passed it by.
       if (acediff.diffs[i].rightStartLine < line) {
         if (acediff.diffs[i].rightEndLine < line) {
-
-      //    console.log("we have passed a right diff", acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine );
-
           totalDeletes += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         } else {
-        //  console.log("in right diff");
-
           inRightDiff = true;
           rightDiffStartLine = acediff.diffs[i].rightStartLine;
           rightDiffEndLine = acediff.diffs[i].rightEndLine;
+          //console.log(rightDiffStartLine, rightDiffEndLine);
         }
       }
     }
+
+    // the right offset is only ever the
+    rightOffset = rightOffset - totalInserts;
 
     return {
       totalInserts: totalInserts,
@@ -234,7 +231,7 @@
       rightDiffStartLine: rightDiffStartLine,
       rightDiffEndLine: rightDiffEndLine,
 
-      rightOffset: rightOffset - totalInserts
+      rightOffset: rightOffset
     };
   };
 
@@ -976,21 +973,20 @@
     });
   }
 
-//  function debounce(func, wait, immediate) {
-//    var timeout;
-//    return function() {
-//      var context = this, args = arguments;
-//      var later = function() {
-//        timeout = null;
-//        if (!immediate) func.apply(context, args);
-//      };
-//      var callNow = immediate && !timeout;
-//      clearTimeout(timeout);
-//      timeout = setTimeout(later, wait);
-//      if (callNow) func.apply(context, args);
-//    };
-//  };
-//  var myEfficientFn = debounce(function() { }, 250);
+  function debounce(func, wait, immediate) {
+    var timeout;
+    return function() {
+      var context = this, args = arguments;
+      var later = function() {
+        timeout = null;
+        if (!immediate) func.apply(context, args);
+      };
+      var callNow = immediate && !timeout;
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+      if (callNow) func.apply(context, args);
+    };
+  };
 
   return AceDiff;
 
