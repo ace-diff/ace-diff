@@ -23,8 +23,7 @@
   };
 
   // our constructor
-  var AceDiff = function(options) {
-
+  function AceDiff(options) {
     this.options = {};
     extend(true, this.options, {
       mode: null,
@@ -99,6 +98,84 @@
   };
 
 
+  // our public API
+  AceDiff.prototype = {
+
+    // allows on-the-fly changes to the AceDiff instance settings
+    setOptions: function (options) {
+      extend(true, this.options, options);
+    },
+
+    // returns the editor mode
+    getMode: function(editor) {
+      var mode = this.options.mode;
+      if (editor === C.EDITOR_LEFT && this.options.left.mode !== null) {
+        mode = this.options.left.mode;
+      }
+      if (editor === C.EDITOR_RIGHT && this.options.right.mode !== null) {
+        mode = this.options.right.mode;
+      }
+      return mode;
+    },
+
+    getNumDiffs: function() {
+      return this.diffs.length;
+    },
+
+    // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
+    // but just to be safe,
+    diff: function() {
+      var dmp = new diff_match_patch();
+      var val1 = this.editors.left.ace.getSession().getValue();
+      var val2 = this.editors.right.ace.getSession().getValue();
+      var diff = dmp.diff_main(val2, val1);
+      dmp.diff_cleanupSemantic(diff);
+
+      this.editors.left.lineLengths  = getLineLengths(this.editors.left);
+      this.editors.right.lineLengths = getLineLengths(this.editors.right);
+
+      // parse the raw diff into something a little more palatable
+      var diffs = [];
+      var offset = {
+        left: 0,
+        right: 0
+      };
+
+      diff.forEach(function(chunk) {
+        var chunkType = chunk[0];
+        var text = chunk[1];
+
+        // oddly, occasionally the algorithm returns a diff with no changes made
+        if (text.length === 0) {
+          return;
+        }
+        if (chunkType === C.DIFF_EQUAL) {
+          offset.left += text.length;
+          offset.right += text.length;
+        } else if (chunkType === C.DIFF_DELETE) {
+          diffs.push(computeDiff(this, C.DIFF_DELETE, offset.left, offset.right, text));
+          offset.right += text.length;
+
+        } else if (chunkType === C.DIFF_INSERT) {
+          diffs.push(computeDiff(this, C.DIFF_INSERT, offset.left, offset.right, text));
+          offset.left += text.length;
+        }
+      }, this);
+
+      // simplify our computed diffs; this groups together multiple diffs on subsequent lines
+      this.diffs = simplifyDiffs(diffs);
+
+      // if we're dealing with too many diffs, fail silently
+      if (this.diffs.length > this.options.maxDiffs) {
+        return;
+      }
+
+      clearDiffs(this);
+      decorate(this);
+    }
+  };
+
+
   function addEventHandlers(acediff) {
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
       if (acediff.options.lockScrolling) {
@@ -117,17 +194,14 @@
     acediff.editors.left.ace.on("change", diff);
     acediff.editors.right.ace.on("change", diff);
 
-    // TODO necessary?
-    var onCopy = copy.bind(acediff);
-
     if (acediff.options.left.showCopyLTR) {
       on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function (e) {
-        onCopy(e, C.LTR);
+        copy(acediff, e, C.LTR);
       });
     }
     if (acediff.options.right.showCopyRTL) {
       on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function (e) {
-        onCopy(e, C.RTL);
+        copy(acediff, e, C.RTL);
       });
     }
 
@@ -137,7 +211,7 @@
     }, 250);
 
     window.addEventListener('resize', onResize);
-  };
+  }
 
 
   // only for left editor right now
@@ -174,7 +248,7 @@
   }
 
 
-  // rename
+  // TODO rename, refactor
   function getDiffRowOffsets(acediff, line) {
     var totalInserts = 0,
         totalDeletes = 0,
@@ -182,12 +256,6 @@
         inRightDiff = false;
 
     var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine;
-
-    /*
-    scenario I want to code for here is this:
-    - we've just passed the first 1-line-high diff.
-    - we want to return the RIGHT start + end line as though the
-    */
 
     var rightOffset = 0;
     for (var i=0; i<acediff.diffs.length; i++) {
@@ -213,7 +281,6 @@
           inRightDiff = true;
           rightDiffStartLine = acediff.diffs[i].rightStartLine;
           rightDiffEndLine = acediff.diffs[i].rightEndLine;
-          //console.log(rightDiffStartLine, rightDiffEndLine);
         }
       }
     }
@@ -233,26 +300,25 @@
 
       rightOffset: rightOffset
     };
-  };
+  }
 
 
-  // this seems woefully inefficient, but since it only occurs on a copy action by the user, I'll refactor it last
-  function copy(e, dir) {
+  function copy(acediff, e, dir) {
     var diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-    var diff = this.diffs[diffIndex];
+    var diff = acediff.diffs[diffIndex];
     var sourceEditor, targetEditor;
 
     var startLine, endLine, targetStartLine, targetEndLine;
     if (dir === C.LTR) {
-      sourceEditor = this.editors.left;
-      targetEditor = this.editors.right;
+      sourceEditor = acediff.editors.left;
+      targetEditor = acediff.editors.right;
       startLine = diff.leftStartLine;
       endLine = diff.leftEndLine;
       targetStartLine = diff.rightStartLine;
       targetEndLine = diff.rightEndLine;
     } else {
-      sourceEditor = this.editors.right;
-      targetEditor = this.editors.left;
+      sourceEditor = acediff.editors.right;
+      targetEditor = acediff.editors.left;
       startLine = diff.rightStartLine;
       endLine = diff.rightEndLine;
       targetStartLine = diff.leftStartLine;
@@ -285,25 +351,8 @@
     targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
     targetEditor.ace.getSession().setScrollTop(parseInt(h));
 
-    this.diff();
+    acediff.diff();
   }
-
-
-  // allows on-the-fly changes to the AceDiff instance settings
-  AceDiff.prototype.setOptions = function (options) {
-    extend(true, this.options, options);
-  };
-
-  AceDiff.prototype.getMode = function(editor) {
-    var mode = this.options.mode;
-    if (editor === C.EDITOR_LEFT && this.options.left.mode !== null) {
-      mode = this.options.left.mode;
-    }
-    if (editor === C.EDITOR_RIGHT && this.options.right.mode !== null) {
-      mode = this.options.right.mode;
-    }
-    return mode;
-  };
 
 
   function getLineLengths(editor) {
@@ -313,9 +362,7 @@
       lineLengths.push(line.length + 1); // +1 for the newline char
     });
     return lineLengths;
-  };
-
-
+  }
 
 
   // shows a diff in one of the two editors.
@@ -334,65 +381,6 @@
   }
 
 
-  // our main diffing function
-  AceDiff.prototype.diff = function() {
-
-    // start by doing our actual diffs
-    var dmp = new diff_match_patch();
-    var val1 = this.editors.left.ace.getSession().getValue();
-    var val2 = this.editors.right.ace.getSession().getValue();
-    var diff = dmp.diff_main(val2, val1);
-    dmp.diff_cleanupSemantic(diff);
-
-    this.editors.left.lineLengths  = getLineLengths(this.editors.left);
-    this.editors.right.lineLengths = getLineLengths(this.editors.right);
-
-    // parse the raw diff into something a little more palatable
-    var diffs = [];
-    var offset = {
-      left: 0,
-      right: 0
-    };
-
-    diff.forEach(function(chunk) {
-      var chunkType = chunk[0];
-      var text = chunk[1];
-
-      // oddly, occasionally the algorithm returns a diff with no changes made
-      if (text.length === 0) {
-        return;
-      }
-      if (chunkType === C.DIFF_EQUAL) {
-        offset.left += text.length;
-        offset.right += text.length;
-      } else if (chunkType === C.DIFF_DELETE) {
-        diffs.push(this.computeDiff(C.DIFF_DELETE, offset.left, offset.right, text));
-        offset.right += text.length;
-
-      } else if (chunkType === C.DIFF_INSERT) {
-        diffs.push(this.computeDiff(C.DIFF_INSERT, offset.left, offset.right, text));
-        offset.left += text.length;
-      }
-    }, this);
-
-    // simplify our computed diffs; this groups together multiple diffs on subsequent lines
-    this.diffs = simplifyDiffs(diffs);
-
-    // if we're dealing with too many diffs, fail silently
-    if (this.diffs.length > this.options.maxDiffs) {
-      return;
-    }
-
-    clearDiffs(this);
-    decorate(this);
-  };
-
-
-  AceDiff.prototype.getNumDiffs = function () {
-    return this.diffs.length;
-  };
-
-
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   function updateGap(acediff, editor, scroll) {
 
@@ -401,7 +389,7 @@
 
     // reposition the copy containers containing all the arrows
     positionCopyContainers(acediff);
-  };
+  }
 
 
   function clearDiffs(acediff) {
@@ -411,7 +399,7 @@
     acediff.editors.right.markers.forEach(function (marker) {
       this.editors.right.ace.getSession().removeMarker(marker);
     }, acediff);
-  };
+  }
 
 
   function addConnector(acediff, dir, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
@@ -457,7 +445,7 @@
     el.setAttribute("d", d);
     el.setAttribute("class", c);
     gutterSVG.appendChild(el);
-  };
+  }
 
 
   function addCopyArrows(acediff, info, diffIndex) {
@@ -482,7 +470,8 @@
       });
       $('.' + acediff.options.classes.copyLeftContainer).append(arrow);
     }
-  };
+  }
+
 
   function positionCopyContainers(acediff) {
     var leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
@@ -490,7 +479,7 @@
 
     $("." + acediff.options.classes.copyRightContainer).css({ top: -leftTopOffset + 'px' });
     $("." + acediff.options.classes.copyLeftContainer).css({ top: -rightTopOffset + 'px' });
-  };
+  }
 
 
   /**
@@ -511,7 +500,7 @@
    * rightEndLine, it means that new content from the other editor is being inserted and a single 1px line will be
    * drawn.
    */
-  AceDiff.prototype.computeDiff = function(diffType, offsetLeft, offsetRight, diffText) {
+  function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
     var lineInfo = {};
 
     // this was added in to hack around an oddity with the Google lib. Sometimes it would include a newline
@@ -522,14 +511,14 @@
     if (diffType === C.DIFF_INSERT) {
 
       // pretty confident this returns the right stuff for the left editor: start & end line & char
-      var info = getSingleDiffInfo(this.editors.left, offsetLeft, diffText);
+      var info = getSingleDiffInfo(acediff.editors.left, offsetLeft, diffText);
 
       // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
       // going to be used as the start line for the diff though.
-      var currentLineOtherEditor = getLineForCharPosition(this.editors.right, offsetRight);
-      var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.right, currentLineOtherEditor);
-      var numCharsOnLeftEditorStartLine = getCharsOnLine(this.editors.left, info.startLine);
-      var numCharsOnLine = getCharsOnLine(this.editors.left, info.startLine);
+      var currentLineOtherEditor = getLineForCharPosition(acediff.editors.right, offsetRight);
+      var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.right, currentLineOtherEditor);
+      var numCharsOnLeftEditorStartLine = getCharsOnLine(acediff.editors.left, info.startLine);
+      var numCharsOnLine = getCharsOnLine(acediff.editors.left, info.startLine);
 
       // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
       // back from google as being on the last char of the previous line so we need to bump it up one
@@ -537,7 +526,7 @@
       if (numCharsOnLine === 0 && newContentStartsWithNewline) {
         newContentStartsWithNewline = false;
       }
-      if (info.startChar === 0 && isLastChar(this.editors.right, offsetRight, newContentStartsWithNewline)) {
+      if (info.startChar === 0 && isLastChar(acediff.editors.right, offsetRight, newContentStartsWithNewline)) {
         rightStartLine = currentLineOtherEditor + 1;
       }
 
@@ -570,12 +559,12 @@
       };
 
     } else {
-      var info = getSingleDiffInfo(this.editors.right, offsetRight, diffText);
+      var info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText);
 
-      var currentLineOtherEditor = getLineForCharPosition(this.editors.left, offsetLeft);
-      var numCharsOnLineOtherEditor = getCharsOnLine(this.editors.left, currentLineOtherEditor);
-      var numCharsOnRightEditorStartLine = getCharsOnLine(this.editors.right, info.startLine);
-      var numCharsOnLine = getCharsOnLine(this.editors.right, info.startLine);
+      var currentLineOtherEditor = getLineForCharPosition(acediff.editors.left, offsetLeft);
+      var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.left, currentLineOtherEditor);
+      var numCharsOnRightEditorStartLine = getCharsOnLine(acediff.editors.right, info.startLine);
+      var numCharsOnLine = getCharsOnLine(acediff.editors.right, info.startLine);
 
       // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
       // back from google as being on the last char of the previous line so we need to bump it up one
@@ -583,7 +572,7 @@
       if (numCharsOnLine === 0 && newContentStartsWithNewline) {
         newContentStartsWithNewline = false;
       }
-      if (info.startChar === 0 && isLastChar(this.editors.left, offsetLeft, newContentStartsWithNewline)) {
+      if (info.startChar === 0 && isLastChar(acediff.editors.left, offsetLeft, newContentStartsWithNewline)) {
         leftStartLine = currentLineOtherEditor + 1;
       }
 
@@ -614,7 +603,7 @@
     }
 
     return lineInfo;
-  };
+  }
 
 
   // helper to return the startline, endline, startChar and endChar for a diff in a particular editor
@@ -671,9 +660,11 @@
     return getLine(editor, line).length;
   }
 
+
   function getLine(editor, line) {
     return editor.ace.getSession().doc.getLine(line);
   }
+
 
   function getLineForCharPosition(editor, offsetChars) {
     var lines = editor.ace.getSession().doc.getAllLines(),
@@ -683,11 +674,6 @@
     for (var i=0; i<lines.length; i++) {
       var lineLength = lines[i].length + 1; // +1 needed for newline char
       runningTotal += lineLength;
-
-      //if (i===lines.length-1 && offsetChars === runningTotal-1) {
-      //  foundLine = i+1;
-      //  break;
-      //} else {
 
       if (offsetChars <= runningTotal) {
         foundLine = i;
@@ -722,10 +708,12 @@
     return isLastChar;
   }
 
+
   function createArrow(info) {
     return '<div class="' + info.className + '" style="top:' + info.topOffset + 'px" title="' + info.tooltip + '" ' +
       'data-diff-index="' + info.diffIndex + '">' + info.arrowContent + '</div>';
   }
+
 
   function createGutter(acediff) {
     acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
@@ -740,7 +728,7 @@
     svg.setAttribute('height', height);
 
     document.getElementById(acediff.options.classes.gutterID).appendChild(svg);
-  };
+  }
 
 
   // creates two contains for positioning the copy left + copy right arrows
@@ -748,15 +736,18 @@
     $("#" + acediff.options.classes.gutterID)
       .append('<div class="' + acediff.options.classes.copyRightContainer + '"></div>')
       .append('<div class="' + acediff.options.classes.copyLeftContainer + '"></div>');
-  };
+  }
+
 
   function clearGutter(gutterID) {
     $("#" + gutterID + " svg").empty();
   }
 
+
   function clearArrows(acediff) {
     $("." + acediff.options.classes.copyLeftContainer + ", ." + acediff.options.classes.copyRightContainer).empty();
-  };
+  }
+
 
   /*
    * This combines multiple rows where, say, line 1 => line 1, line 2 => line 2, line 3-4 => line 3. That could be
@@ -821,7 +812,7 @@
         addCopyArrows(this, info, diffIndex);
       }
     }, acediff);
-  };
+  }
 
 
   function extend() {
@@ -942,7 +933,6 @@
   }
 
 
-  // IE-friendly? Doesn't look it
   function on(elSelector, eventName, selector, fn) {
     var element = document.querySelector(elSelector);
 
@@ -963,6 +953,7 @@
       }
     });
   }
+
 
   function debounce(func, wait, immediate) {
     var timeout;
