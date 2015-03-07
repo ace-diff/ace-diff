@@ -25,7 +25,7 @@ module.exports = function(grunt) {
           "* ace-diff\n" +
           "* @author Ben Keen\n" +
           "* @version " + packageFile.version + "\n" +
-          "* @date Mar 1st, 2015\n" +
+          "* @date " + packageFile.date + "\n" +
           "* @repo http://github.com/benkeen/ace-diff\n" +
           "*/\n"
         }

@@ -27,6 +27,7 @@
   // our constructor
   function AceDiff(options) {
     this.options = {};
+
     extend(true, this.options, {
       mode: null,
       theme: null,
@@ -91,8 +92,8 @@
     this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
     this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
-    createCopyContainers(this);
     createGutter(this);
+    createCopyContainers(this);
 
     // if the data is being supplied by an option, set the editor values now
     if (this.options.left.content) {
@@ -392,7 +393,7 @@
       }
     }
 
-    endContent = endContent.replace(/\s*$/, "");
+    endContent = endContent.replace(/\s*$/, '');
 
     // keep track of the scroll height
     var h = targetEditor.ace.getSession().getScrollTop();
@@ -487,12 +488,10 @@
     var verticalLine2 = 'L' + p3_x + "," + p3_y + ' ' + p1_x + ',' + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
 
-    var gutterSVG = $("#" + acediff.options.classes.gutterID + " svg")[0];
-
-    var el = document.createElementNS(C.SVG_NS, "path");
-    el.setAttribute("d", d);
-    el.setAttribute("class", c);
-    gutterSVG.appendChild(el);
+    var el = document.createElementNS(C.SVG_NS, 'path');
+    el.setAttribute('d', d);
+    el.setAttribute('class', c);
+    acediff.gutterSVG.appendChild(el);
   }
 
 
@@ -505,7 +504,7 @@
         diffIndex: diffIndex,
         arrowContent: acediff.options.classes.newCodeConnectorLinkContent
       });
-      $('.' + acediff.options.classes.copyRightContainer).append(arrow);
+      acediff.copyRightContainer.appendChild(arrow);
     }
 
     if (info.rightEndLine > info.rightStartLine) {
@@ -516,7 +515,7 @@
         diffIndex: diffIndex,
         arrowContent: acediff.options.classes.deletedCodeConnectorLinkContent
       });
-      $('.' + acediff.options.classes.copyLeftContainer).append(arrow);
+      acediff.copyLeftContainer.appendChild(arrow);
     }
   }
 
@@ -525,8 +524,8 @@
     var leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
     var rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
 
-    $("." + acediff.options.classes.copyRightContainer).css({ top: -leftTopOffset + 'px' });
-    $("." + acediff.options.classes.copyLeftContainer).css({ top: -rightTopOffset + 'px' });
+    acediff.copyRightContainer.style.cssText = 'top: ' + (-leftTopOffset) + 'px';
+    acediff.copyLeftContainer.style.cssText = 'top: ' + (-rightTopOffset) + 'px';
   }
 
 
@@ -758,8 +757,21 @@
 
 
   function createArrow(info) {
-    return '<div class="' + info.className + '" style="top:' + info.topOffset + 'px" title="' + info.tooltip + '" ' +
-      'data-diff-index="' + info.diffIndex + '">' + info.arrowContent + '</div>';
+    var el = document.createElement('div');
+
+    var props = {
+      'class': info.className,
+      'style': 'top:' + info.topOffset + 'px',
+      title: info.tooltip,
+      'data-diff-index': info.diffIndex
+    };
+
+    for (var key in props) {
+      el.setAttribute(key, props[key]);
+    }
+    el.textContent = info.arrowContent;
+
+    return el;
   }
 
 
@@ -771,29 +783,35 @@
     var rightHeight = acediff.editors.right.ace.getSession().getLength() * acediff.lineHeight;
     var height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
 
-    var svg = document.createElementNS(C.SVG_NS, 'svg');
-    svg.setAttribute('width', acediff.gutterWidth);
-    svg.setAttribute('height', height);
+    acediff.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
+    acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
+    acediff.gutterSVG.setAttribute('height', height);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(svg);
+    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.gutterSVG);
   }
 
 
   // creates two contains for positioning the copy left + copy right arrows
   function createCopyContainers(acediff) {
-    $("#" + acediff.options.classes.gutterID)
-      .append('<div class="' + acediff.options.classes.copyRightContainer + '"></div>')
-      .append('<div class="' + acediff.options.classes.copyLeftContainer + '"></div>');
+    acediff.copyRightContainer = document.createElement('div');
+    acediff.copyRightContainer.setAttribute('class', acediff.options.classes.copyRightContainer);
+    acediff.copyLeftContainer = document.createElement('div');
+    acediff.copyLeftContainer.setAttribute('class', acediff.options.classes.copyLeftContainer);
+
+    acediff.gutterSVG
+      .appendChild(acediff.copyRightContainer)
+      .appendChild(acediff.copyLeftContainer);
   }
 
 
-  function clearGutter(gutterID) {
-    $("#" + gutterID + " svg").empty();
+  function clearGutter(gutter) {
+    gutter.innerHTML = '';
   }
 
 
   function clearArrows(acediff) {
-    $("." + acediff.options.classes.copyLeftContainer + ", ." + acediff.options.classes.copyRightContainer).empty();
+    acediff.copyLeftContainer.innerHTML = '';
+    acediff.copyRightContainer.innerHTML = '';
   }
 
 
@@ -850,7 +868,7 @@
 
 
   function decorate(acediff) {
-    clearGutter(acediff.options.classes.gutterID);
+    clearGutter(acediff.gutterSVG);
     clearArrows(acediff);
 
     acediff.diffs.forEach(function(info, diffIndex) {
