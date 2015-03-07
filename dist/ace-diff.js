@@ -166,7 +166,7 @@
       }, this);
 
       // simplify our computed diffs; this groups together multiple diffs on subsequent lines
-      this.diffs = simplifyDiffs(diffs);
+      this.diffs = simplifyDiffs(this, diffs);
 
       // if we're dealing with too many diffs, fail silently
       if (this.diffs.length > this.options.maxDiffs) {
@@ -761,8 +761,12 @@
    * This combines multiple rows where, say, line 1 => line 1, line 2 => line 2, line 3-4 => line 3. That could be
    * reduced to a single connector line 1=4 => line 1-3
    */
-  function simplifyDiffs(diffs) {
+  function simplifyDiffs(acediff, diffs) {
     var groupedDiffs = [];
+
+    function compare(val) {
+      return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_NORMAL) ? val < 1 : val <= 1;
+    }
 
     diffs.forEach(function(diff, index) {
       if (index === 0) {
@@ -774,8 +778,8 @@
       // than create a new one
       var isGrouped = false;
       for (var i=0; i<groupedDiffs.length; i++) {
-        if ((Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine) < 1) &&
-            (Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine) < 1)) {
+        if (compare(Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine)) &&
+            compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
 
           // update the existing grouped diff to expand its horizons to include this new diff start + end lines
           groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
@@ -914,14 +918,11 @@
   }
 
 
-  // helper to return pertinent info about
   function getScrollingInfo(acediff) {
     return {
       leftScrollTop: acediff.editors.left.ace.getSession().getScrollTop(),
       rightScrollTop: acediff.editors.right.ace.getSession().getScrollTop(),
-
-      // assumed same for both left and right
-      editorHeight: document.getElementById(acediff.options.left.id).clientHeight
+      editorHeight: document.getElementById(acediff.options.left.id).clientHeight // assumed same for both left and right
     };
   }
 
@@ -976,7 +977,7 @@
       timeout = setTimeout(later, wait);
       if (callNow) func.apply(context, args);
     };
-  };
+  }
 
   return AceDiff;
 

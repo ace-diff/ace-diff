@@ -1,10 +1,12 @@
 ## Ace-diff
 
+### WORK IN PROGRESS. Should be done today or tomorrow (March 7th, 2015)
+
 This is a plugin for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
 differences in two documents and allows users to copy changes from one doc to the other. You've seen it a billion
 times; this is an Ace Editor-compatible one. :)
 
-It's built on top of the excellent, but appallingly-named [Google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
+It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
 library (*buuuurn*). That handles the hard part: the actual computation of the document diffs. This lib converts
 that raw info into an attractive visual representation on the screen for the user.
 
@@ -45,6 +47,7 @@ Alrighty! Ace-diff requires you to do three things:
 Here's some token code so you can get a sense of how onerous these requirements are. But again, I'd suggest checking
 out the [demos](http://benkeen.github.io/ace-diff/) for some hands-on code.
 
+
 #### HTML
 
 ```html
@@ -54,6 +57,7 @@ out the [demos](http://benkeen.github.io/ace-diff/) for some hands-on code.
     <div id="left-editor"></div>
 </div>
 ```
+
 
 #### Javascript
 
@@ -74,6 +78,7 @@ var differ = new AceDiff({
 });
 </script>
 ```
+
 
 #### CSS
 
@@ -128,6 +133,7 @@ Here are all the default settings. I'll explain each one in details below.
 }
 ```
 
+
 #### Diffing settings
 
 - `mode` (string, required). this is the mode for the Ace Editor, e.g. `"ace/mode/javascript"`. Check out the Ace docs
@@ -160,6 +166,7 @@ Ace Editor mode specified in `mode`.
 - `left.showCopyLTR / right.showCopyRTL` (boolean, optional, default: `true`). Whether the copy to right/left arrows should
 appear.
 
+
 #### Classes
 
 - `gutterID`: the ID of the gutter element
@@ -190,19 +197,3 @@ MIT.
 ### Changelog
 
 - **0.1.0** - March 2015 - initial version
-
-
-
-___________________
-
-
-#### Remaining TODO
-- Drop all dependencies other than the diffing lib
-
-Features to add for version 1:
-- go to next/previous diff
-- copy all to right/left
-- undo method
-
-#### Appalling slow stuff that can be improved
-- don't diff on updateGap()
