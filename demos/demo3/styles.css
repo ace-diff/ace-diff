@@ -16,13 +16,13 @@
 #flex-container>div#acediff-gutter {
     flex: 0 0 60px;
     -webkit-flex: 0 0 60px;
-    border-left: 1px solid #999999;
-    border-right: 1px solid #999999;
-    background-color: #efefef;
+    border-left: 1px solid #111111;
+    border-right: 1px solid #111111;
+    background-color: #222222;
     overflow: hidden;
 }
 #acediff-gutter svg {
-    background-color: #efefef;
+    background-color: #222222;
 }
 
 #acediff-left-editor {
@@ -38,21 +38,21 @@
     width: 100%;
 }
 .acediff-diff {
-    background-color: #d8f2ff;
-    border-top: 1px solid #a2d7f2;
-    border-bottom: 1px solid #a2d7f2;
+    background-color: #004d7a;
+    border-top: 1px solid #036daa;
+    border-bottom: 1px solid #036daa;
     position: absolute;
     z-index: 4;
 }
 .acediff-diff.targetOnly {
     height: 0px !important;
-    border-top: 1px solid #a2d7f2;
+    border-top: 1px solid #036daa;
     border-bottom: 0px;
     position: absolute;
 }
 .acediff-connector {
-    fill: #d8f2ff;
-    stroke: #a2d7f2;
+    fill: #004d7a;
+    stroke: #003554;
 }
 
 .acediff-copy-left {
@@ -63,8 +63,7 @@
     position: relative;
 }
 .acediff-copy-right div {
-    color: #000000;
-    text-shadow: 1px 1px #ffffff;
+    color: #ffffff;
     position: absolute;
     margin: -3px 2px;
     cursor: pointer;
@@ -73,8 +72,7 @@
     color: #004ea0;
 }
 .acediff-copy-left div {
-    color: #000000;
-    text-shadow: 1px 1px #ffffff;
+    color: #ffffff;
     position: absolute;
     right: 0px;
     margin: -3px 2px;

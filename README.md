@@ -24,7 +24,7 @@ it works.
 
 ### Features
 
-- Compatible with any Ace Editor mode
+- Compatible with any Ace Editor mode or theme
 - Accommodates realtime changes to one or both editors
 - Readonly option for left/right editors
 - full control over all CSS/IDs for styling. This includes styling the actual diffs and the SVG gutter lines.
@@ -98,6 +98,7 @@ Here are all the default settings. I'll explain each one in details below.
 ```javascript
 {
   mode: null,
+  theme: null,
   diffGranularity: 'normal',
   lockScrolling: true,
   showDiffs: true,
@@ -107,6 +108,7 @@ Here are all the default settings. I'll explain each one in details below.
     id: 'acediff-left-editor',
     content: null,
     mode: null,
+    theme: null,
     editable: true,
     showCopyLTR: true
   },
@@ -114,6 +116,7 @@ Here are all the default settings. I'll explain each one in details below.
     id: 'acediff-right-editor',
     content: null,
     mode: null,
+    theme: null,
     editable: true,
     showCopyRTL: true
   },
@@ -139,6 +142,7 @@ for that. This setting will be applied to both editors. I figured 99.999999% of 
 mode for both of them so you can just set it once here. If you're a mad genius and want to have different modes for
 each side, (a) *whoah man, what's your use-case?*, and (b) you can override this setting in one of the settings
 below. Read on.
+- `theme` (string, optional). This lets you set the theme for both editors.
 - `diffGranularity` (string, optional, default: `normal`). this has two options (`normal`, and `broad`). Basically this
 determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call
 as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
@@ -160,6 +164,8 @@ just leave this blank and give you element an ID of `acediff-left-editor`.
 that should appear in the leftmost editor via this property.
 - `left.mode / right.mode` (string, optional, defaults to whatever you entered in `mode`). This lets you override the default
 Ace Editor mode specified in `mode`.
+- `left.theme / right.theme` (string, optional, defaults to whatever you entered in `theme`). This lets you override the default
+Ace Editor theme specified in `theme`.
 - `left.editable / right.editable` (boolean, optional, default: `true`). Whether the left editor is editable or not.
 - `left.showCopyLTR / right.showCopyRTL` (boolean, optional, default: `true`). Whether the copy to right/left arrows should
 appear.
@@ -180,6 +186,18 @@ appear.
 
 ### API
 
+There are a few API methods available on your AceDiff instance.
+
+- `aceInstance.getEditors()`: this returns an object with left and right properties. Each contains a reference to 
+the Ace editor, in case you need to do anything with them. Ace has a ton of options which I wasn't going to support via the 
+wrapper. This should allow you to do whatever you need
+- `aceInstance.setOptions()`: this lets you set any of the above options on the fly.
+- `aceInstance.getNumDiffs()`: returns the number of diffs currently being displayed.
+- `aceInstance.diff()`: updates the diff. This shouldn't ever be required because AceDiff automatically recognizes the 
+key events like changes to the editor and window resizing. But I've included it because there may always be that fringe
+case... 
+- `aceInstance.destroy()`: destroys the AceDiff instance. Basically this just destroys both editors and cleans out the
+gutter. 
 
 
 ### Browser Support

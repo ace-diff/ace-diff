@@ -29,6 +29,7 @@
     this.options = {};
     extend(true, this.options, {
       mode: null,
+      theme: null,
       diffGranularity: C.DIFF_GRANULARITY_NORMAL,
       lockScrolling: true,
       showDiffs: true,
@@ -38,6 +39,7 @@
         id: 'acediff-left-editor',
         content: null,
         mode: null,
+        theme: null,
         editable: true,
         showCopyLTR: true
       },
@@ -45,6 +47,7 @@
         id: 'acediff-right-editor',
         content: null,
         mode: null,
+        theme: null,
         editable: true,
         showCopyRTL: true
       },
@@ -85,9 +88,8 @@
     this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
-
-    this.editors.left.ace.setTheme("ace/theme/cobalt");
-
+    this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
+    this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
     createCopyContainers(this);
     createGutter(this);
@@ -108,16 +110,17 @@
   AceDiff.prototype = {
 
     // allows on-the-fly changes to the AceDiff instance settings
-    setOptions: function (options) {
+    setOptions: function(options) {
       extend(true, this.options, options);
+      this.diff();
     },
 
-    getNumDiffs: function () {
+    getNumDiffs: function() {
       return this.diffs.length;
     },
 
     // exposes the Ace editors in case the dev needs it
-    getEditors: function () {
+    getEditors: function() {
       return {
         left: this.editors.left.ace,
         right: this.editors.right.ace
@@ -176,7 +179,7 @@
       decorate(this);
     },
 
-    destroy: function () {
+    destroy: function() {
 
       // destroy the two editors
       var leftValue = this.editors.left.ace.getValue();
@@ -210,6 +213,18 @@
   }
 
 
+  function getTheme(acediff, editor) {
+    var theme = acediff.options.theme;
+    if (editor === C.EDITOR_LEFT && acediff.options.left.theme !== null) {
+      theme = acediff.options.left.theme;
+    }
+    if (editor === C.EDITOR_RIGHT && acediff.options.right.theme !== null) {
+      theme = acediff.options.right.theme;
+    }
+    return theme;
+  }
+
+
   function addEventHandlers(acediff) {
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
       if (acediff.options.lockScrolling) {
@@ -228,12 +243,12 @@
     acediff.editors.right.ace.on('change', diff);
 
     if (acediff.options.left.showCopyLTR) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function (e) {
+      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
         copy(acediff, e, C.LTR);
       });
     }
     if (acediff.options.right.showCopyRTL) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function (e) {
+      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
         copy(acediff, e, C.RTL);
       });
     }
@@ -426,10 +441,10 @@
 
 
   function clearDiffs(acediff) {
-    acediff.editors.left.markers.forEach(function (marker) {
+    acediff.editors.left.markers.forEach(function(marker) {
       this.editors.left.ace.getSession().removeMarker(marker);
     }, acediff);
-    acediff.editors.right.markers.forEach(function (marker) {
+    acediff.editors.right.markers.forEach(function(marker) {
       this.editors.right.ace.getSession().removeMarker(marker);
     }, acediff);
   }
@@ -871,23 +886,23 @@
       },
 
       jQuery = {
-        isFunction: function (obj) {
+        isFunction: function(obj) {
           return jQuery.type(obj) === "function";
         },
         isArray: Array.isArray ||
-        function (obj) {
+        function(obj) {
           return jQuery.type(obj) === "array";
         },
-        isWindow: function (obj) {
+        isWindow: function(obj) {
           return obj !== null && obj === obj.window;
         },
-        isNumeric: function (obj) {
+        isNumeric: function(obj) {
           return !isNaN(parseFloat(obj)) && isFinite(obj);
         },
-        type: function (obj) {
+        type: function(obj) {
           return obj === null ? String(obj) : class2type[toString.call(obj)] || "object";
         },
-        isPlainObject: function (obj) {
+        isPlainObject: function(obj) {
           if (!obj || jQuery.type(obj) !== "object" || obj.nodeType) {
             return false;
           }
