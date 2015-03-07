@@ -28,7 +28,7 @@
     this.options = {};
     extend(true, this.options, {
       mode: null,
-      lockScrolling: false,
+      lockScrolling: true,
       left: {
         id: 'acediff-left-editor',
         content: null,
@@ -47,7 +47,7 @@
       showConnectors: true,
       maxDiffs: 5000,
       classes: {
-        gutter: 'acediff-gutter',
+        gutterID: 'acediff-gutter',
         diff: 'acediff-diff',
         connector: 'acediff-connector',
         newCodeConnectorLink: 'acediff-new-code-connector-copy',
@@ -74,12 +74,9 @@
       }
     };
 
-    this.addEventHandlers();
+    addEventHandlers(this);
 
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
-    var $gutter = $("." + this.options.classes.gutter);
-    this.gutterHeight = $gutter.height();
-    this.gutterWidth = $gutter.width();
 
     // set up the editors
     this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
@@ -87,9 +84,10 @@
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
 
-    this.createCopyContainers();
-    this.createGutter();
+    createCopyContainers(this);
+    createGutter(this);
 
+    // if the data is being supplied by an option, set the editor values now
     if (this.options.left.content) {
       this.editors.left.ace.setValue(this.options.left.content, -1);
     }
@@ -101,77 +99,79 @@
   };
 
 
-  AceDiff.prototype.addEventHandlers = function () {
-    var acediff = this;
-
-    // acediff.options.lockScrolling
-
-    this.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-
-      // find the middle line in the left editor
-      var info = getScrollingInfo(acediff);
-      var halfEditorHeight = info.editorHeight / 2;
-      var leftMiddleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
-
-      // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
-      var offsets = getDiffRowOffsets(acediff, leftMiddleLine);
-
-      // our default right scroll height is the current scroll height in the left editor + the height of all deletes
-      // in the RIGHT editor (surely it should left offsets too?)
-      var rightOffsetInPixels = offsets.rightOffset * acediff.lineHeight;
-      var rightScrollHeight = parseInt(scroll) + rightOffsetInPixels;
-
-      // the only time we need to do smooth scrolling on the right if when we're in a left diff
-      if (offsets.inLeftDiff) {
-        var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
-        var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
-        var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
-
-        var hmm = getDiffRowOffsets(acediff, leftMiddleLine + offsets.rightOffset);
-
-        var rightDiffInPixels = (hmm.rightDiffEndLine - hmm.rightDiffStartLine) * acediff.lineHeight;
-        var leftDiffInPixels = (offsets.leftDiffEndLine - offsets.leftDiffStartLine) * acediff.lineHeight;
-
-        rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight) + (ratio * rightDiffInPixels) - (ratio * leftDiffInPixels);
+  function addEventHandlers(acediff) {
+    acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
+      if (acediff.options.lockScrolling) {
+        lockScrolling(acediff, scroll);
       }
-
-      acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
-
       updateGap(acediff, 'left', scroll);
     });
 
 
-    this.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
+    acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
       updateGap(acediff, 'right', scroll);
     });
 
-
-    var diff = this.diff.bind(this);
-    this.editors.left.ace.on("change", diff);
-    this.editors.right.ace.on("change", diff);
+    //
+    var diff = acediff.diff.bind(acediff);
+    acediff.editors.left.ace.on("change", diff);
+    acediff.editors.right.ace.on("change", diff);
 
     // TODO necessary?
-    var onCopy = copy.bind(this);
+    var onCopy = copy.bind(acediff);
 
-    if (this.options.left.showCopyLTR) {
-      on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.newCodeConnectorLink, function (e) {
+    if (acediff.options.left.showCopyLTR) {
+      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function (e) {
         onCopy(e, C.LTR);
       });
     }
-    if (this.options.right.showCopyRTL) {
-      on('.' + this.options.classes.gutter, 'click', '.' + this.options.classes.deletedCodeConnectorLink, function (e) {
+    if (acediff.options.right.showCopyRTL) {
+      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function (e) {
         onCopy(e, C.RTL);
       });
     }
 
-
     var onResize = debounce(function() {
-      // TODO this should re-init the acediff to ensure the gutter is the right size
+      // TODO this should re-init gutter
       acediff.diff();
     }, 250);
 
     window.addEventListener('resize', onResize);
   };
+
+
+  // only for left editor right now
+  function lockScrolling(acediff, scroll) {
+
+    // find the middle line in the left editor
+    var info = getScrollingInfo(acediff);
+    var halfEditorHeight = info.editorHeight / 2;
+    var leftMiddleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
+
+    // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
+    var offsets = getDiffRowOffsets(acediff, leftMiddleLine);
+
+    // our default right scroll height is the current scroll height in the left editor + the height of all deletes
+    // in the RIGHT editor (surely it should left offsets too?)
+    var rightOffsetInPixels = offsets.rightOffset * acediff.lineHeight;
+    var rightScrollHeight = parseInt(scroll) + rightOffsetInPixels;
+
+    // the only time we need to do smooth scrolling on the right if when we're in a left diff
+    if (offsets.inLeftDiff) {
+      var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
+      var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
+      var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
+
+      var hmm = getDiffRowOffsets(acediff, leftMiddleLine + offsets.rightOffset);
+
+      var rightDiffInPixels = (hmm.rightDiffEndLine - hmm.rightDiffStartLine) * acediff.lineHeight;
+      var leftDiffInPixels = (offsets.leftDiffEndLine - offsets.leftDiffStartLine) * acediff.lineHeight;
+
+      rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight) + (ratio * rightDiffInPixels) - (ratio * leftDiffInPixels);
+    }
+
+    acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
+  }
 
 
   // rename
@@ -294,17 +294,6 @@
     extend(true, this.options, options);
   };
 
-
-  function getLineLengths(editor) {
-    var lines = editor.ace.getSession().doc.getAllLines();
-    var lineLengths = [];
-    lines.forEach(function(line) {
-      lineLengths.push(line.length + 1); // +1 for the newline char
-    });
-    return lineLengths;
-  };
-
-
   AceDiff.prototype.getMode = function(editor) {
     var mode = this.options.mode;
     if (editor === C.EDITOR_LEFT && this.options.left.mode !== null) {
@@ -317,11 +306,21 @@
   };
 
 
-  /**
-   * Shows a diff in one of the two editors.
-   */
-  AceDiff.prototype.showDiff = function(editor, startLine, endLine, className) {
-    var editor = this.editors[editor];
+  function getLineLengths(editor) {
+    var lines = editor.ace.getSession().doc.getAllLines();
+    var lineLengths = [];
+    lines.forEach(function(line) {
+      lineLengths.push(line.length + 1); // +1 for the newline char
+    });
+    return lineLengths;
+  };
+
+
+
+
+  // shows a diff in one of the two editors.
+  function showDiff(acediff, editor, startLine, endLine, className) {
+    var editor = acediff.editors[editor];
 
     if (endLine < startLine) { // can this occur? Just in case.
       endLine = startLine;
@@ -332,7 +331,7 @@
 
     // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
     editor.markers.push(editor.ace.session.addMarker(new Range(startLine, 0, endLine, 1), classNames, 'fullLine'));
-  };
+  }
 
 
   // our main diffing function
@@ -358,8 +357,6 @@
     diff.forEach(function(chunk) {
       var chunkType = chunk[0];
       var text = chunk[1];
-
-//      console.log(chunk);
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -398,11 +395,12 @@
 
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   function updateGap(acediff, editor, scroll) {
+
     // naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
     acediff.diff();
 
     // reposition the copy containers containing all the arrows
-    acediff.positionCopyContainers();
+    positionCopyContainers(acediff);
   };
 
 
@@ -415,19 +413,10 @@
     }, acediff);
   };
 
-  AceDiff.prototype.scrollEditors = function (editor) {
-    if (editor === 'left') {
-      this.editors.right.ace.getSession().setScrollTop(parseInt(scroll) || 0);
-    }
-    if (editor === 'right') {
-      this.editors.left.ace.getSession().setScrollTop(parseInt(scroll) || 0);
-    }
-  };
 
-
-  AceDiff.prototype.addConnector = function(dir, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
-    var leftScrollTop  = this.editors.left.ace.getSession().getScrollTop();
-    var rightScrollTop = this.editors.right.ace.getSession().getScrollTop();
+  function addConnector(acediff, dir, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
+    var leftScrollTop  = acediff.editors.left.ace.getSession().getScrollTop();
+    var rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
 
     // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     //  p1   p2
@@ -436,33 +425,33 @@
 
     var c;
     var p1_x = -1;
-    var p2_x = this.gutterWidth + 1;
+    var p2_x = acediff.gutterWidth + 1;
     var p3_x = -1;
-    var p4_x = this.gutterWidth + 1;
+    var p4_x = acediff.gutterWidth + 1;
 
     if (dir === C.LTR) {
-      var p1_y = (leftStartLine * this.lineHeight) - leftScrollTop;
-      var p2_y = rightStartLine * this.lineHeight - rightScrollTop;
-      var p3_y = (leftEndLine * this.lineHeight) - leftScrollTop;
-      var p4_y = (rightEndLine * this.lineHeight) - rightScrollTop;
+      var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
+      var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
+      var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop;
+      var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = this.options.classes.connector;
+      c = acediff.options.classes.connector;
     } else {
-      var p1_y = (targetStartLine * this.lineHeight) - leftScrollTop;
-      var p2_y = sourceStartLine * this.lineHeight - rightScrollTop;
-      var p3_y = (targetStartLine * this.lineHeight) + (targetNumRows * this.lineHeight) - leftScrollTop;
-      var p4_y = (sourceEndLine * this.lineHeight) + this.lineHeight - rightScrollTop;
+      var p1_y = (targetStartLine * acediff.lineHeight) - leftScrollTop;
+      var p2_y = sourceStartLine * acediff.lineHeight - rightScrollTop;
+      var p3_y = (targetStartLine * acediff.lineHeight) + (targetNumRows * acediff.lineHeight) - leftScrollTop;
+      var p4_y = (sourceEndLine * acediff.lineHeight) + acediff.lineHeight - rightScrollTop;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = this.options.classes.connector;
+      c = acediff.options.classes.connector;
     }
 
     var verticalLine1 = 'L' + p2_x + "," + p2_y + " " + p4_x + "," + p4_y;
     var verticalLine2 = 'L' + p3_x + "," + p3_y + " " + p1_x + "," + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
 
-    var gutterSVG = $("." + this.options.classes.gutter + " svg")[0];
+    var gutterSVG = $("#" + acediff.options.classes.gutterID + " svg")[0];
 
     var el = document.createElementNS(C.SVG_NS, "path");
     el.setAttribute("d", d);
@@ -471,36 +460,36 @@
   };
 
 
-  AceDiff.prototype.addCopyArrows = function(info, diffIndex) {
+  function addCopyArrows(acediff, info, diffIndex) {
     if (info.leftEndLine > info.leftStartLine) {
       var arrow = createArrow({
-        className: this.options.classes.newCodeConnectorLink,
-        topOffset: info.leftStartLine * this.lineHeight,
+        className: acediff.options.classes.newCodeConnectorLink,
+        topOffset: info.leftStartLine * acediff.lineHeight,
         tooltip: 'Copy to right',
         diffIndex: diffIndex,
-        arrowContent: this.options.classes.newCodeConnectorLinkContent
+        arrowContent: acediff.options.classes.newCodeConnectorLinkContent
       });
-      $('.' + this.options.classes.copyRightContainer).append(arrow);
+      $('.' + acediff.options.classes.copyRightContainer).append(arrow);
     }
 
     if (info.rightEndLine > info.rightStartLine) {
       var arrow = createArrow({
-        className: this.options.classes.deletedCodeConnectorLink,
-        topOffset: info.rightStartLine * this.lineHeight,
+        className: acediff.options.classes.deletedCodeConnectorLink,
+        topOffset: info.rightStartLine * acediff.lineHeight,
         tooltip: 'Copy to left',
         diffIndex: diffIndex,
-        arrowContent: this.options.classes.deletedCodeConnectorLinkContent
+        arrowContent: acediff.options.classes.deletedCodeConnectorLinkContent
       });
-      $('.' + this.options.classes.copyLeftContainer).append(arrow);
+      $('.' + acediff.options.classes.copyLeftContainer).append(arrow);
     }
   };
 
-  AceDiff.prototype.positionCopyContainers = function () {
-    var leftTopOffset = this.editors.left.ace.getSession().getScrollTop();
-    var rightTopOffset = this.editors.right.ace.getSession().getScrollTop();
+  function positionCopyContainers(acediff) {
+    var leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
+    var rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
 
-    $("." + this.options.classes.copyRightContainer).css({ top: -leftTopOffset + 'px' });
-    $("." + this.options.classes.copyLeftContainer).css({ top: -rightTopOffset + 'px' });
+    $("." + acediff.options.classes.copyRightContainer).css({ top: -leftTopOffset + 'px' });
+    $("." + acediff.options.classes.copyLeftContainer).css({ top: -rightTopOffset + 'px' });
   };
 
 
@@ -738,32 +727,35 @@
       'data-diff-index="' + info.diffIndex + '">' + info.arrowContent + '</div>';
   }
 
-  AceDiff.prototype.createGutter = function() {
-    var leftHeight = this.editors.left.ace.getSession().getLength() * this.lineHeight;
-    var rightHeight = this.editors.right.ace.getSession().getLength() * this.lineHeight;
-    var height = Math.max(leftHeight, rightHeight, this.gutterHeight);
+  function createGutter(acediff) {
+    acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
+    acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
+
+    var leftHeight = acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight;
+    var rightHeight = acediff.editors.right.ace.getSession().getLength() * acediff.lineHeight;
+    var height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
 
     var svg = document.createElementNS(C.SVG_NS, 'svg');
-    svg.setAttribute('width', this.gutterWidth);
+    svg.setAttribute('width', acediff.gutterWidth);
     svg.setAttribute('height', height);
 
-    // TODO
-    $("." + this.options.classes.gutter).append(svg);
+    document.getElementById(acediff.options.classes.gutterID).appendChild(svg);
   };
 
-  // this creates two contains for the copy left + copy right arrows
-  AceDiff.prototype.createCopyContainers = function() {
-    $("." + this.options.classes.gutter)
-      .append('<div class="' + this.options.classes.copyRightContainer + '"></div>')
-      .append('<div class="' + this.options.classes.copyLeftContainer + '"></div>');
+
+  // creates two contains for positioning the copy left + copy right arrows
+  function createCopyContainers(acediff) {
+    $("#" + acediff.options.classes.gutterID)
+      .append('<div class="' + acediff.options.classes.copyRightContainer + '"></div>')
+      .append('<div class="' + acediff.options.classes.copyLeftContainer + '"></div>');
   };
 
-  function clearGutter(el) {
-    $("." + el + " svg").empty();
+  function clearGutter(gutterID) {
+    $("#" + gutterID + " svg").empty();
   }
 
-  AceDiff.prototype.clearArrows = function() {
-    $("." + this.options.classes.copyLeftContainer + ", ." + this.options.classes.copyRightContainer).empty();
+  function clearArrows(acediff) {
+    $("." + acediff.options.classes.copyLeftContainer + ", ." + acediff.options.classes.copyRightContainer).empty();
   };
 
   /*
@@ -815,24 +807,23 @@
 
 
   function decorate(acediff) {
-    clearGutter(acediff.options.classes.gutter);
+    clearGutter(acediff.options.classes.gutterID);
+    clearArrows(acediff);
 
-    acediff.clearArrows();
     acediff.diffs.forEach(function(info, diffIndex) {
       if (this.options.showDiffs) {
-        this.showDiff(C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
-        this.showDiff(C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
+        showDiff(this, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
+        showDiff(this, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
 
         if (this.options.showConnectors) {
-          this.addConnector(C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
+          addConnector(this, C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
         }
-        this.addCopyArrows(info, diffIndex);
+        addCopyArrows(this, info, diffIndex);
       }
     }, acediff);
   };
 
 
-  // taken from jQuery
   function extend() {
     var options, name, src, copy, copyIsArray, clone, target = arguments[0] || {},
       i = 1,
@@ -930,8 +921,8 @@
       leftScrollTop: acediff.editors.left.ace.getSession().getScrollTop(),
       rightScrollTop: acediff.editors.right.ace.getSession().getScrollTop(),
 
-      // assumed same for both
-      editorHeight: $("#" + acediff.options.left.id).height()
+      // assumed same for both left and right
+      editorHeight: document.getElementById(acediff.options.left.id).clientHeight
     };
   }
 
