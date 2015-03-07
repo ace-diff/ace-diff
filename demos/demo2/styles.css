@@ -13,7 +13,7 @@
     -webkit-flex-grow: 1;
     position: relative;
 }
-#flex-container>div#acediff-gutter {
+#flex-container>div#gutter {
     flex: 0 0 60px;
     -webkit-flex: 0 0 60px;
     border-left: 1px solid #999999;
@@ -21,17 +21,17 @@
     background-color: #efefef;
     overflow: hidden;
 }
-#acediff-gutter svg {
+#gutter svg {
     background-color: #efefef;
 }
 
-#acediff-left-editor {
+#editor1 {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 100%;
 }
-#acediff-right-editor {
+#editor2 {
     position: absolute;
     top: 0;
     bottom: 0;

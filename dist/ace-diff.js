@@ -81,10 +81,13 @@
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
 
     // set up the editors
-    this.editors.left.ace.getSession().setMode(this.getMode(C.EDITOR_LEFT));
-    this.editors.right.ace.getSession().setMode(this.getMode(C.EDITOR_RIGHT));
+    this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
+    this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
+    this.editors.left.ace.setTheme("ace/theme/cobalt");
+
 
     createCopyContainers(this);
     createGutter(this);
@@ -98,7 +101,7 @@
     }
 
     this.diff();
-  };
+  }
 
 
   // our public API
@@ -109,20 +112,16 @@
       extend(true, this.options, options);
     },
 
-    // returns the editor mode
-    getMode: function(editor) {
-      var mode = this.options.mode;
-      if (editor === C.EDITOR_LEFT && this.options.left.mode !== null) {
-        mode = this.options.left.mode;
-      }
-      if (editor === C.EDITOR_RIGHT && this.options.right.mode !== null) {
-        mode = this.options.right.mode;
-      }
-      return mode;
+    getNumDiffs: function () {
+      return this.diffs.length;
     },
 
-    getNumDiffs: function() {
-      return this.diffs.length;
+    // exposes the Ace editors in case the dev needs it
+    getEditors: function () {
+      return {
+        left: this.editors.left.ace,
+        right: this.editors.right.ace
+      }
     },
 
     // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
@@ -177,11 +176,38 @@
       decorate(this);
     },
 
-    // TODO
     destroy: function () {
 
+      // destroy the two editors
+      var leftValue = this.editors.left.ace.getValue();
+      this.editors.left.ace.destroy();
+      var oldDiv = this.editors.left.ace.container;
+      var newDiv = oldDiv.cloneNode(false);
+      newDiv.textContent = leftValue;
+      oldDiv.parentNode.replaceChild(newDiv, oldDiv);
+
+      var rightValue = this.editors.right.ace.getValue();
+      this.editors.right.ace.destroy();
+      oldDiv = this.editors.right.ace.container;
+      newDiv = oldDiv.cloneNode(false);
+      newDiv.textContent = rightValue;
+      oldDiv.parentNode.replaceChild(newDiv, oldDiv);
+
+      document.getElementById(this.options.classes.gutterID).innerHTML = '';
     }
   };
+
+
+  function getMode(acediff, editor) {
+    var mode = acediff.options.mode;
+    if (editor === C.EDITOR_LEFT && acediff.options.left.mode !== null) {
+      mode = acediff.options.left.mode;
+    }
+    if (editor === C.EDITOR_RIGHT && acediff.options.right.mode !== null) {
+      mode = acediff.options.right.mode;
+    }
+    return mode;
+  }
 
 
   function addEventHandlers(acediff) {
@@ -197,7 +223,6 @@
       updateGap(acediff, 'right', scroll);
     });
 
-    //
     var diff = acediff.diff.bind(acediff);
     acediff.editors.left.ace.on('change', diff);
     acediff.editors.right.ace.on('change', diff);
