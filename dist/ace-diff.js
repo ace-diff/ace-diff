@@ -31,6 +31,9 @@
       mode: null,
       diffGranularity: C.DIFF_GRANULARITY_NORMAL,
       lockScrolling: true,
+      showDiffs: true,
+      showConnectors: true,
+      maxDiffs: 5000,
       left: {
         id: 'acediff-left-editor',
         content: null,
@@ -45,9 +48,6 @@
         editable: true,
         showCopyRTL: true
       },
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000,
       classes: {
         gutterID: 'acediff-gutter',
         diff: 'acediff-diff',
