@@ -227,16 +227,32 @@
 
 
   function addEventHandlers(acediff) {
+
+    // init them to
+    var leftLastScrollTime = new Date().getTime(),
+        rightLastScrollTime = new Date().getTime(),
+        now;
+
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-      if (acediff.options.lockScrolling) {
-        lockScrolling(acediff, scroll);
+      now = new Date().getTime();
+      if (rightLastScrollTime + 50 < now) {
+        leftLastScrollTime = now;
+        if (acediff.options.lockScrolling) {
+          acediff.editors.right.ace.getSession().setScrollTop(lockScrolling(acediff, C.EDITOR_LEFT, scroll));
+        }
+        updateGap(acediff, 'left', scroll);
       }
-      updateGap(acediff, 'left', scroll);
     });
 
-
     acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
-      updateGap(acediff, 'right', scroll);
+      now = new Date().getTime();
+      if (leftLastScrollTime + 50 < now) {
+        rightLastScrollTime = now;
+        if (acediff.options.lockScrolling) {
+          acediff.editors.left.ace.getSession().setScrollTop(lockScrolling(acediff, C.EDITOR_RIGHT, scroll));
+        }
+        updateGap(acediff, 'right', scroll);
+      }
     });
 
     var diff = acediff.diff.bind(acediff);
@@ -263,56 +279,66 @@
   }
 
 
-  // only for left editor right now
-  function lockScrolling(acediff, scroll) {
+  function lockScrolling(acediff, sourceEditor, scroll) {
 
-    // find the middle line in the left editor
+    // find the middle line in the source editor
     var info = getScrollingInfo(acediff);
     var halfEditorHeight = info.editorHeight / 2;
-    var leftMiddleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
+    var middleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
+    var scrollOffsets = getScrollOffsets(acediff, middleLine);
 
-    // now figure out what line SHOULD be in the right editor, taking into account all the deletes/inserts
-    var offsets = getDiffRowOffsets(acediff, leftMiddleLine);
-
-    // our default right scroll height is the current scroll height in the left editor + the height of all deletes
-    // in the RIGHT editor (surely it should left offsets too?)
-    var rightOffsetInPixels = offsets.rightOffset * acediff.lineHeight;
-    var rightScrollHeight = parseInt(scroll) + rightOffsetInPixels;
-
-    // the only time we need to do smooth scrolling on the right if when we're in a left diff
-    if (offsets.inLeftDiff) {
-      var numRowsInLeftDiff = offsets.leftDiffEndLine - offsets.leftDiffStartLine;
-      var pixelsOverLeftDiffStart = parseInt(info.editorHeight / 2) + parseInt(scroll) - (offsets.leftDiffStartLine * acediff.lineHeight);
-      var ratio = pixelsOverLeftDiffStart / (acediff.lineHeight * numRowsInLeftDiff);
-
-      var hmm = getDiffRowOffsets(acediff, leftMiddleLine + offsets.rightOffset);
-
-      var rightDiffInPixels = (hmm.rightDiffEndLine - hmm.rightDiffStartLine) * acediff.lineHeight;
-      var leftDiffInPixels = (offsets.leftDiffEndLine - offsets.leftDiffStartLine) * acediff.lineHeight;
-
-      rightScrollHeight = parseInt(scroll) + (offsets.rightOffset * acediff.lineHeight) + (ratio * rightDiffInPixels) - (ratio * leftDiffInPixels);
+    var targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd;
+    if (sourceEditor === C.EDITOR_LEFT) {
+      targetOffset = scrollOffsets.rightOffset;
+      inSourceDiff = scrollOffsets.inLeftDiff;
+      sourceDiffStart = scrollOffsets.leftDiffStartLine;
+      sourceDiffEnd = scrollOffsets.leftDiffEndLine;
+    } else {
+      targetOffset = scrollOffsets.leftOffset;
+      inSourceDiff = scrollOffsets.inRightDiff;
+      sourceDiffStart = scrollOffsets.rightDiffStartLine;
+      sourceDiffEnd = scrollOffsets.rightDiffEndLine;
     }
 
-    acediff.editors.right.ace.getSession().setScrollTop(rightScrollHeight);
+    var targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight);
+
+    if (inSourceDiff) {
+      var numRowsInSourceDiff = sourceDiffEnd - sourceDiffStart;
+      var pixelsOverSourceDiffStart = parseInt(halfEditorHeight) + parseInt(scroll) - (sourceDiffStart * acediff.lineHeight);
+      var ratio = pixelsOverSourceDiffStart / (numRowsInSourceDiff * acediff.lineHeight);
+      var otherScrollOffsets = getScrollOffsets(acediff, middleLine + targetOffset);
+
+      var targetLineDiff;
+      if (sourceEditor === C.EDITOR_LEFT) {
+        targetLineDiff = otherScrollOffsets.rightDiffEndLine - otherScrollOffsets.rightDiffStartLine;
+      } else {
+        targetLineDiff = otherScrollOffsets.leftDiffEndLine - otherScrollOffsets.leftDiffStartLine;
+      }
+
+      var targetDiffInPixels = targetLineDiff * acediff.lineHeight;
+      var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
+
+      targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
+    }
+
+    return targetScrollHeight;
   }
 
 
-  // TODO rename, refactor
-  function getDiffRowOffsets(acediff, line) {
+  function getScrollOffsets(acediff, line) {
     var totalInserts = 0,
         totalDeletes = 0,
+        rightOffset = 0,
+        leftOffset = 0,
         inLeftDiff = false,
         inRightDiff = false;
 
     var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine;
 
-    var rightOffset = 0;
     for (var i=0; i<acediff.diffs.length; i++) {
       if (acediff.diffs[i].leftStartLine < line) {
         if (acediff.diffs[i].leftEndLine < line) {
           totalInserts += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
-          //  console.log(acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine);
-
           rightOffset += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         } else {
           inLeftDiff = true;
@@ -321,11 +347,10 @@
         }
       }
 
-      // problem: this returns TRUE when we have a long diff on the right, even though visually it looks like
-      // we've passed it by.
       if (acediff.diffs[i].rightStartLine < line) {
         if (acediff.diffs[i].rightEndLine < line) {
           totalDeletes += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
+          leftOffset += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
         } else {
           inRightDiff = true;
           rightDiffStartLine = acediff.diffs[i].rightStartLine;
@@ -334,20 +359,18 @@
       }
     }
 
-    // the right offset is only ever the
     rightOffset = rightOffset - totalInserts;
+    leftOffset = leftOffset - totalDeletes;
 
     return {
-      totalInserts: totalInserts,
       inLeftDiff: inLeftDiff,
       leftDiffStartLine: leftDiffStartLine,
       leftDiffEndLine: leftDiffEndLine,
-      totalDeletes: totalDeletes,
       inRightDiff: inRightDiff,
       rightDiffStartLine: rightDiffStartLine,
       rightDiffEndLine: rightDiffEndLine,
-
-      rightOffset: rightOffset
+      rightOffset: rightOffset,
+      leftOffset: leftOffset
     };
   }
 
@@ -433,7 +456,7 @@
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   function updateGap(acediff, editor, scroll) {
 
-    // naaahhh! This just needs to update the contents of the gap, not re-run diffs TODO
+    // TODO - big performance gain to be made here. This just needs to update the gutter, not re-run the diff
     acediff.diff();
 
     // reposition the copy containers containing all the arrows
@@ -633,10 +656,10 @@
         //    we DO want to make it a full line
         (info.startChar > 0 || (sameLineInsert && diffText.length < numCharsOnRightEditorStartLine)) &&
 
-          // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
+        // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
         numCharsOnLineOtherEditor > 0 &&
 
-          // if the text being inserted starts mid-line
+        // if the text being inserted starts mid-line
         (info.startChar < numCharsOnRightEditorStartLine)) {
           numRows++;
       }
@@ -653,7 +676,8 @@
   }
 
 
-  // helper to return the startline, endline, startChar and endChar for a diff in a particular editor
+  // helper to return the startline, endline, startChar and endChar for a diff in a particular editor. Pretty
+  // fussy function
   function getSingleDiffInfo(editor, offset, diffString) {
     var info = {
       startLine: 0,
@@ -719,9 +743,7 @@
         runningTotal = 0;
 
     for (var i=0; i<lines.length; i++) {
-      var lineLength = lines[i].length + 1; // +1 needed for newline char
-      runningTotal += lineLength;
-
+      runningTotal += lines[i].length + 1; // +1 needed for newline char
       if (offsetChars <= runningTotal) {
         foundLine = i;
         break;
@@ -737,11 +759,7 @@
         isLastChar = false;
 
     for (var i=0; i<lines.length; i++) {
-      var lineLength = lines[i].length + 1; // +1 needed for newline char
-
-      runningTotal += lineLength;
-
-      // we MUST compare it with - 1, since char
+      runningTotal += lines[i].length + 1; // +1 needed for newline char
       var comparison = runningTotal;
       if (startsWithNewline) {
         comparison--;
@@ -758,7 +776,6 @@
 
   function createArrow(info) {
     var el = document.createElement('div');
-
     var props = {
       'class': info.className,
       'style': 'top:' + info.topOffset + 'px',
