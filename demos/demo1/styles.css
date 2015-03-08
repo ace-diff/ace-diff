@@ -71,7 +71,7 @@
     color: #000000;
     text-shadow: 1px 1px #ffffff;
     position: absolute;
-    margin: -3px 2px;
+    margin: 2px 3px;
     cursor: pointer;
 }
 .acediff-copy-right div:hover {
@@ -82,7 +82,7 @@
     text-shadow: 1px 1px #ffffff;
     position: absolute;
     right: 0px;
-    margin: -3px 2px;
+    margin: 2px 3px;
     cursor: pointer;
 }
 .acediff-copy-left div:hover {

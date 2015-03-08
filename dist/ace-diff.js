@@ -92,8 +92,8 @@
     this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
     this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
-    createGutter(this);
     createCopyContainers(this);
+    createGutter(this);
 
     // if the data is being supplied by an option, set the editor values now
     if (this.options.left.content) {
@@ -368,7 +368,8 @@
       rightDiffStartLine: rightDiffStartLine,
       rightDiffEndLine: rightDiffEndLine,
       rightOffset: rightOffset,
-      leftOffset: leftOffset
+      leftOffset: leftOffset,
+      totalInserts: totalInserts
     };
   }
 
@@ -457,6 +458,9 @@
     // TODO - big performance gain to be made here. This just needs to update the gutter, not re-run the diff
     acediff.diff();
 
+    // ??? Weird. The above is noticeably smoother... but it does a lot more work. (?!)
+    //decorate(acediff);
+
     // reposition the copy containers containing all the arrows
     positionCopyContainers(acediff);
   }
@@ -481,6 +485,8 @@
     //
     //  p3   p4
 
+    var yOffset = 1;
+
     var c;
     var p1_x = -1;
     var p2_x = acediff.gutterWidth + 1;
@@ -490,16 +496,16 @@
     if (dir === C.LTR) {
       var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
       var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
-      var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop;
-      var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop;
+      var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + yOffset;
+      var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + yOffset;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       c = acediff.options.classes.connector;
     } else {
       var p1_y = (targetStartLine * acediff.lineHeight) - leftScrollTop;
       var p2_y = sourceStartLine * acediff.lineHeight - rightScrollTop;
-      var p3_y = (targetStartLine * acediff.lineHeight) + (targetNumRows * acediff.lineHeight) - leftScrollTop;
-      var p4_y = (sourceEndLine * acediff.lineHeight) + acediff.lineHeight - rightScrollTop;
+      var p3_y = (targetStartLine * acediff.lineHeight) - leftScrollTop + yOffset;
+      var p4_y = (sourceEndLine * acediff.lineHeight) + acediff.lineHeight - rightScrollTop + yOffset;
       var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
       var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
       c = acediff.options.classes.connector;
@@ -508,6 +514,7 @@
     var verticalLine1 = 'L' + p2_x + ',' + p2_y + ' ' + p4_x + ',' + p4_y;
     var verticalLine2 = 'L' + p3_x + "," + p3_y + ' ' + p1_x + ',' + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
+
 
     var el = document.createElementNS(C.SVG_NS, 'path');
     el.setAttribute('d', d);
@@ -784,7 +791,7 @@
     for (var key in props) {
       el.setAttribute(key, props[key]);
     }
-    el.textContent = info.arrowContent;
+    el.innerHTML = info.arrowContent;
 
     return el;
   }
@@ -813,9 +820,8 @@
     acediff.copyLeftContainer = document.createElement('div');
     acediff.copyLeftContainer.setAttribute('class', acediff.options.classes.copyLeftContainer);
 
-    acediff.gutterSVG
-      .appendChild(acediff.copyRightContainer)
-      .appendChild(acediff.copyLeftContainer);
+    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyRightContainer);
+    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyLeftContainer);
   }
 
 

@@ -220,3 +220,10 @@ MIT.
 ### Changelog
 
 - **0.1.0** - March 2015 - initial version
+
+
+### Remaining TODO
+- ensure diffs at top & bottom always show up
+- bug where right has diff at start. Connectors don't connect.
+- check IE!
+- Fix copy arrows
