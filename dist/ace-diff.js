@@ -315,10 +315,11 @@
         targetLineDiff = otherScrollOffsets.leftDiffEndLine - otherScrollOffsets.leftDiffStartLine;
       }
 
-      var targetDiffInPixels = targetLineDiff * acediff.lineHeight;
-      var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
-
-      targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
+      if (targetLineDiff) {
+        var targetDiffInPixels = targetLineDiff * acediff.lineHeight;
+        var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
+        targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
+      }
     }
 
     return targetScrollHeight;
