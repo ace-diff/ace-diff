@@ -129,7 +129,7 @@
     },
 
     // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
-    // but just to be safe,
+    // but just to be safe, it's included
     diff: function() {
       var dmp = new diff_match_patch();
       var val1 = this.editors.left.ace.getSession().getValue();
@@ -236,7 +236,8 @@
       if (rightLastScrollTime + 50 < now) {
         leftLastScrollTime = now;
         if (acediff.options.lockScrolling) {
-          acediff.editors.right.ace.getSession().setScrollTop(lockScrolling(acediff, C.EDITOR_LEFT, scroll));
+          var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
+          acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
         }
         updateGap(acediff, 'left', scroll);
       }
@@ -247,7 +248,8 @@
       if (leftLastScrollTime + 50 < now) {
         rightLastScrollTime = now;
         if (acediff.options.lockScrolling) {
-          acediff.editors.left.ace.getSession().setScrollTop(lockScrolling(acediff, C.EDITOR_RIGHT, scroll));
+          var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
+          acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
         }
         updateGap(acediff, 'right', scroll);
       }
@@ -455,11 +457,8 @@
   // called onscroll. Updates the gap to ensure the connectors are all lining up
   function updateGap(acediff, editor, scroll) {
 
-    // TODO - big performance gain to be made here. This just needs to update the gutter, not re-run the diff
-    acediff.diff();
-
-    // ??? Weird. The above is noticeably smoother... but it does a lot more work. (?!)
-    //decorate(acediff);
+    clearDiffs(acediff);
+    decorate(acediff);
 
     // reposition the copy containers containing all the arrows
     positionCopyContainers(acediff);
@@ -476,7 +475,7 @@
   }
 
 
-  function addConnector(acediff, dir, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
+  function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
     var leftScrollTop  = acediff.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
 
@@ -487,38 +486,25 @@
 
     var yOffset = 1;
 
-    var c;
     var p1_x = -1;
+    var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
     var p2_x = acediff.gutterWidth + 1;
+    var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
     var p3_x = -1;
+    var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + yOffset;
     var p4_x = acediff.gutterWidth + 1;
-
-    if (dir === C.LTR) {
-      var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
-      var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
-      var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + yOffset;
-      var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + yOffset;
-      var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
-      var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = acediff.options.classes.connector;
-    } else {
-      var p1_y = (targetStartLine * acediff.lineHeight) - leftScrollTop;
-      var p2_y = sourceStartLine * acediff.lineHeight - rightScrollTop;
-      var p3_y = (targetStartLine * acediff.lineHeight) - leftScrollTop + yOffset;
-      var p4_y = (sourceEndLine * acediff.lineHeight) + acediff.lineHeight - rightScrollTop + yOffset;
-      var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
-      var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
-      c = acediff.options.classes.connector;
-    }
+    var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + yOffset;
+    var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+    var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
     var verticalLine1 = 'L' + p2_x + ',' + p2_y + ' ' + p4_x + ',' + p4_y;
-    var verticalLine2 = 'L' + p3_x + "," + p3_y + ' ' + p1_x + ',' + p1_y;
+    var verticalLine2 = 'L' + p3_x + ',' + p3_y + ' ' + p1_x + ',' + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
 
 
     var el = document.createElementNS(C.SVG_NS, 'path');
     el.setAttribute('d', d);
-    el.setAttribute('class', c);
+    el.setAttribute('class', acediff.options.classes.connector);
     acediff.gutterSVG.appendChild(el);
   }
 
@@ -787,12 +773,10 @@
       title: info.tooltip,
       'data-diff-index': info.diffIndex
     };
-
     for (var key in props) {
       el.setAttribute(key, props[key]);
     }
     el.innerHTML = info.arrowContent;
-
     return el;
   }
 
@@ -898,7 +882,7 @@
         showDiff(this, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
 
         if (this.options.showConnectors) {
-          addConnector(this, C.LTR, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
+          addConnector(this, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
         }
         addCopyArrows(this, info, diffIndex);
       }
@@ -1011,11 +995,11 @@
     var halfWidth = startX + (w / 2);
 
     // position it at the initial x,y coords
-    var curve = "M " + startX + " " + startY +
+    var curve = 'M ' + startX + ' ' + startY +
 
       // now create the curve. This is of the form "C M,N O,P Q,R" where C is a directive for SVG ("curveto"),
       // M,N are the first curve control point, O,P the second control point and Q,R are the final coords
-      " C " + halfWidth + "," + startY + " " + halfWidth + "," + endY + " " + endX + "," + endY;
+      ' C ' + halfWidth + ',' + startY + ' ' + halfWidth + ',' + endY + ' ' + endX + ',' + endY;
 
     return curve;
   }
