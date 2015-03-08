@@ -7,6 +7,11 @@
     width: 100%;
     top: 0px !important;
     left: 0px;
+
+    /* these 3 lines are to prevents an unsightly scrolling bounce affect on Safari */
+    height: 100%;
+    width: 100%;
+    overflow: auto;
 }
 #flex-container>div {
     flex-grow: 1;

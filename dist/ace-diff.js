@@ -227,8 +227,6 @@
 
 
   function addEventHandlers(acediff) {
-
-    // init them to
     var leftLastScrollTime = new Date().getTime(),
         rightLastScrollTime = new Date().getTime(),
         now;

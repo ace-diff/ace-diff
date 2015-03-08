@@ -5,8 +5,8 @@ differences in two documents and allows users to copy changes from one doc to th
 times; this is an Ace Editor-compatible one. :)
 
 It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
-library (*buuuurn*). That handles the hard part: the actual computation of the document diffs. This lib converts
-that raw info into an attractive visual representation on the screen for the user.
+library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. AceDiff 
+just converts that raw diff info into an visual representation on the screen.
 
 
 ### Dependencies
@@ -18,8 +18,8 @@ that raw info into an attractive visual representation on the screen for the use
 ### Demos
 
 Take a look at the `gh-pages` branch of this repo for some [demos](http://benkeen.github.io/ace-diff/). The demos
-illustrate a few different configurations and styles. Hopefully they'll give you a sense of what it does and how
-it works.
+illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and 
+how it works.
 
 
 ### Features
@@ -32,7 +32,7 @@ it works.
 - control over how aggressively diffs are combined
 - option to allow users to copy diffs from one side to the other
 - option to either set the editor values by targeting markup containing the code, or by sending it via a config option
-- convenient API to do thing like changing options on the fly, getting the number of diffs, destroying it altogether
+- convenient API to do thing like changing options on the fly, getting the number of diffs, destroying it altogether.
 
 
 ### How to install
@@ -42,8 +42,8 @@ Alrighty! Ace-diff requires you to do three things:
 - some **JS** to instantiate your `AceDiff` instance and set whatever settings you want,
 - some **CSS** to properly style the editors and gutter.
 
-Here's some token code so you can get a sense of how onerous these requirements are. But again, I'd suggest checking
-out the [demos](http://benkeen.github.io/ace-diff/) for some hands-on code.
+Here's some token code so you can get a sense what's involved with these. But again, I'd really suggest checking
+out the [demos](http://benkeen.github.io/ace-diff/) for something more hands-on.
 
 
 #### HTML
@@ -59,7 +59,8 @@ out the [demos](http://benkeen.github.io/ace-diff/) for some hands-on code.
 
 #### Javascript
 
-Here's how you instantiate AceDiff. Note: it should be placed in a DOM ready function to ensure everything is available.
+Here's an example of how you'd instantiate AceDiff. Note: it should be placed in a DOM ready function to ensure 
+all code and DOM elements are available.
 
 ```javascript
 <script>
@@ -81,19 +82,25 @@ var differ = new AceDiff({
 #### CSS
 
 Styling the elements is vitally important: the gutter should retain its width even if the user resizes his or her
-browser; but honestly the CSS is very much up to you. If you want the ace editor's to change height/width based on a
-user's browser, I find using flexbox the best option - but hell, if you want to use a `<table>`, knock yourself out. :)
-Take a look at the [demos](http://benkeen.github.io/ace-diff/) for some ideas.
+browser. But honestly, how you go about that is very much up to you: you can provide whatever CSS you want, depending
+on your scenario. 
+
+If you want the ace editor's to change height/width based on a user's browser, I find using flexbox the best 
+option - but hell, if you want to use a `<table>`, knock yourself out. :)
+
+Take a look at the [demos](http://benkeen.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but 
+include some different styles and class names just so you can see.
 
 
 ### Configuration
 
-As mentioned in the features section above, you can configure your Ace-diff instances in a few different ways:
+You can configure your Ace-diff instance through a number of config settings. This object is what you pass to the 
+constructor, like the **Javascript** section above. 
 
 
 #### Default settings
 
-Here are all the default settings. I'll explain each one in details below.
+Here are all the defaults. I'll explain each one in details below. Note: you only need to override whatever you want.
 
 ```javascript
 {
