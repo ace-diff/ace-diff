@@ -106,7 +106,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 {
   mode: null,
   theme: null,
-  diffGranularity: 'normal',
+  diffGranularity: 'broad',
   lockScrolling: true,
   showDiffs: true,
   showConnectors: true,
@@ -150,7 +150,7 @@ mode for both of them so you can just set it once here. If you're a mad genius a
 each side, (a) *whoah man, what's your use-case?*, and (b) you can override this setting in one of the settings
 below. Read on.
 - `theme` (string, optional). This lets you set the theme for both editors.
-- `diffGranularity` (string, optional, default: `normal`). this has two options (`normal`, and `broad`). Basically this
+- `diffGranularity` (string, optional, default: `broad`). this has two options (`specific`, and `broad`). Basically this
 determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call
 as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
 - `lockScrolling` (boolean, optional, default: `true`). This setting locks the scrollbars so that scrolling down one
@@ -198,7 +198,8 @@ There are a few API methods available on your AceDiff instance.
 - `aceInstance.getEditors()`: this returns an object with left and right properties. Each contains a reference to 
 the Ace editor, in case you need to do anything with them. Ace has a ton of options which I wasn't going to support via the 
 wrapper. This should allow you to do whatever you need
-- `aceInstance.setOptions()`: this lets you set any of the above options on the fly.
+- `aceInstance.setOptions()`: this lets you set many of the above options on the fly. Note: certain things used during the 
+construction of the editor, like the classes can't be overridden. 
 - `aceInstance.getNumDiffs()`: returns the number of diffs currently being displayed.
 - `aceInstance.diff()`: updates the diff. This shouldn't ever be required because AceDiff automatically recognizes the 
 key events like changes to the editor and window resizing. But I've included it because there may always be that fringe
@@ -224,6 +225,5 @@ MIT.
 
 ### Remaining TODO
 - ensure diffs at top & bottom always show up
-- bug where right has diff at start. Connectors don't connect.
+- bit of shuffling weirdness with scroll locking: glitch when 
 - check IE!
-- Fix copy arrows

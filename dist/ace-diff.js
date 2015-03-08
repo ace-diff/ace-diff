@@ -20,7 +20,7 @@
     RTL: 'rtl',
     LTR: 'ltr',
     SVG_NS: 'http://www.w3.org/2000/svg',
-    DIFF_GRANULARITY_NORMAL: 'normal',
+    DIFF_GRANULARITY_SPECIFIC: 'specific',
     DIFF_GRANULARITY_BROAD: 'broad'
   };
 
@@ -31,7 +31,7 @@
     extend(true, this.options, {
       mode: null,
       theme: null,
-      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
+      diffGranularity: C.DIFF_GRANULARITY_BROAD,
       lockScrolling: true,
       showDiffs: true,
       showConnectors: true,
@@ -237,7 +237,10 @@
         leftLastScrollTime = now;
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
-          acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+
+          if (scrollTop !== false) {
+            acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+          }
         }
         updateGap(acediff, 'left', scroll);
       }
@@ -249,7 +252,9 @@
         rightLastScrollTime = now;
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
-          acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+          if (scrollTop !== false) {
+            acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+          }
         }
         updateGap(acediff, 'right', scroll);
       }
@@ -287,39 +292,31 @@
     var middleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
     var scrollOffsets = getScrollOffsets(acediff, middleLine);
 
-    var targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd;
+    var targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd, targetDiffHeight;
     if (sourceEditor === C.EDITOR_LEFT) {
       targetOffset = scrollOffsets.rightOffset;
       inSourceDiff = scrollOffsets.inLeftDiff;
       sourceDiffStart = scrollOffsets.leftDiffStartLine;
       sourceDiffEnd = scrollOffsets.leftDiffEndLine;
+      targetDiffHeight = scrollOffsets.rightDiffHeight;
     } else {
       targetOffset = scrollOffsets.leftOffset;
       inSourceDiff = scrollOffsets.inRightDiff;
       sourceDiffStart = scrollOffsets.rightDiffStartLine;
       sourceDiffEnd = scrollOffsets.rightDiffEndLine;
+      targetDiffHeight = scrollOffsets.leftDiffHeight;
     }
 
     var targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight);
 
+    // we only ever want to do a scrolling effect when we're scrolling within a source diff
     if (inSourceDiff) {
       var numRowsInSourceDiff = sourceDiffEnd - sourceDiffStart;
       var pixelsOverSourceDiffStart = parseInt(halfEditorHeight) + parseInt(scroll) - (sourceDiffStart * acediff.lineHeight);
       var ratio = pixelsOverSourceDiffStart / (numRowsInSourceDiff * acediff.lineHeight);
-      var otherScrollOffsets = getScrollOffsets(acediff, middleLine + targetOffset);
-
-      var targetLineDiff;
-      if (sourceEditor === C.EDITOR_LEFT) {
-        targetLineDiff = otherScrollOffsets.rightDiffEndLine - otherScrollOffsets.rightDiffStartLine;
-      } else {
-        targetLineDiff = otherScrollOffsets.leftDiffEndLine - otherScrollOffsets.leftDiffStartLine;
-      }
-
-      if (targetLineDiff) {
-        var targetDiffInPixels = targetLineDiff * acediff.lineHeight;
-        var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
-        targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
-      }
+      var targetDiffInPixels = targetDiffHeight * acediff.lineHeight;
+      var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
+      targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
     }
 
     return targetScrollHeight;
@@ -334,7 +331,7 @@
         inLeftDiff = false,
         inRightDiff = false;
 
-    var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine;
+    var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine, rightDiffHeight, leftDiffHeight;
 
     for (var i=0; i<acediff.diffs.length; i++) {
       if (acediff.diffs[i].leftStartLine < line) {
@@ -345,6 +342,7 @@
           inLeftDiff = true;
           leftDiffStartLine = acediff.diffs[i].leftStartLine;
           leftDiffEndLine = acediff.diffs[i].leftEndLine;
+          rightDiffHeight = acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
         }
       }
 
@@ -356,6 +354,7 @@
           inRightDiff = true;
           rightDiffStartLine = acediff.diffs[i].rightStartLine;
           rightDiffEndLine = acediff.diffs[i].rightEndLine;
+          leftDiffHeight = acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
         }
       }
     }
@@ -372,7 +371,9 @@
       rightDiffEndLine: rightDiffEndLine,
       rightOffset: rightOffset,
       leftOffset: leftOffset,
-      totalInserts: totalInserts
+      totalInserts: totalInserts,
+      leftDiffHeight: leftDiffHeight,
+      rightDiffHeight: rightDiffHeight
     };
   }
 
@@ -829,7 +830,7 @@
     var groupedDiffs = [];
 
     function compare(val) {
-      return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_NORMAL) ? val < 1 : val <= 1;
+      return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_SPECIFIC) ? val < 1 : val <= 1;
     }
 
     diffs.forEach(function(diff, index) {
