@@ -227,3 +227,4 @@ MIT.
 - ensure diffs at top & bottom always show up
 - bit of shuffling weirdness with scroll locking: glitch when 
 - check IE!
+- add some better error handling for the on() function if it can't find the element. 
