@@ -117,7 +117,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
     mode: null,
     theme: null,
     editable: true,
-    showCopyLTR: true
+    copyLinkEnabled: true
   },
   right: {
     id: 'acediff-right-editor',
@@ -125,7 +125,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
     mode: null,
     theme: null,
     editable: true,
-    showCopyRTL: true
+    copyLinkEnabled: true
   },
   classes: {
     gutterID: 'acediff-gutter',
@@ -174,7 +174,7 @@ Ace Editor mode specified in `mode`.
 - `left.theme / right.theme` (string, optional, defaults to whatever you entered in `theme`). This lets you override the default
 Ace Editor theme specified in `theme`.
 - `left.editable / right.editable` (boolean, optional, default: `true`). Whether the left editor is editable or not.
-- `left.showCopyLTR / right.showCopyRTL` (boolean, optional, default: `true`). Whether the copy to right/left arrows should
+- `left.copyLinkEnabled / right.copyLinkEnabled` (boolean, optional, default: `true`). Whether the copy to right/left arrows should
 appear.
 
 
@@ -227,3 +227,4 @@ MIT.
 - ensure diffs at top & bottom always show up
 - bit of shuffling weirdness with scroll locking: glitch when 
 - check IE!
+- add some better error handling for the on() function if it can't find the element. 

@@ -42,7 +42,7 @@
         mode: null,
         theme: null,
         editable: true,
-        showCopyLTR: true
+        copyLinkEnabled: true
       },
       right: {
         id: 'acediff-right-editor',
@@ -50,7 +50,7 @@
         mode: null,
         theme: null,
         editable: true,
-        showCopyRTL: true
+        copyLinkEnabled: true
       },
       classes: {
         gutterID: 'acediff-gutter',
@@ -62,7 +62,8 @@
         deletedCodeConnectorLinkContent: '&#8592;',
         copyRightContainer: 'acediff-copy-right',
         copyLeftContainer: 'acediff-copy-left'
-      }
+      },
+      connectorYOffset: 0
     }, options);
 
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
@@ -273,12 +274,12 @@
     acediff.editors.left.ace.on('change', diff);
     acediff.editors.right.ace.on('change', diff);
 
-    if (acediff.options.left.showCopyLTR) {
+    if (acediff.options.left.copyLinkEnabled) {
       on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
         copy(acediff, e, C.LTR);
       });
     }
-    if (acediff.options.right.showCopyRTL) {
+    if (acediff.options.right.copyLinkEnabled) {
       on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
         copy(acediff, e, C.RTL);
       });
@@ -502,16 +503,16 @@
     //
     //  p3   p4
 
-    var yOffset = 1;
+    acediff.connectorYOffset = 1;
 
     var p1_x = -1;
     var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
     var p2_x = acediff.gutterWidth + 1;
     var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
     var p3_x = -1;
-    var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + yOffset;
+    var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + acediff.connectorYOffset;
     var p4_x = acediff.gutterWidth + 1;
-    var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + yOffset;
+    var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + acediff.connectorYOffset;
     var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
     var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
@@ -527,7 +528,7 @@
 
 
   function addCopyArrows(acediff, info, diffIndex) {
-    if (info.leftEndLine > info.leftStartLine) {
+    if (info.leftEndLine > info.leftStartLine && acediff.options.left.copyLinkEnabled) {
       var arrow = createArrow({
         className: acediff.options.classes.newCodeConnectorLink,
         topOffset: info.leftStartLine * acediff.lineHeight,
@@ -538,7 +539,7 @@
       acediff.copyRightContainer.appendChild(arrow);
     }
 
-    if (info.rightEndLine > info.rightStartLine) {
+    if (info.rightEndLine > info.rightStartLine && acediff.options.right.copyLinkEnabled) {
       var arrow = createArrow({
         className: acediff.options.classes.deletedCodeConnectorLink,
         topOffset: info.rightStartLine * acediff.lineHeight,
