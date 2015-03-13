@@ -233,11 +233,11 @@
 
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
       now = new Date().getTime();
+
       if (rightLastScrollTime + 50 < now) {
         leftLastScrollTime = now;
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
-
           if (scrollTop !== false) {
             acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
           }
@@ -247,12 +247,21 @@
     });
 
     acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
+
+      // to be moved
+      //var maxLeftScrollableHeight = acediff.editors.left.ace.getSession().getScreenLength() * acediff.lineHeight;
+      //var availableHeight =
+
       now = new Date().getTime();
       if (leftLastScrollTime + 50 < now) {
         rightLastScrollTime = now;
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
           if (scrollTop !== false) {
+
+            // only scroll the editor if there's space to scroll
+            //console.log(maxLeftScrollHeight, scrollTop);
+
             acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
           }
         }
@@ -439,6 +448,10 @@
     return lineLengths;
   }
 
+  //function getEditorHeight(acediff, editor) {
+  //  return editor.ace.getSession().doc.getAllLines().length * acediff.lineHeight;
+  //}
+
 
   // shows a diff in one of the two editors.
   function showDiff(acediff, editor, startLine, endLine, className) {
@@ -481,6 +494,9 @@
     var leftScrollTop  = acediff.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
 
+    //console.log(getEditorHeight(acediff, acediff.editors.left));
+    //console.log(leftScrollTop);
+
     // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     //  p1   p2
     //
@@ -502,7 +518,6 @@
     var verticalLine1 = 'L' + p2_x + ',' + p2_y + ' ' + p4_x + ',' + p4_y;
     var verticalLine2 = 'L' + p3_x + ',' + p3_y + ' ' + p1_x + ',' + p1_y;
     var d = curve1 + ' ' + verticalLine1 + ' ' + curve2 + ' ' + verticalLine2;
-
 
     var el = document.createElementNS(C.SVG_NS, 'path');
     el.setAttribute('d', d);
@@ -813,6 +828,9 @@
 
   function clearGutter(gutter) {
     gutter.innerHTML = '';
+    //for (var i=0; i<gutter.childNodes.length; i++) {
+    //  gutter.removeChild(gutter.childNodes[i]);
+    //};
   }
 
 

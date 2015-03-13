@@ -8,67 +8,15 @@
 <body>
 
 <div id="flex-container">
-    <div><div id="acediff-left-editor">(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory(require());
-  } else {
-    root.AceDiff = factory(root);
-  }
-}(this, function(){
-  'use strict';
-
-  var Range = require('ace/range').Range;
-
-  var C = {
-    DIFF_EQUAL: 0,
-    DIFF_DELETE: -1,
-    DIFF_INSERT: 1,
-    EDITOR_RIGHT: 'right',
-    EDITOR_LEFT: 'left',
-    RTL: 'rtl',
-    LTR: 'ltr',
-    SVG_NS: 'http://www.w3.org/2000/svg'
-  };
-
-  // our constructor
-  function AceDiff(options) {
-    this.options = {};
-    extend(true, this.options, {
-      mode: null,
-      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000,
-      left: {
-        id: 'acediff-left-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyLTR: true
-      },
-      right: {
-        id: 'acediff-right-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyRTL: true
-      },
-      classes: {
-        gutterID: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
-    }, options);
-
+    <div><div id="acediff-left-editor">
+-
+-
+-
+-
+-
+-
+-
+-
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
     // editor content
     this.editors = {
@@ -86,72 +34,15 @@
   }
 }));</div></div>
     <div id="acediff-gutter"></div>
-    <div><div id="acediff-right-editor">(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object'
-
-
-
-
-
-
-
-
-
-        ) {
-    module.exports = factory(require());
-  } else {
-    root.AceDiff = factory(root);
-  }
-}(this, function() {
-  'use strict';
-
-  var Range = require('ace/range').Range;
-
-  var C = {
-    DIFF_EQUAL: 0,
-    DIFF_DELETE: -1,
-    DIFF_INSERT: 1,
-    EDITOR_RIGHT: 'right',
-    EDITOR_LEFT: 'left',
-    RTL: 'rtl',
-    LTR: 'ltr',
-    SVG_NS: 'http://www.w3.org/2000/svg',
-    DIFF_GRANULARITY_NORMAL: 'normal',
-    DIFF_GRANULARITY_BROAD: 'broad'
-  };
-
-  // our constructor
-  function AceDiff(options) {
-    this.options = {};
-    extend(true, this.options, {
-      mode: null,
-      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000,
-      left: {
-        id: 'acediff-left-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyLTR: true
-      },
-      classes: {
-        gutterID: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
-    }, options);
-
+    <div><div id="acediff-right-editor">
+-
+-
+-
+-
+-
+-
+-
+-
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
     // editor content
     this.editors = {
@@ -164,6 +55,11 @@
         ace: ace.edit(this.options.right.id),
         markers: [],
         lineLengths: []
+
+
+
+
+
       }
     };
   }
