@@ -9,6 +9,9 @@
 
 <div id="flex-container">
     <div><div id="acediff-left-editor">
+one
+two
+three
 -
 -
 -
@@ -35,12 +38,9 @@
 }));</div></div>
     <div id="acediff-gutter"></div>
     <div><div id="acediff-right-editor">
--
--
--
--
--
--
+one
+two
+three
 -
 -
     // instantiate the editors in an internal data structure that will store a little info about the diffs and
@@ -55,18 +55,13 @@
         ace: ace.edit(this.options.right.id),
         markers: [],
         lineLengths: []
-
-
-
-
-
       }
     };
   }
 }));</div></div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../libs/ace.js" charset="utf-8"></script>
 <script src="../../dist/ace-diff.js"></script>
 
 <script>

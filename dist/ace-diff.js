@@ -78,7 +78,8 @@
         ace: ace.edit(this.options.right.id),
         markers: [],
         lineLengths: []
-      }
+      },
+      visibleHeight: null
     };
 
     addEventHandlers(this);
@@ -103,6 +104,9 @@
     if (this.options.right.content) {
       this.editors.right.ace.setValue(this.options.right.content, -1);
     }
+
+    // store the visible height of the editors (assumed the same)
+    this.editors.visibleHeight = getVisibleHeight(this);
 
     this.diff();
   }
@@ -233,6 +237,7 @@
         now;
 
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
+      var maxRightScrollableHeight = acediff.editors.right.ace.getSession().getScreenLength() * acediff.lineHeight;
       now = new Date().getTime();
 
       if (rightLastScrollTime + 50 < now) {
@@ -240,7 +245,11 @@
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
           if (scrollTop !== false) {
-            acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+
+            // only scroll the editor if there's space to scroll: TODO move this logic to lockScrolling
+            if (maxRightScrollableHeight - scrollTop > acediff.editors.visibleHeight) {
+              acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+            }
           }
         }
         updateGap(acediff, 'left', scroll);
@@ -248,22 +257,17 @@
     });
 
     acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
-
-      // to be moved
-      //var maxLeftScrollableHeight = acediff.editors.left.ace.getSession().getScreenLength() * acediff.lineHeight;
-      //var availableHeight =
-
+      var maxLeftScrollableHeight = acediff.editors.left.ace.getSession().getScreenLength() * acediff.lineHeight;
       now = new Date().getTime();
       if (leftLastScrollTime + 50 < now) {
         rightLastScrollTime = now;
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
           if (scrollTop !== false) {
-
             // only scroll the editor if there's space to scroll
-            //console.log(maxLeftScrollHeight, scrollTop);
-
-            acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+            if (maxLeftScrollableHeight - scrollTop > acediff.editors.visibleHeight) {
+              acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
+            }
           }
         }
         updateGap(acediff, 'right', scroll);
@@ -286,6 +290,8 @@
     }
 
     var onResize = debounce(function() {
+      acediff.editors.availableHeight = document.getElementById(acediff.options.left.id).offsetHeight;
+
       // TODO this should re-init gutter
       acediff.diff();
     }, 250);
@@ -328,6 +334,10 @@
       var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
       targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
     }
+
+    // additional adjustment for the top/end when a user scrolls an editor that has less space than the other
+
+
 
     return targetScrollHeight;
   }
@@ -1008,6 +1018,10 @@
       rightScrollTop: acediff.editors.right.ace.getSession().getScrollTop(),
       editorHeight: document.getElementById(acediff.options.left.id).clientHeight // assumed same for both left and right
     };
+  }
+
+  function getVisibleHeight(acediff) {
+    return document.getElementById(acediff.options.left.id).offsetHeight;
   }
 
   // generates a Bezier curve in SVG format
