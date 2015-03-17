@@ -79,7 +79,7 @@
         markers: [],
         lineLengths: []
       },
-      visibleHeight: null
+      editorHeight: null
     };
 
     addEventHandlers(this);
@@ -106,7 +106,7 @@
     }
 
     // store the visible height of the editors (assumed the same)
-    this.editors.visibleHeight = getVisibleHeight(this);
+    this.editors.editorHeight = getEditorHeight(this);
 
     this.diff();
   }
@@ -247,7 +247,7 @@
           if (scrollTop !== false) {
 
             // only scroll the editor if there's space to scroll: TODO move this logic to lockScrolling
-            if (maxRightScrollableHeight - scrollTop > acediff.editors.visibleHeight) {
+            if (maxRightScrollableHeight - scrollTop > acediff.editors.editorHeight) {
               acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
             }
           }
@@ -265,7 +265,7 @@
           var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
           if (scrollTop !== false) {
             // only scroll the editor if there's space to scroll
-            if (maxLeftScrollableHeight - scrollTop > acediff.editors.visibleHeight) {
+            if (maxLeftScrollableHeight - scrollTop > acediff.editors.editorHeight) {
               acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
             }
           }
@@ -303,8 +303,8 @@
   function lockScrolling(acediff, sourceEditor, scroll) {
 
     // find the middle line in the source editor
-    var info = getScrollingInfo(acediff);
-    var halfEditorHeight = info.editorHeight / 2;
+    var halfEditorHeight = acediff.editors.editorHeight / 2;
+
     var middleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
     var scrollOffsets = getScrollOffsets(acediff, middleLine);
 
@@ -335,8 +335,21 @@
       targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
     }
 
-    // additional adjustment for the top/end when a user scrolls an editor that has less space than the other
 
+    // additional adjustment for the top/end when a user scrolls an editor that has less space than the other
+    if (scroll > 0 && scroll < halfEditorHeight) {
+
+      // find the current scroll height of the other editor
+      var otherEditorScroll = (C.EDITOR_LEFT) ? getScrollingInfo(acediff, C.EDITOR_LEFT) : getScrollingInfo(acediff, C.EDITOR_RIGHT);
+
+
+      // NEED: total offset height for the line
+
+      // if the other editor has greater height to scroll, scale it
+      if (otherEditorScroll > scroll) {
+
+      }
+    }
 
 
     return targetScrollHeight;
@@ -458,10 +471,6 @@
     });
     return lineLengths;
   }
-
-  //function getEditorHeight(acediff, editor) {
-  //  return editor.ace.getSession().doc.getAllLines().length * acediff.lineHeight;
-  //}
 
 
   // shows a diff in one of the two editors.
@@ -1012,15 +1021,13 @@
   }
 
 
-  function getScrollingInfo(acediff) {
-    return {
-      leftScrollTop: acediff.editors.left.ace.getSession().getScrollTop(),
-      rightScrollTop: acediff.editors.right.ace.getSession().getScrollTop(),
-      editorHeight: document.getElementById(acediff.options.left.id).clientHeight // assumed same for both left and right
-    };
+  function getScrollingInfo(acediff, dir) {
+    return (dir == C.EDITOR_LEFT) ? acediff.editors.left.ace.getSession().getScrollTop() : acediff.editors.right.ace.getSession().getScrollTop();
   }
 
-  function getVisibleHeight(acediff) {
+
+  function getEditorHeight(acediff) {
+    //editorHeight: document.getElementById(acediff.options.left.id).clientHeight
     return document.getElementById(acediff.options.left.id).offsetHeight;
   }
 

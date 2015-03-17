@@ -1,17 +1,19 @@
 ## Ace-diff
 
+*** THIS IS STILL IN DEV (March 17th, 2015) *** 
+
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
-differences in two documents and allows users to copy changes from one doc to the other. You've seen it a billion
-times; this is an Ace Editor-compatible one. :)
+differences in two documents and allows users to copy changes from to the other. If you're a develoiper, you've 
+seen it a billion times; this is one for Ace Editor. :)
 
 It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
 library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. AceDiff 
-just converts that raw diff info into an visual representation on the screen.
+just visualizes that information as line-diffs in the editors.
 
 
 ### Dependencies
 
-- Ace Editor 1.1.8 or later (probably works on older version, but I haven't confirmed)
+- Ace Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
 - google-diff-match-patch (20121119 or later)
 
 
