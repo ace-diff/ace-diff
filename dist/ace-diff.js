@@ -9,6 +9,7 @@
 }(this, function() {
   'use strict';
 
+  // how to tie this into the above?
   var Range = require('ace/range').Range;
 
   var C = {
@@ -245,8 +246,6 @@
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
           if (scrollTop !== false) {
-
-            // only scroll the editor if there's space to scroll: TODO move this logic to lockScrolling
             if (maxRightScrollableHeight - scrollTop > acediff.editors.editorHeight) {
               acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
             }
@@ -264,7 +263,6 @@
         if (acediff.options.lockScrolling) {
           var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
           if (scrollTop !== false) {
-            // only scroll the editor if there's space to scroll
             if (maxLeftScrollableHeight - scrollTop > acediff.editors.editorHeight) {
               acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
             }
@@ -300,6 +298,7 @@
   }
 
 
+
   function lockScrolling(acediff, sourceEditor, scroll) {
 
     // find the middle line in the source editor
@@ -308,14 +307,16 @@
     var middleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
     var scrollOffsets = getScrollOffsets(acediff, middleLine);
 
-    var targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd, targetDiffHeight;
+    var targetEditor, targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd, targetDiffHeight;
     if (sourceEditor === C.EDITOR_LEFT) {
+      targetEditor = C.EDITOR_RIGHT;
       targetOffset = scrollOffsets.rightOffset;
       inSourceDiff = scrollOffsets.inLeftDiff;
       sourceDiffStart = scrollOffsets.leftDiffStartLine;
       sourceDiffEnd = scrollOffsets.leftDiffEndLine;
       targetDiffHeight = scrollOffsets.rightDiffHeight;
     } else {
+      targetEditor = C.EDITOR_LEFT;
       targetOffset = scrollOffsets.leftOffset;
       inSourceDiff = scrollOffsets.inRightDiff;
       sourceDiffStart = scrollOffsets.rightDiffStartLine;
@@ -335,22 +336,46 @@
       targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
     }
 
+    // additional adjustments for the top/end when a user scrolls an editor that has less space than the other. These always
+    // override the above logic
 
-    // additional adjustment for the top/end when a user scrolls an editor that has less space than the other
-    if (scroll > 0 && scroll < halfEditorHeight) {
-
-      // find the current scroll height of the other editor
-      var otherEditorScroll = (C.EDITOR_LEFT) ? getScrollingInfo(acediff, C.EDITOR_LEFT) : getScrollingInfo(acediff, C.EDITOR_RIGHT);
-
-
-      // NEED: total offset height for the line
-
-      // if the other editor has greater height to scroll, scale it
-      if (otherEditorScroll > scroll) {
-
-      }
+    // TOP
+    if (scroll < halfEditorHeight) {
+      scroll = scroll > 0 ? scroll : 0;
+      var targetOffsetHeight = targetOffset * acediff.lineHeight;
+      var ratio = scroll / halfEditorHeight;
+      targetScrollHeight = (targetOffsetHeight + halfEditorHeight) * ratio;
     }
 
+    // BOTTOM
+    var totalSourceEditorHeight = getTotalHeight(acediff, sourceEditor);
+    if (scroll + 3 * halfEditorHeight > totalSourceEditorHeight) {
+      var line2 = Math.floor((totalSourceEditorHeight - halfEditorHeight) / acediff.lineHeight);
+      var bottomOffsets = getScrollOffsets(acediff, line2);
+
+      var totalTargetEditorHeight = getTotalHeight(acediff, targetEditor);
+      var diffsInPx = (bottomOffsets.totalInserts - bottomOffsets.totalDeletes) * acediff.lineHeight;
+      var leftBottomLine = totalTargetEditorHeight - (halfEditorHeight + diffsInPx);
+
+      // ratio of right editor scroll
+      var ratio = (totalSourceEditorHeight - (scroll + (2 * halfEditorHeight))) / halfEditorHeight;
+      ratio = ratio > 1 ? 1 : ratio;
+      ratio = ratio < 0 ? 0 : ratio;
+
+      // now multiple REMAINING height in left editor with ratio
+      var targetEditorRemainingHeight = totalTargetEditorHeight - leftBottomLine;
+
+      // the previous var is the total height from the top of the line. Now compute the scroll height for that line
+      targetScrollHeight = (leftBottomLine - acediff.editors.editorHeight + (targetEditorRemainingHeight * (1 - ratio)));
+    }
+
+    // final bounds checking [TODO shouldn't be necessary]
+    var scrollPlusHeight = scroll + acediff.editors.editorHeight;
+    if (scroll <= 0) {
+      targetScrollHeight = 0;
+    } else if (scrollPlusHeight >= getTotalHeight(acediff, sourceEditor)) {
+      targetScrollHeight = getTotalHeight(acediff, targetEditor) + acediff.editors.editorHeight;
+    }
 
     return targetScrollHeight;
   }
@@ -405,6 +430,7 @@
       rightOffset: rightOffset,
       leftOffset: leftOffset,
       totalInserts: totalInserts,
+      totalDeletes: totalDeletes,
       leftDiffHeight: leftDiffHeight,
       rightDiffHeight: rightDiffHeight
     };
@@ -513,9 +539,6 @@
   function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
     var leftScrollTop  = acediff.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
-
-    //console.log(getEditorHeight(acediff, acediff.editors.left));
-    //console.log(leftScrollTop);
 
     // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     //  p1   p2
@@ -822,8 +845,8 @@
     acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
     acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
 
-    var leftHeight = acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight;
-    var rightHeight = acediff.editors.right.ace.getSession().getLength() * acediff.lineHeight;
+    var leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
+    var rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
     var height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
 
     acediff.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
@@ -833,6 +856,11 @@
     document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.gutterSVG);
   }
 
+  // acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight
+  function getTotalHeight(acediff, editor) {
+    var ed = (editor === C.EDITOR_LEFT) ? acediff.editors.left : acediff.editors.right;
+    return ed.ace.getSession().getLength() * acediff.lineHeight;
+  }
 
   // creates two contains for positioning the copy left + copy right arrows
   function createCopyContainers(acediff) {
