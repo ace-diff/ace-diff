@@ -298,7 +298,7 @@
   }
 
 
-
+  // this code is so terrible, the human race hasn't invented a word to properly encapsulate it
   function lockScrolling(acediff, sourceEditor, scroll) {
 
     // find the middle line in the source editor
@@ -334,48 +334,67 @@
       var targetDiffInPixels = targetDiffHeight * acediff.lineHeight;
       var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
       targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
+    } else {
+
+      // additional adjustments for the top/end when a user scrolls an editor that has less space than the other. These always
+      // override the above logic
+
+      var totalSourceEditorHeight = getTotalHeight(acediff, sourceEditor);
+
+      // TOP
+      if (scroll < halfEditorHeight) {
+        scroll = scroll > 0 ? scroll : 0;
+        var targetOffsetHeight = targetOffset * acediff.lineHeight;
+        var ratio = scroll / halfEditorHeight;
+        targetScrollHeight = (targetOffsetHeight + halfEditorHeight) * ratio;
+      }
+
+      // BOTTOM
+      else if (scroll + (3 * halfEditorHeight) > totalSourceEditorHeight) {
+
+        // we don't want to ALWAYS apply this logic. Only if the other side won't scroll fully into view with the current editor
+        var exactPixelLine = totalSourceEditorHeight - halfEditorHeight;
+        var line2 = Math.floor(exactPixelLine / acediff.lineHeight);
+        var remainingPixels = exactPixelLine % acediff.lineHeight;
+
+        var bottomOffsets = getScrollOffsets(acediff, line2);
+        var totalTargetEditorHeight = getTotalHeight(acediff, targetEditor);
+
+        var diffsInPx;
+        if (sourceEditor === C.EDITOR_RIGHT) {
+          diffsInPx = (bottomOffsets.totalInserts - bottomOffsets.totalDeletes) * acediff.lineHeight;
+        } else {
+          diffsInPx = (bottomOffsets.totalDeletes - bottomOffsets.totalInserts) * acediff.lineHeight;
+        }
+
+        var targetBottomLine = totalTargetEditorHeight - (halfEditorHeight + diffsInPx);
+
+        // ratio of right editor scroll
+        var ratio = (totalSourceEditorHeight - (scroll + (2 * halfEditorHeight))) / halfEditorHeight;
+        ratio = ratio > 1 ? 1 : ratio;
+        ratio = ratio < 0 ? 0 : ratio;
+
+        // now multiple REMAINING height in other editor with ratio
+        var targetEditorRemainingHeight = totalTargetEditorHeight - targetBottomLine;
+
+        var remainingSourceEditorHeight = totalSourceEditorHeight - (scroll + acediff.editors.editorHeight);
+        var targetEditorInst = (targetEditor === C.EDITOR_LEFT) ? acediff.editors.left : acediff.editors.right;
+        var remainingTargetEditorHeight = totalTargetEditorHeight - (targetEditorInst.ace.getSession().getScrollTop() + acediff.editors.editorHeight);
+
+        if (remainingTargetEditorHeight > remainingSourceEditorHeight) {
+          //console.log(".");
+          //targetScrollHeight = (targetBottomLine - acediff.editors.editorHeight + (targetEditorRemainingHeight * (1 - ratio)));
+        }
+      }
     }
 
-    // additional adjustments for the top/end when a user scrolls an editor that has less space than the other. These always
-    // override the above logic
-
-    // TOP
-    if (scroll < halfEditorHeight) {
-      scroll = scroll > 0 ? scroll : 0;
-      var targetOffsetHeight = targetOffset * acediff.lineHeight;
-      var ratio = scroll / halfEditorHeight;
-      targetScrollHeight = (targetOffsetHeight + halfEditorHeight) * ratio;
-    }
-
-    // BOTTOM
-    var totalSourceEditorHeight = getTotalHeight(acediff, sourceEditor);
-    if (scroll + 3 * halfEditorHeight > totalSourceEditorHeight) {
-      var line2 = Math.floor((totalSourceEditorHeight - halfEditorHeight) / acediff.lineHeight);
-      var bottomOffsets = getScrollOffsets(acediff, line2);
-
-      var totalTargetEditorHeight = getTotalHeight(acediff, targetEditor);
-      var diffsInPx = (bottomOffsets.totalInserts - bottomOffsets.totalDeletes) * acediff.lineHeight;
-      var leftBottomLine = totalTargetEditorHeight - (halfEditorHeight + diffsInPx);
-
-      // ratio of right editor scroll
-      var ratio = (totalSourceEditorHeight - (scroll + (2 * halfEditorHeight))) / halfEditorHeight;
-      ratio = ratio > 1 ? 1 : ratio;
-      ratio = ratio < 0 ? 0 : ratio;
-
-      // now multiple REMAINING height in left editor with ratio
-      var targetEditorRemainingHeight = totalTargetEditorHeight - leftBottomLine;
-
-      // the previous var is the total height from the top of the line. Now compute the scroll height for that line
-      targetScrollHeight = (leftBottomLine - acediff.editors.editorHeight + (targetEditorRemainingHeight * (1 - ratio)));
-    }
-
-    // final bounds checking [TODO shouldn't be necessary]
-    var scrollPlusHeight = scroll + acediff.editors.editorHeight;
+    // final bounds checking [TODO shouldn't be necessary...]
+    /*var scrollPlusHeight = scroll + acediff.editors.editorHeight;
     if (scroll <= 0) {
       targetScrollHeight = 0;
     } else if (scrollPlusHeight >= getTotalHeight(acediff, sourceEditor)) {
       targetScrollHeight = getTotalHeight(acediff, targetEditor) + acediff.editors.editorHeight;
-    }
+    }*/
 
     return targetScrollHeight;
   }
@@ -874,13 +893,13 @@
   }
 
 
+  // TODO. This doesn't work on Safari or IE
   function clearGutter(gutter) {
     gutter.innerHTML = '';
     //for (var i=0; i<gutter.childNodes.length; i++) {
     //  gutter.removeChild(gutter.childNodes[i]);
     //};
   }
-
 
   function clearArrows(acediff) {
     acediff.copyLeftContainer.innerHTML = '';
@@ -1049,13 +1068,7 @@
   }
 
 
-  function getScrollingInfo(acediff, dir) {
-    return (dir == C.EDITOR_LEFT) ? acediff.editors.left.ace.getSession().getScrollTop() : acediff.editors.right.ace.getSession().getScrollTop();
-  }
-
-
   function getEditorHeight(acediff) {
-    //editorHeight: document.getElementById(acediff.options.left.id).clientHeight
     return document.getElementById(acediff.options.left.id).offsetHeight;
   }
 
