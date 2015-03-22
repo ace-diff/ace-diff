@@ -16,10 +16,8 @@
 
 <script>
 $(function () {
-    //console.log()
     var aceDiffer = new AceDiff({
         mode: "ace/mode/javascript",
-        lockScrolling: false,
         left: {
             id: "editor1",
             content: $("#example-content-1").html()
@@ -82,7 +80,6 @@ we'll just stash it elsewhere in the page -->
     extend(true, this.options, {
       mode: null,
       diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
       showDiffs: true,
       showConnectors: true,
       maxDiffs: 5000,
@@ -162,7 +159,6 @@ we'll just stash it elsewhere in the page -->
     extend(true, this.options, {
       mode: null,
       diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
       showDiffs: true,
       showConnectors: true,
       maxDiffs: 5000,

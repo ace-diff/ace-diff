@@ -30,7 +30,6 @@ how it works.
 - Accommodates realtime changes to one or both editors
 - Readonly option for left/right editors
 - full control over all CSS/IDs for styling. This includes styling the actual diffs and the SVG gutter lines.
-- optional scroll-locking (scroll one editor and it intelligently scrolls the other based on the diff heights)
 - control over how aggressively diffs are combined
 - option to allow users to copy diffs from one side to the other
 - option to either set the editor values by targeting markup containing the code, or by sending it via a config option
@@ -109,7 +108,6 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
   mode: null,
   theme: null,
   diffGranularity: 'broad',
-  lockScrolling: true,
   showDiffs: true,
   showConnectors: true,
   maxDiffs: 5000,
@@ -155,9 +153,6 @@ below. Read on.
 - `diffGranularity` (string, optional, default: `broad`). this has two options (`specific`, and `broad`). Basically this
 determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call
 as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
-- `lockScrolling` (boolean, optional, default: `true`). This setting locks the scrollbars so that scrolling down one
-editor, the other editor scrolls at an appropriate pace - keeping the code as in sync as possible, depending on the
-diffs. It's a pretty nice setting so it's enabled by default.
 - `showDiffs` (boolean, optional, default: `true`). Whether or not the diffs are enabled. This basically turns
 everything off.
 - `showConnectors` (boolean, optional, default: `true`). Whether or not the gutter in the middle show show connectors
@@ -212,7 +207,7 @@ gutter.
 
 ### Browser Support
 
-Should be all non-IE browsers, and IE 10 and up. Open a ticket if you find otherwise.
+All modern non-IE browsers, and IE 10 and up. Open a ticket if you find otherwise.
 
 
 ### License
@@ -222,11 +217,4 @@ MIT.
 
 ### Changelog
 
-- **0.1.0** - March 2015 - initial version
-
-
-### Remaining TODO
-- ensure diffs at top & bottom always show up
-- bit of shuffling weirdness with scroll locking: glitch when 
-- check IE!
-- add some better error handling for the on() function if it can't find the element. 
+- **0.1.0** - March 21, 2015 - initial version

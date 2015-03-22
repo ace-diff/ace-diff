@@ -9,7 +9,6 @@
 }(this, function() {
   'use strict';
 
-  // how to tie this into the above?
   var Range = require('ace/range').Range;
 
   var C = {
@@ -33,7 +32,7 @@
       mode: null,
       theme: null,
       diffGranularity: C.DIFF_GRANULARITY_BROAD,
-      lockScrolling: true,
+      lockScrolling: false, // not implemented yet
       showDiffs: true,
       showConnectors: true,
       maxDiffs: 5000,
@@ -238,36 +237,15 @@
         now;
 
     acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-      var maxRightScrollableHeight = acediff.editors.right.ace.getSession().getScreenLength() * acediff.lineHeight;
       now = new Date().getTime();
-
       if (rightLastScrollTime + 50 < now) {
-        leftLastScrollTime = now;
-        if (acediff.options.lockScrolling) {
-          var scrollTop = lockScrolling(acediff, C.EDITOR_LEFT, scroll);
-          if (scrollTop !== false) {
-            if (maxRightScrollableHeight - scrollTop > acediff.editors.editorHeight) {
-              acediff.editors.right.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
-            }
-          }
-        }
         updateGap(acediff, 'left', scroll);
       }
     });
 
     acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
-      var maxLeftScrollableHeight = acediff.editors.left.ace.getSession().getScreenLength() * acediff.lineHeight;
       now = new Date().getTime();
       if (leftLastScrollTime + 50 < now) {
-        rightLastScrollTime = now;
-        if (acediff.options.lockScrolling) {
-          var scrollTop = lockScrolling(acediff, C.EDITOR_RIGHT, scroll);
-          if (scrollTop !== false) {
-            if (maxLeftScrollableHeight - scrollTop > acediff.editors.editorHeight) {
-              acediff.editors.left.ace.getSession().setScrollTop((scrollTop > 0) ? scrollTop : 0);
-            }
-          }
-        }
         updateGap(acediff, 'right', scroll);
       }
     });
@@ -295,145 +273,6 @@
     }, 250);
 
     window.addEventListener('resize', onResize);
-  }
-
-
-
-  function lockScrolling(acediff, sourceEditor, scroll) {
-
-    // find the middle line in the source editor
-    var halfEditorHeight = acediff.editors.editorHeight / 2;
-
-    var middleLine = Math.floor((scroll + halfEditorHeight) / acediff.lineHeight) + 1;
-    var scrollOffsets = getScrollOffsets(acediff, middleLine);
-
-    var targetEditor, targetOffset, inSourceDiff, sourceDiffStart, sourceDiffEnd, targetDiffHeight;
-    if (sourceEditor === C.EDITOR_LEFT) {
-      targetEditor = C.EDITOR_RIGHT;
-      targetOffset = scrollOffsets.rightOffset;
-      inSourceDiff = scrollOffsets.inLeftDiff;
-      sourceDiffStart = scrollOffsets.leftDiffStartLine;
-      sourceDiffEnd = scrollOffsets.leftDiffEndLine;
-      targetDiffHeight = scrollOffsets.rightDiffHeight;
-    } else {
-      targetEditor = C.EDITOR_LEFT;
-      targetOffset = scrollOffsets.leftOffset;
-      inSourceDiff = scrollOffsets.inRightDiff;
-      sourceDiffStart = scrollOffsets.rightDiffStartLine;
-      sourceDiffEnd = scrollOffsets.rightDiffEndLine;
-      targetDiffHeight = scrollOffsets.leftDiffHeight;
-    }
-
-    var targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight);
-
-    // we only ever want to do a scrolling effect when we're scrolling within a source diff
-    if (inSourceDiff) {
-      var numRowsInSourceDiff = sourceDiffEnd - sourceDiffStart;
-      var pixelsOverSourceDiffStart = parseInt(halfEditorHeight) + parseInt(scroll) - (sourceDiffStart * acediff.lineHeight);
-      var ratio = pixelsOverSourceDiffStart / (numRowsInSourceDiff * acediff.lineHeight);
-      var targetDiffInPixels = targetDiffHeight * acediff.lineHeight;
-      var sourceDiffInPixels = (sourceDiffEnd - sourceDiffStart) * acediff.lineHeight;
-      targetScrollHeight = parseInt(scroll) + (targetOffset * acediff.lineHeight) + (ratio * targetDiffInPixels) - (ratio * sourceDiffInPixels);
-    }
-
-    // additional adjustments for the top/end when a user scrolls an editor that has less space than the other. These always
-    // override the above logic
-
-    // TOP
-    if (scroll < halfEditorHeight) {
-      scroll = scroll > 0 ? scroll : 0;
-      var targetOffsetHeight = targetOffset * acediff.lineHeight;
-      var ratio = scroll / halfEditorHeight;
-      targetScrollHeight = (targetOffsetHeight + halfEditorHeight) * ratio;
-    }
-
-    // BOTTOM
-    var totalSourceEditorHeight = getTotalHeight(acediff, sourceEditor);
-    if (scroll + 3 * halfEditorHeight > totalSourceEditorHeight) {
-      var line2 = Math.floor((totalSourceEditorHeight - halfEditorHeight) / acediff.lineHeight);
-      var bottomOffsets = getScrollOffsets(acediff, line2);
-
-      var totalTargetEditorHeight = getTotalHeight(acediff, targetEditor);
-      var diffsInPx = (bottomOffsets.totalInserts - bottomOffsets.totalDeletes) * acediff.lineHeight;
-      var leftBottomLine = totalTargetEditorHeight - (halfEditorHeight + diffsInPx);
-
-      // ratio of right editor scroll
-      var ratio = (totalSourceEditorHeight - (scroll + (2 * halfEditorHeight))) / halfEditorHeight;
-      ratio = ratio > 1 ? 1 : ratio;
-      ratio = ratio < 0 ? 0 : ratio;
-
-      // now multiple REMAINING height in left editor with ratio
-      var targetEditorRemainingHeight = totalTargetEditorHeight - leftBottomLine;
-
-      // the previous var is the total height from the top of the line. Now compute the scroll height for that line
-      targetScrollHeight = (leftBottomLine - acediff.editors.editorHeight + (targetEditorRemainingHeight * (1 - ratio)));
-    }
-
-    // final bounds checking [TODO shouldn't be necessary]
-    var scrollPlusHeight = scroll + acediff.editors.editorHeight;
-    if (scroll <= 0) {
-      targetScrollHeight = 0;
-    } else if (scrollPlusHeight >= getTotalHeight(acediff, sourceEditor)) {
-      targetScrollHeight = getTotalHeight(acediff, targetEditor) + acediff.editors.editorHeight;
-    }
-
-    return targetScrollHeight;
-  }
-
-
-  function getScrollOffsets(acediff, line) {
-    var totalInserts = 0,
-        totalDeletes = 0,
-        rightOffset = 0,
-        leftOffset = 0,
-        inLeftDiff = false,
-        inRightDiff = false;
-
-    var leftDiffStartLine, leftDiffEndLine, rightDiffStartLine, rightDiffEndLine, rightDiffHeight, leftDiffHeight;
-
-    for (var i=0; i<acediff.diffs.length; i++) {
-      if (acediff.diffs[i].leftStartLine < line) {
-        if (acediff.diffs[i].leftEndLine < line) {
-          totalInserts += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
-          rightOffset += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
-        } else {
-          inLeftDiff = true;
-          leftDiffStartLine = acediff.diffs[i].leftStartLine;
-          leftDiffEndLine = acediff.diffs[i].leftEndLine;
-          rightDiffHeight = acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
-        }
-      }
-
-      if (acediff.diffs[i].rightStartLine < line) {
-        if (acediff.diffs[i].rightEndLine < line) {
-          totalDeletes += acediff.diffs[i].rightEndLine - acediff.diffs[i].rightStartLine;
-          leftOffset += acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
-        } else {
-          inRightDiff = true;
-          rightDiffStartLine = acediff.diffs[i].rightStartLine;
-          rightDiffEndLine = acediff.diffs[i].rightEndLine;
-          leftDiffHeight = acediff.diffs[i].leftEndLine - acediff.diffs[i].leftStartLine;
-        }
-      }
-    }
-
-    rightOffset = rightOffset - totalInserts;
-    leftOffset = leftOffset - totalDeletes;
-
-    return {
-      inLeftDiff: inLeftDiff,
-      leftDiffStartLine: leftDiffStartLine,
-      leftDiffEndLine: leftDiffEndLine,
-      inRightDiff: inRightDiff,
-      rightDiffStartLine: rightDiffStartLine,
-      rightDiffEndLine: rightDiffEndLine,
-      rightOffset: rightOffset,
-      leftOffset: leftOffset,
-      totalInserts: totalInserts,
-      totalDeletes: totalDeletes,
-      leftDiffHeight: leftDiffHeight,
-      rightDiffHeight: rightDiffHeight
-    };
   }
 
 

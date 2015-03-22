@@ -8,156 +8,79 @@
 <body>
 
 <div id="flex-container">
-    <div><div id="acediff-left-editor">(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory(require());
-  } else {
-    root.AceDiff = factory(root);
+    <div><div id="acediff-left-editor">{
+  "name": "ace-diff",
+  "version": "0.1.0",
+  "date": "Mar 15, 2015",
+  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
+  "main": "dist/ace-diff.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benkeen/ace-diff.git"
+  },
+  "keywords": [
+    "ace",
+    "dif",
+    "diffing",
+    "ace editor",
+    "syntax highlighting"
+  ],
+  "author": "Ben Keen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/benkeen/ace-diff/issues"
+  },
+  "homepage": "https://github.com/benkeen/ace-diff",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "^0.10.0"
   }
-}(this, function(){
-  'use strict';
-
-  var Range = require('ace/range').Range;
-
-  var C = {
-    DIFF_EQUAL: 0,
-    DIFF_DELETE: -1,
-    DIFF_INSERT: 1,
-    EDITOR_RIGHT: 'right',
-    EDITOR_LEFT: 'left',
-    RTL: 'rtl',
-    LTR: 'ltr',
-    SVG_NS: 'http://www.w3.org/2000/svg'
-  };
-
-  // our constructor
-  function AceDiff(options) {
-    this.options = {};
-    extend(true, this.options, {
-      mode: null,
-      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000,
-      left: {
-        id: 'acediff-left-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyLTR: true
-      },
-      right: {
-        id: 'acediff-right-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyRTL: true
-      },
-      classes: {
-        gutterID: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
-    }, options);
-
-    // instantiate the editors in an internal data structure that will store a little info about the diffs and
-    // editor content
-    this.editors = {
-      left: {
-        ace: ace.edit(this.options.left.id),
-        markers: [],
-        lineLengths: []
-      },
-      right: {
-        ace: ace.edit(this.options.right.id),
-        markers: [],
-        lineLengths: []
-      }
-    };
-  }
-}));</div></div>
+}
+</div></div>
     <div id="acediff-gutter"></div>
-    <div><div id="acediff-right-editor">(function(root, factory) {
-  if (typeof define === 'function' && define.amd) {
-    define([], factory);
-  } else if (typeof exports === 'object') {
-    module.exports = factory(require());
-  } else {
-    root.AceDiff = factory(root);
+    <div><div id="acediff-right-editor">{
+  "name": "ace-diff",
+  "version": "0.1.1",
+  "date": "Mar 21, 2015",
+  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
+  "main": "dist/ace-diff.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/benkeen/ace-diff.git"
+  },
+  "keywords": [
+    "ace",
+    "dif",
+    "diffing",
+    "merge",
+    "merging",
+    "ace editor",
+    "syntax highlighting"
+  ],
+  "author": "Ben Keen",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/benkeen/ace-diff/issues"
+  },
+  "homepage": "https://github.com/benkeen/ace-diff",
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-contrib-uglify": "^0.8.0",
+    "grunt-contrib-clean": "~0.5.0",
+    "grunt-contrib-watch": "~0.5.3",
+    "grunt-contrib-jshint": "^0.10.0"
   }
-}(this, function() {
-  'use strict';
-
-  var Range = require('ace/range').Range;
-
-  var C = {
-    DIFF_EQUAL: 0,
-    DIFF_DELETE: -1,
-    DIFF_INSERT: 1,
-    EDITOR_RIGHT: 'right',
-    EDITOR_LEFT: 'left',
-    RTL: 'rtl',
-    LTR: 'ltr',
-    SVG_NS: 'http://www.w3.org/2000/svg',
-    DIFF_GRANULARITY_NORMAL: 'normal',
-    DIFF_GRANULARITY_BROAD: 'broad'
-  };
-
-  // our constructor
-  function AceDiff(options) {
-    this.options = {};
-    extend(true, this.options, {
-      mode: null,
-      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
-      lockScrolling: true,
-      showDiffs: true,
-      showConnectors: true,
-      maxDiffs: 5000,
-      left: {
-        id: 'acediff-left-editor',
-        content: null,
-        mode: null,
-        editable: true,
-        showCopyLTR: true
-      },
-      classes: {
-        gutterID: 'acediff-gutter',
-        diff: 'acediff-diff',
-        connector: 'acediff-connector',
-        newCodeConnectorLink: 'acediff-new-code-connector-copy',
-        newCodeConnectorLinkContent: '&#8594;',
-        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
-        deletedCodeConnectorLinkContent: '&#8592;',
-        copyRightContainer: 'acediff-copy-right',
-        copyLeftContainer: 'acediff-copy-left'
-      }
-    }, options);
-
-    // instantiate the editors in an internal data structure that will store a little info about the diffs and
-    // editor content
-    this.editors = {
-      left: {
-        ace: ace.edit(this.options.left.id),
-        markers: [],
-        lineLengths: []
-      },
-      right: {
-        ace: ace.edit(this.options.right.id),
-        markers: [],
-        lineLengths: []
-      }
-    };
-  }
-}));</div></div>
+}
+</div></div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
@@ -165,7 +88,7 @@
 
 <script>
 var aceDiffer = new AceDiff({
-    mode: "ace/mode/javascript"
+    mode: "ace/mode/json"
 });
 </script>
 
