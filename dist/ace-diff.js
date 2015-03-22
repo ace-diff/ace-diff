@@ -713,11 +713,13 @@
   }
 
 
-  function clearGutter(gutter) {
-    gutter.innerHTML = '';
-    //for (var i=0; i<gutter.childNodes.length; i++) {
-    //  gutter.removeChild(gutter.childNodes[i]);
-    //};
+  function clearGutter(acediff) {
+    //gutter.innerHTML = '';
+
+    var gutterEl  = document.getElementById(acediff.options.classes.gutterID);
+    gutterEl.removeChild(acediff.gutterSVG);
+
+    createGutter(acediff);
   }
 
 
@@ -780,7 +782,7 @@
 
 
   function decorate(acediff) {
-    clearGutter(acediff.gutterSVG);
+    clearGutter(acediff);
     clearArrows(acediff);
 
     acediff.diffs.forEach(function(info, diffIndex) {
@@ -915,7 +917,7 @@
 
 
   function on(elSelector, eventName, selector, fn) {
-    var element = document.querySelector(elSelector);
+    var element = (elSelector === 'document') ? document : document.querySelector(elSelector);
 
     element.addEventListener(eventName, function(event) {
       var possibleTargets = element.querySelectorAll(selector);
