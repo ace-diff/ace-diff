@@ -1,7 +1,5 @@
 ## Ace-diff
 
-*** THIS IS STILL IN DEV (March 17th, 2015) *** 
-
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
 differences in two documents and allows users to copy changes from to the other. If you're a develoiper, you've 
 seen it a billion times; this is one for Ace Editor. :)
