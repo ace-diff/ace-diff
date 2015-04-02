@@ -1,7 +1,7 @@
 ## Ace-diff
 
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
-differences in two documents and allows users to copy changes from to the other. If you're a develoiper, you've 
+differences in two documents and allows users to copy changes from to the other. If you're a developer, you've 
 seen it a billion times; this is one for Ace Editor. :)
 
 It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
