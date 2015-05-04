@@ -387,13 +387,13 @@
     acediff.connectorYOffset = 1;
 
     var p1_x = -1;
-    var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop;
+    var p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop + 0.5;
     var p2_x = acediff.gutterWidth + 1;
-    var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop;
+    var p2_y = rightStartLine * acediff.lineHeight - rightScrollTop + 0.5;
     var p3_x = -1;
-    var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + acediff.connectorYOffset;
+    var p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + acediff.connectorYOffset + 0.5;
     var p4_x = acediff.gutterWidth + 1;
-    var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + acediff.connectorYOffset;
+    var p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + acediff.connectorYOffset + 0.5;
     var curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
     var curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
