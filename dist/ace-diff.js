@@ -17,8 +17,10 @@
     DIFF_INSERT: 1,
     EDITOR_RIGHT: 'right',
     EDITOR_LEFT: 'left',
+    EDITOR_MERGE: 'merge',
     RTL: 'rtl',
     LTR: 'ltr',
+    RTM: 'rtm',
     SVG_NS: 'http://www.w3.org/2000/svg',
     DIFF_GRANULARITY_SPECIFIC: 'specific',
     DIFF_GRANULARITY_BROAD: 'broad'
@@ -52,7 +54,18 @@
         editable: true,
         copyLinkEnabled: true
       },
+      merge: {
+        id: 'acediff-merge-editor',
+        content: null,
+        mode: null,
+        theme: null,
+        editable: true,
+        copyLinkEnabled: true,
+        enabled: false
+      },
       classes: {
+        leftGutterID: 'acediff-gutter',
+        rightGutterID: 'acediff-gutter',
         gutterID: 'acediff-gutter',
         diff: 'acediff-diff',
         connector: 'acediff-connector',
@@ -82,6 +95,14 @@
       editorHeight: null
     };
 
+    if (this.options.merge.enabled) {
+      this.editors.merge = {
+        ace: this.options.merge.enabled ? ace.edit(this.options.merge.id) : null,
+        markers: [],
+        lineLengths: []
+      };
+    }
+
     addEventHandlers(this);
 
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
@@ -89,13 +110,29 @@
     // set up the editors
     this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
     this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
+
     this.editors.left.ace.setReadOnly(!this.options.left.editable);
     this.editors.right.ace.setReadOnly(!this.options.right.editable);
+
     this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
     this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
-    createCopyContainers(this);
-    createGutter(this);
+
+    if (this.options.merge.enabled) {
+      this.editors.merge.ace.getSession().setMode(getMode(this, C.EDITOR_MERGE));
+      this.editors.merge.ace.setReadOnly(!this.options.merge.editable);
+      this.editors.merge.ace.setTheme(getTheme(this, C.EDITOR_MERGE));
+
+      createCopyContainers(this, this.options.classes.leftGutterID, 'left');
+      createGutter(this, this.options.classes.leftGutterID, 'left');
+
+      createCopyContainers(this, this.options.classes.rightGutterID, 'right');
+      createGutter(this, this.options.classes.rightGutterID, 'right');
+    } else {
+      createCopyContainers(this, this.options.classes.gutterID);
+      createGutter(this, this.options.classes.gutterID);
+    }
+
 
     // if the data is being supplied by an option, set the editor values now
     if (this.options.left.content) {
@@ -103,6 +140,9 @@
     }
     if (this.options.right.content) {
       this.editors.right.ace.setValue(this.options.right.content, -1);
+    }
+    if (this.options.merge.content) {
+      this.editors.merge.ace.setValue(this.options.merge.content, -1);
     }
 
     // store the visible height of the editors (assumed the same)
@@ -139,11 +179,18 @@
       var dmp = new diff_match_patch();
       var val1 = this.editors.left.ace.getSession().getValue();
       var val2 = this.editors.right.ace.getSession().getValue();
-      var diff = dmp.diff_main(val2, val1);
-      dmp.diff_cleanupSemantic(diff);
+
+      if (this.options.merge.enabled) {
+        val1 = this.editors.merge.ace.getSession().getValue();
+        this.editors.merge.lineLengths = getLineLengths(this.editors.merge);
+      }
 
       this.editors.left.lineLengths  = getLineLengths(this.editors.left);
       this.editors.right.lineLengths = getLineLengths(this.editors.right);
+
+      var diff = dmp.diff_main(val2, val1);
+      dmp.diff_cleanupSemantic(diff);
+
 
       // parse the raw diff into something a little more palatable
       var diffs = [];
@@ -202,7 +249,21 @@
       newDiv.textContent = rightValue;
       oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-      document.getElementById(this.options.classes.gutterID).innerHTML = '';
+      if (this.options.merge.enabled) {
+        document.getElementById(this.options.classes.leftGutterID).innerHTML = '';
+        document.getElementById(this.options.classes.rightGutterID).innerHTML = '';
+
+        // destroy the merge editor
+        var mergeValue = this.editors.merge.ace.getValue();
+        this.editors.merge.ace.destroy();
+        oldDiv = this.editors.merge.ace.container;
+        newDiv = oldDiv.cloneNode(false);
+        newDiv.textContent = mergeValue;
+        oldDiv.parentNode.replaceChild(newDiv, oldDiv);
+      } else {
+        document.getElementById(this.options.classes.gutterID).innerHTML = '';
+      }
+
     }
   };
 
@@ -232,37 +293,64 @@
 
 
   function addEventHandlers(acediff) {
-    var leftLastScrollTime = new Date().getTime(),
-        rightLastScrollTime = new Date().getTime(),
-        now;
+    var lastScrollTime = new Date().getTime();
 
-    acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
-      now = new Date().getTime();
-      if (rightLastScrollTime + 50 < now) {
-        updateGap(acediff, 'left', scroll);
-      }
-    });
+    if (acediff.options.merge.enabled) {
 
-    acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
-      now = new Date().getTime();
-      if (leftLastScrollTime + 50 < now) {
-        updateGap(acediff, 'right', scroll);
-      }
-    });
+      acediff.editors.merge.ace.getSession().on('changeScrollTop', function(scroll) {
+        var now = new Date().getTime();
+        if (lastScrollTime + 50 < now) {
+          updateGap(acediff, 'merge', scroll);
+        }
+      });
+
+      acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
+        var now = new Date().getTime();
+        if (lastScrollTime + 50 < now) {
+          updateGap(acediff, 'right', scroll);
+        }
+      });
+
+    } else {
+      acediff.editors.left.ace.getSession().on('changeScrollTop', function(scroll) {
+        var now = new Date().getTime();
+        if (lastScrollTime + 50 < now) {
+          updateGap(acediff, 'left', scroll);
+        }
+      });
+
+      acediff.editors.right.ace.getSession().on('changeScrollTop', function(scroll) {
+        var now = new Date().getTime();
+        if (lastScrollTime + 50 < now) {
+          updateGap(acediff, 'right', scroll);
+        }
+      });
+    }
+
+
 
     var diff = acediff.diff.bind(acediff);
     acediff.editors.left.ace.on('change', diff);
     acediff.editors.right.ace.on('change', diff);
 
     if (acediff.options.left.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
-        copy(acediff, e, C.LTR);
-      });
+
+      if (!acediff.options.merge.enabled) {
+        on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
+          copy(acediff, e, C.LTR);
+        });
+      }
     }
     if (acediff.options.right.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
-        copy(acediff, e, C.RTL);
-      });
+      if (acediff.options.merge.enabled) {
+        on('#' + acediff.options.classes.rightGutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
+          copy(acediff, e, C.RTM);
+        });
+      } else {
+        on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
+          copy(acediff, e, C.RTL);
+        });
+      }
     }
 
     var onResize = debounce(function() {
@@ -281,22 +369,21 @@
     var diff = acediff.diffs[diffIndex];
     var sourceEditor, targetEditor;
 
-    var startLine, endLine, targetStartLine, targetEndLine;
     if (dir === C.LTR) {
       sourceEditor = acediff.editors.left;
       targetEditor = acediff.editors.right;
-      startLine = diff.leftStartLine;
-      endLine = diff.leftEndLine;
-      targetStartLine = diff.rightStartLine;
-      targetEndLine = diff.rightEndLine;
+    } else if (dir === C.RTM) {
+      sourceEditor = acediff.editors.right;
+      targetEditor = acediff.editors.merge;
     } else {
       sourceEditor = acediff.editors.right;
       targetEditor = acediff.editors.left;
-      startLine = diff.rightStartLine;
-      endLine = diff.rightEndLine;
-      targetStartLine = diff.leftStartLine;
-      targetEndLine = diff.leftEndLine;
     }
+
+    var startLine = diff.rightStartLine;
+    var endLine = diff.rightEndLine;
+    var targetStartLine = diff.leftStartLine;
+    var targetEndLine = diff.leftEndLine;
 
     var contentToInsert = '';
     for (var i=startLine; i<endLine; i++) {
@@ -366,9 +453,17 @@
 
 
   function clearDiffs(acediff) {
-    acediff.editors.left.markers.forEach(function(marker) {
-      this.editors.left.ace.getSession().removeMarker(marker);
-    }, acediff);
+
+    if (acediff.options.merge.enabled) {
+      acediff.editors.merge.markers.forEach(function(marker) {
+        this.editors.merge.ace.getSession().removeMarker(marker);
+      }, acediff);
+    } else {
+      acediff.editors.left.markers.forEach(function(marker) {
+        this.editors.left.ace.getSession().removeMarker(marker);
+      }, acediff);
+    }
+
     acediff.editors.right.markers.forEach(function(marker) {
       this.editors.right.ace.getSession().removeMarker(marker);
     }, acediff);
@@ -378,6 +473,10 @@
   function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
     var leftScrollTop  = acediff.editors.left.ace.getSession().getScrollTop();
     var rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
+
+    if (acediff.options.merge.enabled) {
+      leftScrollTop = acediff.editors.merge.ace.getSession().getScrollTop();
+    }
 
     // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
     //  p1   p2
@@ -404,31 +503,49 @@
     var el = document.createElementNS(C.SVG_NS, 'path');
     el.setAttribute('d', d);
     el.setAttribute('class', acediff.options.classes.connector);
-    acediff.gutterSVG.appendChild(el);
+
+    if (acediff.options.merge.enabled) {
+      acediff.rightGutterSVG.appendChild(el);
+    } else {
+      acediff.gutterSVG.appendChild(el);
+    }
+
   }
 
 
   function addCopyArrows(acediff, info, diffIndex) {
-    if (info.leftEndLine > info.leftStartLine && acediff.options.left.copyLinkEnabled) {
-      var arrow = createArrow({
-        className: acediff.options.classes.newCodeConnectorLink,
-        topOffset: info.leftStartLine * acediff.lineHeight,
-        tooltip: 'Copy to right',
-        diffIndex: diffIndex,
-        arrowContent: acediff.options.classes.newCodeConnectorLinkContent
-      });
-      acediff.copyRightContainer.appendChild(arrow);
+
+    // if merge is enabled we don't need the left gutter arrows
+    if (!acediff.options.merge.enabled) {
+      if (info.leftEndLine > info.leftStartLine && acediff.options.left.copyLinkEnabled) {
+        var leftArrow = createArrow({
+          className: acediff.options.classes.newCodeConnectorLink,
+          topOffset: info.leftStartLine * acediff.lineHeight,
+          tooltip: 'Copy to right',
+          diffIndex: diffIndex,
+          arrowContent: acediff.options.classes.newCodeConnectorLinkContent
+        });
+
+        acediff.copyRightContainer.appendChild(leftArrow);
+      }
     }
 
     if (info.rightEndLine > info.rightStartLine && acediff.options.right.copyLinkEnabled) {
-      var arrow = createArrow({
+      var rightArrow = createArrow({
         className: acediff.options.classes.deletedCodeConnectorLink,
-        topOffset: info.rightStartLine * acediff.lineHeight,
+        topOffset: (info.rightEndLine - 1) * acediff.lineHeight,
         tooltip: 'Copy to left',
         diffIndex: diffIndex,
         arrowContent: acediff.options.classes.deletedCodeConnectorLinkContent
       });
-      acediff.copyLeftContainer.appendChild(arrow);
+
+      // if merge is enabled we want the arrows on the right gutter
+      if (acediff.options.merge.enabled) {
+        acediff.copyRightContainer.appendChild(rightArrow);
+      } else {
+        acediff.copyLeftContainer.appendChild(rightArrow);
+      }
+
     }
   }
 
@@ -468,17 +585,19 @@
     // is used to level things out so the diffs don't appear to shift around
     var newContentStartsWithNewline = /^\n/.test(diffText);
 
+    var sourceEditor = acediff.options.merge.enabled ? acediff.editors.merge : acediff.editors.left;
+
     if (diffType === C.DIFF_INSERT) {
 
       // pretty confident this returns the right stuff for the left editor: start & end line & char
-      var info = getSingleDiffInfo(acediff.editors.left, offsetLeft, diffText);
+      var info = getSingleDiffInfo(sourceEditor, offsetLeft, diffText);
 
       // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
       // going to be used as the start line for the diff though.
       var currentLineOtherEditor = getLineForCharPosition(acediff.editors.right, offsetRight);
       var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.right, currentLineOtherEditor);
-      var numCharsOnLeftEditorStartLine = getCharsOnLine(acediff.editors.left, info.startLine);
-      var numCharsOnLine = getCharsOnLine(acediff.editors.left, info.startLine);
+      var numCharsOnLeftEditorStartLine = getCharsOnLine(sourceEditor, info.startLine);
+      var numCharsOnLine = getCharsOnLine(sourceEditor, info.startLine);
 
       // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
       // back from google as being on the last char of the previous line so we need to bump it up one
@@ -521,8 +640,8 @@
     } else {
       var info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText);
 
-      var currentLineOtherEditor = getLineForCharPosition(acediff.editors.left, offsetLeft);
-      var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.left, currentLineOtherEditor);
+      var currentLineOtherEditor = getLineForCharPosition(sourceEditor, offsetLeft);
+      var numCharsOnLineOtherEditor = getCharsOnLine(sourceEditor, currentLineOtherEditor);
       var numCharsOnRightEditorStartLine = getCharsOnLine(acediff.editors.right, info.startLine);
       var numCharsOnLine = getCharsOnLine(acediff.editors.right, info.startLine);
 
@@ -532,7 +651,7 @@
       if (numCharsOnLine === 0 && newContentStartsWithNewline) {
         newContentStartsWithNewline = false;
       }
-      if (info.startChar === 0 && isLastChar(acediff.editors.left, offsetLeft, newContentStartsWithNewline)) {
+      if (info.startChar === 0 && isLastChar(sourceEditor, offsetLeft, newContentStartsWithNewline)) {
         leftStartLine = currentLineOtherEditor + 1;
       }
 
@@ -680,19 +799,28 @@
   }
 
 
-  function createGutter(acediff) {
-    acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
-    acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
+  function createGutter(acediff, gutterId, side) {
+    acediff.gutterHeight = document.getElementById(gutterId).clientHeight;
+    acediff.gutterWidth = document.getElementById(gutterId).clientWidth;
 
     var leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
     var rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
     var height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
 
-    acediff.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
-    acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
-    acediff.gutterSVG.setAttribute('height', height);
+    if (acediff.options.merge.enabled) {
+      var gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
+      gutterSVG.setAttribute('width', acediff.gutterWidth);
+      gutterSVG.setAttribute('height', height);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.gutterSVG);
+      acediff[side + 'GutterSVG'] = gutterSVG;
+      document.getElementById(gutterId).appendChild(gutterSVG);
+    } else {
+      acediff.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
+      acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
+      acediff.gutterSVG.setAttribute('height', height);
+
+      document.getElementById(gutterId).appendChild(acediff.gutterSVG);
+    }
   }
 
   // acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight
@@ -702,24 +830,29 @@
   }
 
   // creates two contains for positioning the copy left + copy right arrows
-  function createCopyContainers(acediff) {
+  function createCopyContainers(acediff, gutterId, side) {
     acediff.copyRightContainer = document.createElement('div');
     acediff.copyRightContainer.setAttribute('class', acediff.options.classes.copyRightContainer);
+    document.getElementById(gutterId).appendChild(acediff.copyRightContainer);
+
     acediff.copyLeftContainer = document.createElement('div');
     acediff.copyLeftContainer.setAttribute('class', acediff.options.classes.copyLeftContainer);
-
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyRightContainer);
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyLeftContainer);
+    document.getElementById(gutterId).appendChild(acediff.copyLeftContainer);
   }
 
 
-  function clearGutter(acediff) {
+  function clearGutter(acediff, gutterId, side) {
     //gutter.innerHTML = '';
 
-    var gutterEl  = document.getElementById(acediff.options.classes.gutterID);
-    gutterEl.removeChild(acediff.gutterSVG);
+    var gutterEl  = document.getElementById(gutterId);
 
-    createGutter(acediff);
+    if (side) {
+      gutterEl.removeChild(acediff[side + 'GutterSVG']);
+    } else {
+      gutterEl.removeChild(acediff.gutterSVG);
+    }
+
+    createGutter(acediff, gutterId, side);
   }
 
 
@@ -782,12 +915,25 @@
 
 
   function decorate(acediff) {
-    clearGutter(acediff);
-    clearArrows(acediff);
+
+    if (acediff.options.merge.enabled) {
+      clearGutter(acediff, acediff.options.classes.leftGutterID, 'left');
+      clearArrows(acediff, acediff.options.classes.leftGutterID);
+
+      clearGutter(acediff, acediff.options.classes.rightGutterID, 'right');
+      clearArrows(acediff, acediff.options.classes.rightGutterID);
+    } else {
+      clearGutter(acediff, acediff.options.classes.gutterID);
+      clearArrows(acediff, acediff.options.classes.gutterID);
+    }
 
     acediff.diffs.forEach(function(info, diffIndex) {
       if (this.options.showDiffs) {
-        showDiff(this, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
+        if (this.options.merge.enabled) {
+          showDiff(this, C.EDITOR_MERGE, info.leftStartLine, info.rightEndLine, this.options.classes.diff);
+        } else {
+          showDiff(this, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, this.options.classes.diff);
+        }
         showDiff(this, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, this.options.classes.diff);
 
         if (this.options.showConnectors) {
