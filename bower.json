@@ -1,0 +1,31 @@
+{
+  "name": "ace-diff",
+  "version": "0.1.0",
+  "homepage": "https://github.com/benkeen/ace-diff",
+  "authors": [
+    "Ben Keen <ben.keen@gmail.com>"
+  ],
+  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
+  "main": "dist/ace-diff.min.js",
+  "moduleType": [
+    "amd",
+    "globals",
+    "node"
+  ],
+  "keywords": [
+    "Ace",
+    "Editor",
+    "diffing",
+    "merging",
+    "diff",
+    "google-diff-match-patch"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
