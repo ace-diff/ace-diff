@@ -51,7 +51,7 @@ out the [demos](http://benkeen.github.io/ace-diff/) for something more hands-on.
 <div>
     <div id="left-editor"></div>
     <div id="gutter"></div>
-    <div id="left-editor"></div>
+    <div id="right-editor"></div>
 </div>
 ```
 
