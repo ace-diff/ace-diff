@@ -1,11 +1,11 @@
 ## Ace-diff
 
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
-differences in two documents and allows users to copy changes from to the other. If you're a developer, you've 
+differences in two documents and allows users to copy changes from to the other. If you're a developer, you've
 seen it a billion times; this is one for Ace Editor. :)
 
 It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
-library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. AceDiff 
+library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. AceDiff
 just visualizes that information as line-diffs in the editors.
 
 
@@ -18,7 +18,7 @@ just visualizes that information as line-diffs in the editors.
 ### Demos
 
 Take a look at the `gh-pages` branch of this repo for some [demos](http://benkeen.github.io/ace-diff/). The demos
-illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and 
+illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and
 how it works.
 
 
@@ -51,14 +51,14 @@ out the [demos](http://benkeen.github.io/ace-diff/) for something more hands-on.
 <div>
     <div id="left-editor"></div>
     <div id="gutter"></div>
-    <div id="left-editor"></div>
+    <div id="right-editor"></div>
 </div>
 ```
 
 
 #### Javascript
 
-Here's an example of how you'd instantiate AceDiff. Note: it should be placed in a DOM ready function to ensure 
+Here's an example of how you'd instantiate AceDiff. Note: it should be placed in a DOM ready function to ensure
 all code and DOM elements are available.
 
 ```javascript
@@ -82,19 +82,19 @@ var differ = new AceDiff({
 
 Styling the elements is vitally important: the gutter should retain its width even if the user resizes his or her
 browser. But honestly, how you go about that is very much up to you: you can provide whatever CSS you want, depending
-on your scenario. 
+on your scenario.
 
-If you want the ace editor's to change height/width based on a user's browser, I find using flexbox the best 
+If you want the ace editor's to change height/width based on a user's browser, I find using flexbox the best
 option - but hell, if you want to use a `<table>`, knock yourself out. :)
 
-Take a look at the [demos](http://benkeen.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but 
+Take a look at the [demos](http://benkeen.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but
 include some different styles and class names just so you can see.
 
 
 ### Configuration
 
-You can configure your Ace-diff instance through a number of config settings. This object is what you pass to the 
-constructor, like the **Javascript** section above. 
+You can configure your Ace-diff instance through a number of config settings. This object is what you pass to the
+constructor, like the **Javascript** section above.
 
 
 #### Default settings
@@ -190,17 +190,17 @@ appear.
 
 There are a few API methods available on your AceDiff instance.
 
-- `aceInstance.getEditors()`: this returns an object with left and right properties. Each contains a reference to 
-the Ace editor, in case you need to do anything with them. Ace has a ton of options which I wasn't going to support via the 
+- `aceInstance.getEditors()`: this returns an object with left and right properties. Each contains a reference to
+the Ace editor, in case you need to do anything with them. Ace has a ton of options which I wasn't going to support via the
 wrapper. This should allow you to do whatever you need
-- `aceInstance.setOptions()`: this lets you set many of the above options on the fly. Note: certain things used during the 
-construction of the editor, like the classes can't be overridden. 
+- `aceInstance.setOptions()`: this lets you set many of the above options on the fly. Note: certain things used during the
+construction of the editor, like the classes can't be overridden.
 - `aceInstance.getNumDiffs()`: returns the number of diffs currently being displayed.
-- `aceInstance.diff()`: updates the diff. This shouldn't ever be required because AceDiff automatically recognizes the 
+- `aceInstance.diff()`: updates the diff. This shouldn't ever be required because AceDiff automatically recognizes the
 key events like changes to the editor and window resizing. But I've included it because there may always be that fringe
-case... 
+case...
 - `aceInstance.destroy()`: destroys the AceDiff instance. Basically this just destroys both editors and cleans out the
-gutter. 
+gutter.
 
 
 ### Browser Support
