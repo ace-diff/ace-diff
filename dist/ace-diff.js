@@ -52,8 +52,10 @@
         editable: true,
         copyLinkEnabled: true
       },
+      gutter: {
+        el: 'acediff-gutter'
+      },
       classes: {
-        gutterID: 'acediff-gutter',
         diff: 'acediff-diff',
         connector: 'acediff-connector',
         newCodeConnectorLink: 'acediff-new-code-connector-copy',
@@ -81,6 +83,7 @@
       },
       editorHeight: null
     };
+    this.gutterEl = getGutterEl(this, this.options.gutter);
 
     addEventHandlers(this);
 
@@ -194,7 +197,7 @@
       newDiv.textContent = rightValue;
       oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-      document.getElementById(this.options.classes.gutterID).innerHTML = '';
+      this.gutterEl.innterHTML = '';
     }
   };
 
@@ -206,6 +209,20 @@
     editor.setTheme(options.theme !== null ? options.theme : acediff.options.theme);
 
     return editor;
+  }
+
+  function getGutterEl(acediff, options) {
+    var element = acediff.options.classes.gutterID || options.el;
+
+    if (typeof element === 'string') {
+      element = document.getElementById(element);
+    }
+
+    if (!element) {
+      throw new Error('Cannot find gutter element');
+    }
+
+    return element;
   }
 
 
@@ -233,12 +250,12 @@
     acediff.editors.right.ace.on('change', diff);
 
     if (acediff.options.left.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
+      on(acediff.gutterEl, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
         copy(acediff, e, C.LTR);
       });
     }
     if (acediff.options.right.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
+      on(acediff.gutterEl, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
         copy(acediff, e, C.RTL);
       });
     }
@@ -659,8 +676,8 @@
 
 
   function createGutter(acediff) {
-    acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
-    acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
+    acediff.gutterHeight = acediff.gutterEl.clientHeight;
+    acediff.gutterWidth = acediff.gutterEl.clientWidth;
 
     var leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
     var rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
@@ -670,7 +687,7 @@
     acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
     acediff.gutterSVG.setAttribute('height', height);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.gutterSVG);
+    acediff.gutterEl.appendChild(acediff.gutterSVG);
   }
 
   // acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight
@@ -686,16 +703,15 @@
     acediff.copyLeftContainer = document.createElement('div');
     acediff.copyLeftContainer.setAttribute('class', acediff.options.classes.copyLeftContainer);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyRightContainer);
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyLeftContainer);
+    acediff.gutterEl.appendChild(acediff.copyRightContainer);
+    acediff.gutterEl.appendChild(acediff.copyLeftContainer);
   }
 
 
   function clearGutter(acediff) {
     //gutter.innerHTML = '';
 
-    var gutterEl  = document.getElementById(acediff.options.classes.gutterID);
-    gutterEl.removeChild(acediff.gutterSVG);
+    acediff.gutterEl.removeChild(acediff.gutterSVG);
 
     createGutter(acediff);
   }
@@ -893,8 +909,14 @@
   }
 
 
-  function on(elSelector, eventName, selector, fn) {
-    var element = (elSelector === 'document') ? document : document.querySelector(elSelector);
+  function on(element, eventName, selector, fn) {
+    if (typeof element === 'string') {
+      element = (element === 'document') ? document : document.querySelector(element);
+    }
+
+    if (!element || typeof element.addEventListener !== 'function') {
+      throw new Error('Cannot add event listener to element');
+    }
 
     element.addEventListener(eventName, function(event) {
       var possibleTargets = element.querySelectorAll(selector);
