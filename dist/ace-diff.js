@@ -37,7 +37,7 @@
       showConnectors: true,
       maxDiffs: 5000,
       left: {
-        id: 'acediff-left-editor',
+        el: 'acediff-left-editor',
         content: null,
         mode: null,
         theme: null,
@@ -45,7 +45,7 @@
         copyLinkEnabled: true
       },
       right: {
-        id: 'acediff-right-editor',
+        el: 'acediff-right-editor',
         content: null,
         mode: null,
         theme: null,
@@ -70,12 +70,12 @@
     // editor content
     this.editors = {
       left: {
-        ace: ace.edit(this.options.left.id),
+        ace: getEditor(this, this.options.left),
         markers: [],
         lineLengths: []
       },
       right: {
-        ace: ace.edit(this.options.right.id),
+        ace: getEditor(this, this.options.right),
         markers: [],
         lineLengths: []
       },
@@ -85,14 +85,6 @@
     addEventHandlers(this);
 
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
-
-    // set up the editors
-    this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
-    this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
-    this.editors.left.ace.setReadOnly(!this.options.left.editable);
-    this.editors.right.ace.setReadOnly(!this.options.right.editable);
-    this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
-    this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
     createCopyContainers(this);
     createGutter(this);
@@ -206,28 +198,14 @@
     }
   };
 
+  function getEditor(acediff, options) {
+    var editor = ace.edit(options.id || options.el);
 
-  function getMode(acediff, editor) {
-    var mode = acediff.options.mode;
-    if (editor === C.EDITOR_LEFT && acediff.options.left.mode !== null) {
-      mode = acediff.options.left.mode;
-    }
-    if (editor === C.EDITOR_RIGHT && acediff.options.right.mode !== null) {
-      mode = acediff.options.right.mode;
-    }
-    return mode;
-  }
+    editor.getSession().setMode(options.mode !== null ? options.mode : acediff.options.mode);
+    editor.setReadOnly(!options.editable);
+    editor.setTheme(options.theme !== null ? options.theme : acediff.options.theme);
 
-
-  function getTheme(acediff, editor) {
-    var theme = acediff.options.theme;
-    if (editor === C.EDITOR_LEFT && acediff.options.left.theme !== null) {
-      theme = acediff.options.left.theme;
-    }
-    if (editor === C.EDITOR_RIGHT && acediff.options.right.theme !== null) {
-      theme = acediff.options.right.theme;
-    }
-    return theme;
+    return editor;
   }
 
 
@@ -266,7 +244,7 @@
     }
 
     var onResize = debounce(function() {
-      acediff.editors.availableHeight = document.getElementById(acediff.options.left.id).offsetHeight;
+      acediff.editors.editorHeight = getEditorHeight(acediff);
 
       // TODO this should re-init gutter
       acediff.diff();
@@ -896,8 +874,7 @@
 
 
   function getEditorHeight(acediff) {
-    //editorHeight: document.getElementById(acediff.options.left.id).clientHeight
-    return document.getElementById(acediff.options.left.id).offsetHeight;
+    return acediff.editors.left.ace.container.offsetHeight;
   }
 
   // generates a Bezier curve in SVG format
