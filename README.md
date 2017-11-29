@@ -1,7 +1,5 @@
 ## Ace-diff
 
-*** HELP WANTED! Looking for developers to help maintain this library. I've a zillion other projects and this one is falling by the wayside. Send me an email at ben.keen@gmail.com if you'd like to work on the project and help maintain it. *** 
-
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes
 differences in two documents and allows users to copy changes from to the other. If you're a developer, you've
 seen it a billion times; this is one for Ace Editor. :)
