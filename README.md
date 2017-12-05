@@ -211,8 +211,3 @@ All modern non-IE browsers, and IE 10 and up. Open a ticket if you find otherwis
 ### License
 
 MIT.
-
-
-### Changelog
-
-- **0.1.0** - March 21, 2015 - initial version
