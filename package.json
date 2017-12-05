@@ -5,7 +5,7 @@
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
   "main": "dist/ace-diff.js",
   "scripts": {
-    "serve": "http-server . -p 8081",
+    "serve": "http-server . -p 8081 -s",
     "test": "cypress run",
     "cypress": "cypress open",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
