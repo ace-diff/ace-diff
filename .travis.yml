@@ -1,0 +1,14 @@
+language: node_js
+sudo: false
+node_js:
+  - "8"
+cache:
+  directories:
+    - "node_modules"
+install:
+  - npm install
+script:
+  - npm run serve &
+  - npm test
+after_success:
+  - npm run semantic-release
