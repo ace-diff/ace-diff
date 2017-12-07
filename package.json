@@ -25,9 +25,9 @@
   "author": "Ben Keen",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/benkeen/ace-diff/issues"
+    "url": "https://github.com/ace-diff/ace-diff/issues"
   },
-  "homepage": "https://github.com/benkeen/ace-diff",
+  "homepage": "https://ace-diff.github.io/ace-diff/",
   "devDependencies": {
     "cypress": "^1.1.3",
     "grunt": "^0.4.5",
