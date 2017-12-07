@@ -1,7 +1,6 @@
 {
   "name": "ace-diff",
   "version": "0.0.0-development",
-  "date": "Mar 21, 2015",
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
   "main": "dist/ace-diff.js",
   "scripts": {
