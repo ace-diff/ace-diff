@@ -123,32 +123,32 @@ AceDiff.prototype = {
   getEditors() {
     return {
       left: this.editors.left.ace,
-      right: this.editors.right.ace
-    }
+      right: this.editors.right.ace,
+    };
   },
 
   // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
   // but just to be safe, it's included
   diff() {
-    var dmp = new DiffMatchPatch();
-    var val1 = this.editors.left.ace.getSession().getValue();
-    var val2 = this.editors.right.ace.getSession().getValue();
-    var diff = dmp.diff_main(val2, val1);
+    let dmp = new DiffMatchPatch();
+    let val1 = this.editors.left.ace.getSession().getValue();
+    let val2 = this.editors.right.ace.getSession().getValue();
+    let diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
-    this.editors.left.lineLengths  = getLineLengths(this.editors.left);
+    this.editors.left.lineLengths = getLineLengths(this.editors.left);
     this.editors.right.lineLengths = getLineLengths(this.editors.right);
 
     // parse the raw diff into something a little more palatable
-    var diffs = [];
-    var offset = {
+    let diffs = [];
+    let offset = {
       left: 0,
-      right: 0
+      right: 0,
     };
 
-    diff.forEach(function(chunk) {
-      var chunkType = chunk[0];
-      var text = chunk[1];
+    diff.forEach(function (chunk) {
+      let chunkType = chunk[0];
+      let text = chunk[1];
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -160,7 +160,6 @@ AceDiff.prototype = {
       } else if (chunkType === C.DIFF_DELETE) {
         diffs.push(computeDiff(this, C.DIFF_DELETE, offset.left, offset.right, text));
         offset.right += text.length;
-
       } else if (chunkType === C.DIFF_INSERT) {
         diffs.push(computeDiff(this, C.DIFF_INSERT, offset.left, offset.right, text));
         offset.left += text.length;
@@ -180,16 +179,15 @@ AceDiff.prototype = {
   },
 
   destroy() {
-
     // destroy the two editors
-    var leftValue = this.editors.left.ace.getValue();
+    let leftValue = this.editors.left.ace.getValue();
     this.editors.left.ace.destroy();
-    var oldDiv = this.editors.left.ace.container;
-    var newDiv = oldDiv.cloneNode(false);
+    let oldDiv = this.editors.left.ace.container;
+    let newDiv = oldDiv.cloneNode(false);
     newDiv.textContent = leftValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    var rightValue = this.editors.right.ace.getValue();
+    let rightValue = this.editors.right.ace.getValue();
     this.editors.right.ace.destroy();
     oldDiv = this.editors.right.ace.container;
     newDiv = oldDiv.cloneNode(false);
@@ -244,22 +242,22 @@ function addEventHandlers(acediff) {
     }
   });
 
-  let diff = acediff.diff.bind(acediff);
+  const diff = acediff.diff.bind(acediff);
   acediff.editors.left.ace.on('change', diff);
   acediff.editors.right.ace.on('change', diff);
 
   if (acediff.options.left.copyLinkEnabled) {
-    on(`#${  acediff.options.classes.gutterID}`, 'click', `.${  acediff.options.classes.newCodeConnectorLink}`, (e) => {
+    on(`#${ acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.LTR);
     });
   }
   if (acediff.options.right.copyLinkEnabled) {
-    on(`#${  acediff.options.classes.gutterID}`, 'click', `.${  acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
+    on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.RTL);
     });
   }
 
-  let onResize = debounce(() => {
+  const onResize = debounce(() => {
     acediff.editors.availableHeight = document.getElementById(acediff.options.left.id).offsetHeight;
 
     // TODO this should re-init gutter
@@ -271,15 +269,15 @@ function addEventHandlers(acediff) {
 
 
 function copy(acediff, e, dir) {
-  let diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
-  let diff = acediff.diffs[diffIndex];
+  const diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
+  const diff = acediff.diffs[diffIndex];
   let sourceEditor,
-targetEditor;
+    targetEditor;
 
   let startLine,
-endLine,
-targetStartLine,
-targetEndLine;
+    endLine,
+    targetStartLine,
+    targetEndLine;
   if (dir === C.LTR) {
     sourceEditor = acediff.editors.left;
     targetEditor = acediff.editors.right;
@@ -298,16 +296,16 @@ targetEndLine;
 
   let contentToInsert = '';
   for (var i = startLine; i < endLine; i++) {
-    contentToInsert += `${getLine(sourceEditor, i)  }\n`;
+    contentToInsert += `${getLine(sourceEditor, i) }\n`;
   }
 
   let startContent = '';
   for (var i = 0; i < targetStartLine; i++) {
-    startContent += `${getLine(targetEditor, i)  }\n`;
+    startContent += `${getLine(targetEditor, i)}\n`;
   }
 
   let endContent = '';
-  let totalLines = targetEditor.ace.getSession().getLength();
+  const totalLines = targetEditor.ace.getSession().getLength();
   for (var i = targetEndLine; i < totalLines; i++) {
     endContent += getLine(targetEditor, i);
     if (i < totalLines - 1) {
@@ -318,7 +316,7 @@ targetEndLine;
   endContent = endContent.replace(/\s*$/, '');
 
   // keep track of the scroll height
-  let h = targetEditor.ace.getSession().getScrollTop();
+  const h = targetEditor.ace.getSession().getScrollTop();
   targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
   targetEditor.ace.getSession().setScrollTop(parseInt(h));
 
@@ -327,8 +325,8 @@ targetEndLine;
 
 
 function getLineLengths(editor) {
-  let lines = editor.ace.getSession().doc.getAllLines();
-  let lineLengths = [];
+  const lines = editor.ace.getSession().doc.getAllLines();
+  const lineLengths = [];
   lines.forEach((line) => {
     lineLengths.push(line.length + 1); // +1 for the newline char
   });
@@ -344,7 +342,7 @@ function showDiff(acediff, editor, startLine, endLine, className) {
     endLine = startLine;
   }
 
-  let classNames = `${className  } ${  (endLine > startLine) ? 'lines' : 'targetOnly'}`;
+  const classNames = `${className } ${ (endLine > startLine) ? 'lines' : 'targetOnly'}`;
   endLine--; // because endLine is always + 1
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
@@ -373,8 +371,8 @@ function clearDiffs(acediff) {
 
 
 function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, rightEndLine) {
-  let leftScrollTop = acediff.editors.left.ace.getSession().getScrollTop();
-  let rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
+  const leftScrollTop = acediff.editors.left.ace.getSession().getScrollTop();
+  const rightScrollTop = acediff.editors.right.ace.getSession().getScrollTop();
 
   // All connectors, regardless of ltr or rtl have the same point system, even if p1 === p3 or p2 === p4
   //  p1   p2
@@ -383,22 +381,22 @@ function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, right
 
   acediff.connectorYOffset = 1;
 
-  let p1_x = -1;
-  let p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop + 0.5;
-  let p2_x = acediff.gutterWidth + 1;
-  let p2_y = rightStartLine * acediff.lineHeight - rightScrollTop + 0.5;
-  let p3_x = -1;
-  let p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + acediff.connectorYOffset + 0.5;
-  let p4_x = acediff.gutterWidth + 1;
-  let p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + acediff.connectorYOffset + 0.5;
-  let curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
-  let curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
+  const p1_x = -1;
+  const p1_y = (leftStartLine * acediff.lineHeight) - leftScrollTop + 0.5;
+  const p2_x = acediff.gutterWidth + 1;
+  const p2_y = rightStartLine * acediff.lineHeight - rightScrollTop + 0.5;
+  const p3_x = -1;
+  const p3_y = (leftEndLine * acediff.lineHeight) - leftScrollTop + acediff.connectorYOffset + 0.5;
+  const p4_x = acediff.gutterWidth + 1;
+  const p4_y = (rightEndLine * acediff.lineHeight) - rightScrollTop + acediff.connectorYOffset + 0.5;
+  const curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
+  const curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
-  let verticalLine1 = `L${  p2_x  },${  p2_y  } ${  p4_x  },${  p4_y}`;
-  let verticalLine2 = `L${  p3_x  },${  p3_y  } ${  p1_x  },${  p1_y}`;
-  let d = `${curve1  } ${  verticalLine1  } ${  curve2  } ${  verticalLine2}`;
+  const verticalLine1 = `L${ p2_x},${p2_y } ${ p4_x},${ p4_y}`;
+  const verticalLine2 = `L${p3_x },${ p3_y} ${p1_x},${p1_y}`;
+  const d = `${curve1} ${ verticalLine1 } ${ curve2 } ${verticalLine2}`;
 
-  let el = document.createElementNS(C.SVG_NS, 'path');
+  const el = document.createElementNS(C.SVG_NS, 'path');
   el.setAttribute('d', d);
   el.setAttribute('class', acediff.options.classes.connector);
   acediff.gutterSVG.appendChild(el);
@@ -431,11 +429,11 @@ function addCopyArrows(acediff, info, diffIndex) {
 
 
 function positionCopyContainers(acediff) {
-  let leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
-  let rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
+  const leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
+  const rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
 
-  acediff.copyRightContainer.style.cssText = `top: ${  -leftTopOffset  }px`;
-  acediff.copyLeftContainer.style.cssText = `top: ${  -rightTopOffset  }px`;
+  acediff.copyRightContainer.style.cssText = `top: ${ -leftTopOffset }px`;
+  acediff.copyLeftContainer.style.cssText = `top: ${-rightTopOffset}px`;
 }
 
 
@@ -473,7 +471,7 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
     // going to be used as the start line for the diff though.
     var currentLineOtherEditor = getLineForCharPosition(acediff.editors.right, offsetRight);
     var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.right, currentLineOtherEditor);
-    let numCharsOnLeftEditorStartLine = getCharsOnLine(acediff.editors.left, info.startLine);
+    const numCharsOnLeftEditorStartLine = getCharsOnLine(acediff.editors.left, info.startLine);
     var numCharsOnLine = getCharsOnLine(acediff.editors.left, info.startLine);
 
     // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
@@ -518,7 +516,7 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
 
     var currentLineOtherEditor = getLineForCharPosition(acediff.editors.left, offsetLeft);
     var numCharsOnLineOtherEditor = getCharsOnLine(acediff.editors.left, currentLineOtherEditor);
-    let numCharsOnRightEditorStartLine = getCharsOnLine(acediff.editors.right, info.startLine);
+    const numCharsOnRightEditorStartLine = getCharsOnLine(acediff.editors.right, info.startLine);
     var numCharsOnLine = getCharsOnLine(acediff.editors.right, info.startLine);
 
     // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
@@ -564,13 +562,13 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
 // helper to return the startline, endline, startChar and endChar for a diff in a particular editor. Pretty
 // fussy function
 function getSingleDiffInfo(editor, offset, diffString) {
-  let info = {
+  const info = {
     startLine: 0,
     startChar: 0,
     endLine: 0,
     endChar: 0,
   };
-  let endCharNum = offset + diffString.length;
+  const endCharNum = offset + diffString.length;
   let runningTotal = 0;
   let startLineSet = false,
     endLineSet = false;
@@ -602,7 +600,7 @@ function getSingleDiffInfo(editor, offset, diffString) {
     info.endLine--;
   }
 
-  let endsWithNewline = /\n$/.test(diffString);
+  const endsWithNewline = /\n$/.test(diffString);
   if (info.startChar > 0 && endsWithNewline) {
     info.endLine++;
   }
@@ -660,14 +658,14 @@ function isLastChar(editor, char, startsWithNewline) {
 
 
 function createArrow(info) {
-  let el = document.createElement('div');
-  let props = {
+  const el = document.createElement('div');
+  const props = {
     class: info.className,
-    style: `top:${  info.topOffset  }px`,
+    style: `top:${info.topOffset}px`,
     title: info.tooltip,
     'data-diff-index': info.diffIndex,
   };
-  for (let key in props) {
+  for (const key in props) {
     el.setAttribute(key, props[key]);
   }
   el.innerHTML = info.arrowContent;
@@ -679,9 +677,9 @@ function createGutter(acediff) {
   acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
   acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
 
-  let leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
-  let rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
-  let height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
+  const leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
+  const rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
+  const height = Math.max(leftHeight, rightHeight, acediff.gutterHeight);
 
   acediff.gutterSVG = document.createElementNS(C.SVG_NS, 'svg');
   acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
@@ -692,7 +690,7 @@ function createGutter(acediff) {
 
 // acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight
 function getTotalHeight(acediff, editor) {
-  let ed = (editor === C.EDITOR_LEFT) ? acediff.editors.left : acediff.editors.right;
+  const ed = (editor === C.EDITOR_LEFT) ? acediff.editors.left : acediff.editors.right;
   return ed.ace.getSession().getLength() * acediff.lineHeight;
 }
 
@@ -711,7 +709,7 @@ function createCopyContainers(acediff) {
 function clearGutter(acediff) {
   // gutter.innerHTML = '';
 
-  let gutterEl = document.getElementById(acediff.options.classes.gutterID);
+  const gutterEl = document.getElementById(acediff.options.classes.gutterID);
   gutterEl.removeChild(acediff.gutterSVG);
 
   createGutter(acediff);
@@ -729,7 +727,7 @@ function clearArrows(acediff) {
   * reduced to a single connector line 1=4 => line 1-3
   */
 function simplifyDiffs(acediff, diffs) {
-  let groupedDiffs = [];
+  const groupedDiffs = [];
 
   function compare(val) {
     return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_SPECIFIC) ? val < 1 : val <= 1;
@@ -743,11 +741,10 @@ function simplifyDiffs(acediff, diffs) {
 
     // loop through all grouped diffs. If this new diff lies between an existing one, we'll just add to it, rather
     // than create a new one
-    var isGrouped = false;
-    for (var i=0; i<groupedDiffs.length; i++) {
+    let isGrouped = false;
+    for (let i = 0; i < groupedDiffs.length; i++) {
       if (compare(Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine)) &&
           compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
-
         // update the existing grouped diff to expand its horizons to include this new diff start + end lines
         groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
         groupedDiffs[i].rightStartLine = Math.min(diff.rightStartLine, groupedDiffs[i].rightStartLine);
@@ -764,7 +761,7 @@ function simplifyDiffs(acediff, diffs) {
   });
 
   // clear out any single line diffs (i.e. single line on both editors)
-  let fullDiffs = [];
+  const fullDiffs = [];
   groupedDiffs.forEach((diff) => {
     if (diff.leftStartLine === diff.leftEndLine && diff.rightStartLine === diff.rightEndLine) {
       return;
@@ -805,32 +802,32 @@ function getEditorHeight(acediff) {
 
 // generates a Bezier curve in SVG format
 function getCurve(startX, startY, endX, endY) {
-  let w = endX - startX;
-  let halfWidth = startX + (w / 2);
+  const w = endX - startX;
+  const halfWidth = startX + (w / 2);
 
   // position it at the initial x,y coords
-  let curve = `M ${  startX  } ${  startY
+  const curve = `M ${startX} ${startY
 
     // now create the curve. This is of the form "C M,N O,P Q,R" where C is a directive for SVG ("curveto"),
     // M,N are the first curve control point, O,P the second control point and Q,R are the final coords
-    } C ${  halfWidth  },${  startY  } ${  halfWidth  },${  endY  } ${  endX  },${  endY}`;
+  } C ${halfWidth},${startY} ${halfWidth },${endY } ${endX },${endY}`;
 
   return curve;
 }
 
 
 function on(elSelector, eventName, selector, fn) {
-  let element = (elSelector === 'document') ? document : document.querySelector(elSelector);
+  const element = (elSelector === 'document') ? document : document.querySelector(elSelector);
 
   element.addEventListener(eventName, (event) => {
-    var possibleTargets = element.querySelectorAll(selector);
-    var target = event.target;
+    let possibleTargets = element.querySelectorAll(selector);
+    let target = event.target;
 
-    for (var i = 0, l = possibleTargets.length; i < l; i++) {
-      var el = target;
-      var p = possibleTargets[i];
+    for (let i = 0, l = possibleTargets.length; i < l; i++) {
+      let el = target;
+      let p = possibleTargets[i];
 
-      while(el && el !== element) {
+      while (el && el !== element) {
         if (el === p) {
           return fn.call(p, event);
         }
