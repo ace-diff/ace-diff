@@ -2,7 +2,7 @@
   "name": "ace-diff",
   "version": "0.0.0-development",
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
-  "main": "dist/ace-diff.js",
+  "main": "dist/ace-diff.min.js",
   "scripts": {
     "build": "webpack",
     "dev": "webpack --watch",
