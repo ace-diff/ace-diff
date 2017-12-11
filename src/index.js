@@ -1,5 +1,6 @@
 import extend from 'lodash/extend';
 import debounce from 'lodash/debounce';
+import DiffMatchPatch from 'diff-match-patch';
 
 const { Range } = ace.require('ace/range');
 
@@ -129,7 +130,7 @@ AceDiff.prototype = {
   // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
   // but just to be safe, it's included
   diff() {
-    var dmp = new diff_match_patch();
+    var dmp = new DiffMatchPatch();
     var val1 = this.editors.left.ace.getSession().getValue();
     var val2 = this.editors.right.ace.getSession().getValue();
     var diff = dmp.diff_main(val2, val1);
