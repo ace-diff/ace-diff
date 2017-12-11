@@ -2,3 +2,4 @@ node_modules/*
 .idea*
 cypress/videos
 cypress/screenshots
+dist
