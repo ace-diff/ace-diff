@@ -78,7 +78,8 @@ function AceDiff(options) {
 
   addEventHandlers(this);
 
-  this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
+  // assumption: both editors have same line heights
+  this.lineHeight = this.editors.left.ace.renderer.lineHeight;
 
   // set up the editors
   this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));

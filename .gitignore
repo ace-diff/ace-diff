@@ -1,5 +1,7 @@
 node_modules/*
+.nyc_output
 .idea*
+coverage
 cypress/videos
 cypress/screenshots
 dist

@@ -1,7 +1,7 @@
 describe('Basic usage', () => {
   context('Ace-diff init', () => {
     beforeEach(function () {
-      cy.visit('http://localhost:8081/tests/fixtures/');
+      cy.visit('http://localhost:8081/test/fixtures/');
     });
 
     it('makes `AceDiff` available globally', () => {
