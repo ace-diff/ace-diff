@@ -43,5 +43,7 @@
     "uglifyjs-webpack-plugin": "^1.1.2",
     "webpack": "^3.10.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "lodash": "^4.17.4"
+  }
 }
