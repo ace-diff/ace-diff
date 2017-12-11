@@ -27,6 +27,13 @@ module.exports = {
       },
     ],
   },
+  externals: {
+    ace: {
+      commonjs: 'brace',
+      amd: 'brace',
+      root: 'ace',
+    },
+  },
   plugins: [
     new UglifyJsPlugin(),
     new webpack.BannerPlugin('Ace-diff | github.com/ace-diff/ace-diff'),
