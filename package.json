@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "dev": "webpack --watch",
-    "serve": "http-server . -p 8081 -s -c-1",
+    "serve": "npm run build && http-server . -p 8081 -s -c-1",
     "test": "cypress run",
     "cypress": "cypress open",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
