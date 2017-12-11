@@ -4,7 +4,9 @@
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
   "main": "dist/ace-diff.js",
   "scripts": {
-    "serve": "http-server . -p 8081 -s",
+    "build": "webpack",
+    "dev": "webpack --watch",
+    "serve": "http-server . -p 8081 -s -c-1",
     "test": "cypress run",
     "cypress": "cypress open",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
@@ -34,7 +36,9 @@
     "eslint-config-airbnb-base": "^12.1.0",
     "eslint-plugin-import": "^2.8.0",
     "http-server": "^0.10.0",
-    "semantic-release": "^8.2.0"
+    "semantic-release": "^8.2.0",
+    "uglifyjs-webpack-plugin": "^1.1.2",
+    "webpack": "^3.10.0"
   },
   "dependencies": {}
 }
