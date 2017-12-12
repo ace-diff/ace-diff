@@ -4,8 +4,7 @@ This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffi
 differences in two documents and allows users to copy changes from to the other. If you're a developer, you've
 seen it a billion times; this is one for Ace Editor. :)
 
-It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/)
-library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. AceDiff
+It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/) library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. Ace-diff
 just visualizes that information as line-diffs in the editors.
 
 
@@ -17,7 +16,7 @@ just visualizes that information as line-diffs in the editors.
 
 ### Demos
 
-Take a look at the `gh-pages` branch of this repo for some [demos](http://benkeen.github.io/ace-diff/). The demos
+Take a look at the `gh-pages` branch of this repo for some [demos](http://ace-diff.github.io/ace-diff/). The demos
 illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and
 how it works.
 
@@ -42,7 +41,7 @@ Alrighty! Ace-diff requires you to do three things:
 - some **CSS** to properly style the editors and gutter.
 
 Here's some token code so you can get a sense what's involved with these. But again, I'd really suggest checking
-out the [demos](http://benkeen.github.io/ace-diff/) for something more hands-on.
+out the [demos](http://ace-diff.github.io/ace-diff/) for something more hands-on.
 
 
 #### HTML
@@ -87,7 +86,7 @@ on your scenario.
 If you want the ace editor's to change height/width based on a user's browser, I find using flexbox the best
 option - but hell, if you want to use a `<table>`, knock yourself out. :)
 
-Take a look at the [demos](http://benkeen.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but
+Take a look at the [demos](http://ace-diff.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but
 include some different styles and class names just so you can see.
 
 
