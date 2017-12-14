@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Ace-diff - Simple Demo #2</title>
+    <script src="../../libs/jquery.js"></script>
+    <script src="../../libs/diff_match_patch.js"></script>
+    <link rel=stylesheet href="styles.css">
+</head>
+<body>
+
+<div id="flex-container">
+    <div><div id="editor1"></div></div>
+    <div class="gutter" id="gutter-left"></div>
+    <div><div id="merge"></div></div>
+    <div class="gutter" id="gutter-right"></div>
+    <div><div id="editor2"></div></div>
+</div>
+
+<script>
+$(function () {
+    var aceDiffer = new AceDiff({
+        mode: "ace/mode/javascript",
+        left: {
+            id: "editor1",
+            content: $("#example-content-1").html()
+        },
+        right: {
+            id: "editor2",
+            content: $("#example-content-2").html()
+        },
+        merge: {
+          id: 'merge',
+          content: $("#example-content-1").html(),
+          enabled: true
+        },
+        classes: {
+            leftGutterID: "gutter-left",
+            rightGutterID: "gutter-right"
+        }
+    });
+});
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
+<script src="../../dist/ace-diff.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+<!-- for illustration purposes only. This demo shows how to instantiate AceDiff and pass along the default content for
+both editors. Normally this would be done with (say) the content coming back from  request to the server, but for here
+we'll just stash it elsewhere in the page -->
+
+<div id="example-content-1" style="display: none">(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require());
+  } else {
+    root.AceDiff = factory(root);
+  }
+}(this, function(){
+  'use strict';
+
+  var Range = require('ace/range').Range;
+
+  var MaximumRange = Range.max;
+
+  var C = {
+    DIFF_EQUAL: 0,
+    DIFF_DELETE: -1,
+    DIFF_INSERT: 1,
+    EDITOR_RIGHT: 'right',
+    EDITOR_LEFT: 'left',
+    RTL: 'rtl',
+    LTR: 'ltr',
+    SVG_NS: 'http://www.w3.org/2000/svg'
+  };
+
+  // our constructor
+  function AceDiff(options) {
+    this.options = {};
+    extend(true, this.options, {
+      mode: null,
+      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
+      showDiffs: true,
+      showConnectors: true,
+      maxDiffs: 5000,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true,
+        showCopyLTR: true
+      },
+      right: {
+        id: 'acediff-right-editor',
+        content: null,
+        mode: null,
+        editable: true,
+        showCopyRTL: true
+      },
+      classes: {
+        gutterID: 'acediff-gutter',
+        diff: 'acediff-diff',
+        connector: 'acediff-connector',
+        newCodeConnectorLink: 'acediff-new-code-connector-copy',
+        newCodeConnectorLinkContent: '&#8594;',
+        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+        deletedCodeConnectorLinkContent: '&#8592;',
+        copyRightContainer: 'acediff-copy-right',
+        copyLeftContainer: 'acediff-copy-left'
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      },
+      right: {
+        ace: ace.edit(this.options.right.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+  }
+}));</div>
+
+<div id="example-content-2" style="display: none">(function(root, factory) {
+  if (typeof define === 'function' && define.amd) {
+    define([], factory);
+  } else if (typeof exports === 'object') {
+    module.exports = factory(require());
+  } else {
+    root.AceDiff = factory(root);
+  }
+}(this, function() {
+  'use strict';
+
+  var Range = require('ace/range').Range;
+
+  var C = {
+    DIFF_EQUAL: 0,
+    DIFF_DELETE: -1,
+    DIFF_INSERT: 1,
+    EDITOR_RIGHT: 'right',
+    EDITOR_LEFT: 'left',
+    RTL: 'rtl',
+    LTR: 'ltr',
+    SVG_NS: 'http://www.w3.org/2000/svg',
+    DIFF_GRANULARITY_NORMAL: 'normal',
+    DIFF_GRANULARITY_BROAD: 'broad'
+  };
+
+  // our constructor
+  function AceDiff(options) {
+    this.options = {};
+    extend(true, this.options, {
+      mode: null,
+      diffGranularity: C.DIFF_GRANULARITY_NORMAL,
+      showDiffs: true,
+      showConnectors: true,
+      maxDiffs: 5000,
+      left: {
+        id: 'acediff-left-editor',
+        content: null,
+        mode: null,
+        editable: true,
+        showCopyLTR: true
+      },
+      classes: {
+        gutterID: 'acediff-gutter',
+        diff: 'acediff-diff',
+        connector: 'acediff-connector',
+        newCodeConnectorLink: 'acediff-new-code-connector-copy',
+        newCodeConnectorLinkContent: '&#8594;',
+        deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+        deletedCodeConnectorLinkContent: '&#8592;',
+        copyRightContainer: 'acediff-copy-right',
+        copyLeftContainer: 'acediff-copy-left'
+      }
+    }, options);
+
+    // instantiate the editors in an internal data structure that will store a little info about the diffs and
+    // editor content
+    this.editors = {
+      left: {
+        ace: ace.edit(this.options.left.id),
+        markers: [],
+        lineLengths: []
+      },
+      right: {
+        ace: ace.edit(this.options.right.id),
+        markers: [],
+        lineLengths: []
+      }
+    };
+  }
+}));</div>
+
+</body>
+</html>
