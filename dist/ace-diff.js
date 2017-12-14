@@ -37,7 +37,7 @@
       showConnectors: true,
       maxDiffs: 5000,
       left: {
-        id: 'acediff-left-editor',
+        el: 'acediff-left-editor',
         content: null,
         mode: null,
         theme: null,
@@ -45,15 +45,17 @@
         copyLinkEnabled: true
       },
       right: {
-        id: 'acediff-right-editor',
+        el: 'acediff-right-editor',
         content: null,
         mode: null,
         theme: null,
         editable: true,
         copyLinkEnabled: true
       },
+      gutter: {
+        el: 'acediff-gutter'
+      },
       classes: {
-        gutterID: 'acediff-gutter',
         diff: 'acediff-diff',
         connector: 'acediff-connector',
         newCodeConnectorLink: 'acediff-new-code-connector-copy',
@@ -70,29 +72,22 @@
     // editor content
     this.editors = {
       left: {
-        ace: ace.edit(this.options.left.id),
+        ace: getEditor(this, this.options.left),
         markers: [],
         lineLengths: []
       },
       right: {
-        ace: ace.edit(this.options.right.id),
+        ace: getEditor(this, this.options.right),
         markers: [],
         lineLengths: []
       },
       editorHeight: null
     };
+    this.gutterEl = getGutterEl(this, this.options.gutter);
 
     addEventHandlers(this);
 
     this.lineHeight = this.editors.left.ace.renderer.lineHeight; // assumption: both editors have same line heights
-
-    // set up the editors
-    this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
-    this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
-    this.editors.left.ace.setReadOnly(!this.options.left.editable);
-    this.editors.right.ace.setReadOnly(!this.options.right.editable);
-    this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
-    this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
 
     createCopyContainers(this);
     createGutter(this);
@@ -202,32 +197,32 @@
       newDiv.textContent = rightValue;
       oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-      document.getElementById(this.options.classes.gutterID).innerHTML = '';
+      this.gutterEl.innterHTML = '';
     }
   };
 
+  function getEditor(acediff, options) {
+    var editor = ace.edit(options.id || options.el);
 
-  function getMode(acediff, editor) {
-    var mode = acediff.options.mode;
-    if (editor === C.EDITOR_LEFT && acediff.options.left.mode !== null) {
-      mode = acediff.options.left.mode;
-    }
-    if (editor === C.EDITOR_RIGHT && acediff.options.right.mode !== null) {
-      mode = acediff.options.right.mode;
-    }
-    return mode;
+    editor.getSession().setMode(options.mode !== null ? options.mode : acediff.options.mode);
+    editor.setReadOnly(!options.editable);
+    editor.setTheme(options.theme !== null ? options.theme : acediff.options.theme);
+
+    return editor;
   }
 
+  function getGutterEl(acediff, options) {
+    var element = acediff.options.classes.gutterID || options.el;
 
-  function getTheme(acediff, editor) {
-    var theme = acediff.options.theme;
-    if (editor === C.EDITOR_LEFT && acediff.options.left.theme !== null) {
-      theme = acediff.options.left.theme;
+    if (typeof element === 'string') {
+      element = document.getElementById(element);
     }
-    if (editor === C.EDITOR_RIGHT && acediff.options.right.theme !== null) {
-      theme = acediff.options.right.theme;
+
+    if (!element) {
+      throw new Error('Cannot find gutter element');
     }
-    return theme;
+
+    return element;
   }
 
 
@@ -255,18 +250,18 @@
     acediff.editors.right.ace.on('change', diff);
 
     if (acediff.options.left.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
+      on(acediff.gutterEl, 'click', '.' + acediff.options.classes.newCodeConnectorLink, function(e) {
         copy(acediff, e, C.LTR);
       });
     }
     if (acediff.options.right.copyLinkEnabled) {
-      on('#' + acediff.options.classes.gutterID, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
+      on(acediff.gutterEl, 'click', '.' + acediff.options.classes.deletedCodeConnectorLink, function(e) {
         copy(acediff, e, C.RTL);
       });
     }
 
     var onResize = debounce(function() {
-      acediff.editors.availableHeight = document.getElementById(acediff.options.left.id).offsetHeight;
+      acediff.editors.editorHeight = getEditorHeight(acediff);
 
       // TODO this should re-init gutter
       acediff.diff();
@@ -681,8 +676,8 @@
 
 
   function createGutter(acediff) {
-    acediff.gutterHeight = document.getElementById(acediff.options.classes.gutterID).clientHeight;
-    acediff.gutterWidth = document.getElementById(acediff.options.classes.gutterID).clientWidth;
+    acediff.gutterHeight = acediff.gutterEl.clientHeight;
+    acediff.gutterWidth = acediff.gutterEl.clientWidth;
 
     var leftHeight = getTotalHeight(acediff, C.EDITOR_LEFT);
     var rightHeight = getTotalHeight(acediff, C.EDITOR_RIGHT);
@@ -692,7 +687,7 @@
     acediff.gutterSVG.setAttribute('width', acediff.gutterWidth);
     acediff.gutterSVG.setAttribute('height', height);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.gutterSVG);
+    acediff.gutterEl.appendChild(acediff.gutterSVG);
   }
 
   // acediff.editors.left.ace.getSession().getLength() * acediff.lineHeight
@@ -708,16 +703,15 @@
     acediff.copyLeftContainer = document.createElement('div');
     acediff.copyLeftContainer.setAttribute('class', acediff.options.classes.copyLeftContainer);
 
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyRightContainer);
-    document.getElementById(acediff.options.classes.gutterID).appendChild(acediff.copyLeftContainer);
+    acediff.gutterEl.appendChild(acediff.copyRightContainer);
+    acediff.gutterEl.appendChild(acediff.copyLeftContainer);
   }
 
 
   function clearGutter(acediff) {
     //gutter.innerHTML = '';
 
-    var gutterEl  = document.getElementById(acediff.options.classes.gutterID);
-    gutterEl.removeChild(acediff.gutterSVG);
+    acediff.gutterEl.removeChild(acediff.gutterSVG);
 
     createGutter(acediff);
   }
@@ -896,8 +890,7 @@
 
 
   function getEditorHeight(acediff) {
-    //editorHeight: document.getElementById(acediff.options.left.id).clientHeight
-    return document.getElementById(acediff.options.left.id).offsetHeight;
+    return acediff.editors.left.ace.container.offsetHeight;
   }
 
   // generates a Bezier curve in SVG format
@@ -916,8 +909,14 @@
   }
 
 
-  function on(elSelector, eventName, selector, fn) {
-    var element = (elSelector === 'document') ? document : document.querySelector(elSelector);
+  function on(element, eventName, selector, fn) {
+    if (typeof element === 'string') {
+      element = (element === 'document') ? document : document.querySelector(element);
+    }
+
+    if (!element || typeof element.addEventListener !== 'function') {
+      throw new Error('Cannot add event listener to element');
+    }
 
     element.addEventListener(eventName, function(event) {
       var possibleTargets = element.querySelectorAll(selector);
