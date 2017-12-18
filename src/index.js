@@ -134,10 +134,10 @@ AceDiff.prototype = {
   // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
   // but just to be safe, it's included
   diff() {
-    let dmp = new DiffMatchPatch();
-    let val1 = this.editors.left.ace.getSession().getValue();
-    let val2 = this.editors.right.ace.getSession().getValue();
-    let diff = dmp.diff_main(val2, val1);
+    const dmp = new DiffMatchPatch();
+    const val1 = this.editors.left.ace.getSession().getValue();
+    const val2 = this.editors.right.ace.getSession().getValue();
+    const diff = dmp.diff_main(val2, val1);
     dmp.diff_cleanupSemantic(diff);
 
     this.editors.left.lineLengths = getLineLengths(this.editors.left);
