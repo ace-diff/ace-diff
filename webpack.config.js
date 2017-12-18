@@ -28,7 +28,7 @@ module.exports = {
     ],
   },
   externals: {
-    ace: {
+    brace: {
       commonjs: 'brace',
       commonjs2: 'brace',
       amd: 'brace',
