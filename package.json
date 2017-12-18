@@ -8,7 +8,7 @@
     "dev": "webpack --watch",
     "serve": "npm run build && http-server . -p 8081 -s -c-1",
     "test": "NODE_ENV=test cypress run && npm run mocha",
-    "mocha": "nyc --reporter=html mocha",
+    "mocha": "nyc --reporter=html mocha test/**/*.test.js",
     "cypress": "cypress open",
     "semantic-release": "semantic-release pre && npm publish && semantic-release post"
   },

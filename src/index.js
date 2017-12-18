@@ -1,6 +1,9 @@
+import ace from 'ace'; // eslint-disable-line
 import extend from 'lodash/extend';
 import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
+
+import getCurve from './visuals/getCurve';
 
 const { Range } = ace.require('ace/range');
 
@@ -799,21 +802,6 @@ function getScrollingInfo(acediff, dir) {
 function getEditorHeight(acediff) {
   // editorHeight: document.getElementById(acediff.options.left.id).clientHeight
   return document.getElementById(acediff.options.left.id).offsetHeight;
-}
-
-// generates a Bezier curve in SVG format
-function getCurve(startX, startY, endX, endY) {
-  const w = endX - startX;
-  const halfWidth = startX + (w / 2);
-
-  // position it at the initial x,y coords
-  const curve = `M ${startX} ${startY
-
-    // now create the curve. This is of the form "C M,N O,P Q,R" where C is a directive for SVG ("curveto"),
-    // M,N are the first curve control point, O,P the second control point and Q,R are the final coords
-  } C ${halfWidth},${startY} ${halfWidth },${endY } ${endX },${endY}`;
-
-  return curve;
 }
 
 
