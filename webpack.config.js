@@ -30,6 +30,7 @@ module.exports = {
   externals: {
     ace: {
       commonjs: 'brace',
+      commonjs2: 'brace',
       amd: 'brace',
       root: 'ace',
     },
