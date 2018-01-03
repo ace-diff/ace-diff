@@ -12,7 +12,8 @@
     "test": "NODE_ENV=test cypress run && npm run mocha",
     "mocha": "nyc --reporter=html mocha test/**/*.test.js",
     "cypress": "cypress open",
-    "semantic-release": "semantic-release pre && npm publish && semantic-release post"
+    "semantic-release": "semantic-release",
+    "travis-deploy-once": "travis-deploy-once"
   },
   "repository": {
     "type": "git",
@@ -48,6 +49,7 @@
     "nyc": "^11.4.1",
     "semantic-release": "^11.0.2",
     "sinon": "^4.1.3",
+    "travis-deploy-once": "^4.3.0",
     "uglifyjs-webpack-plugin": "^1.1.5",
     "webpack": "^3.10.0"
   },

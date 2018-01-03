@@ -11,4 +11,4 @@ script:
   - npm run serve &
   - npm test
 after_success:
-  - npm run semantic-release
+  - npm run travis-deploy-once "npm run semantic-release"
