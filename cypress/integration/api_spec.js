@@ -1,6 +1,6 @@
 describe('Ace-diff API', () => {
   beforeEach(function () {
-    cy.visit('http://localhost:8081/tests/fixtures/');
+    cy.visit('http://localhost:8081/test/fixtures/');
   });
 
   context('getEditors()', () => {

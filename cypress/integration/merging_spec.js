@@ -1,7 +1,7 @@
 describe('Merging code', () => {
   context('Merging new code', () => {
     before(function () {
-      cy.visit('http://localhost:8081/tests/fixtures/');
+      cy.visit('http://localhost:8081/test/fixtures/');
     });
 
     it('shows different version and date in editors', () => {
@@ -35,7 +35,7 @@ describe('Merging code', () => {
 
   context('Merging deleted code', () => {
     before(function () {
-      cy.visit('http://localhost:8081/tests/fixtures/');
+      cy.visit('http://localhost:8081/test/fixtures/');
     });
 
     it('shows different version and date in editors', () => {

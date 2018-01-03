@@ -9,9 +9,7 @@ just visualizes that information as line-diffs in the editors.
 
 
 ### Dependencies
-
-- Ace Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
-- google-diff-match-patch (20121119 or later)
+- Ace (or [brace](https://github.com/thlorenz/brace)) Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
 
 
 ### Demos
