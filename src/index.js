@@ -5,7 +5,9 @@ import DiffMatchPatch from 'diff-match-patch';
 
 import getCurve from './visuals/getCurve';
 
-const { Range } = ace.require('ace/range');
+const requireFunc = (ace.acequire || ace.require);
+
+const { Range } = requireFunc('ace/range');
 
 const C = {
   DIFF_EQUAL: 0,
