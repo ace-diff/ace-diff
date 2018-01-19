@@ -24,11 +24,10 @@ const C = {
 
 // our constructor
 function AceDiff(options) {
-  this.options = {};
-
-  extend(this.options, {
+  this.options = extend({
     mode: null,
     theme: null,
+    element: null,
     diffGranularity: C.DIFF_GRANULARITY_BROAD,
     lockScrolling: false, // not implemented yet
     showDiffs: true,
