@@ -13,15 +13,15 @@ describe('Basic usage', () => {
     });
 
     it('shows 2 diff connectors', () => {
-      cy.get('.acediff-connector').should('have.length', 2);
+      cy.get('.acediff__connector').should('have.length', 2);
     });
 
     it('shows 1 new code arrow', () => {
-      cy.get('.acediff-new-code-connector-copy').should('have.length', 1);
+      cy.get('.acediff__newCodeConnector').should('have.length', 1);
     });
 
     it('shows 2 deleted code arrows', () => {
-      cy.get('.acediff-deleted-code-connector-copy').should('have.length', 2);
+      cy.get('.acediff__deletedCodeConnector').should('have.length', 2);
     });
   });
 });

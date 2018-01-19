@@ -1,6 +1,6 @@
 describe('Merging code', () => {
   context('Merging new code', () => {
-    before(function () {
+    before(() => {
       cy.visit('http://localhost:8081/test/fixtures/');
     });
 
@@ -14,11 +14,11 @@ describe('Merging code', () => {
     });
 
     it('shows 1 new code arrow', () => {
-      cy.get('.acediff-new-code-connector-copy').should('have.length', 1);
+      cy.get('.acediff__newCodeConnector').should('have.length', 1);
     });
 
     it('merges code from right to left', () => {
-      cy.get('.acediff-new-code-connector-copy').click();
+      cy.get('.acediff__newCodeConnector').click();
 
       cy.window().then((win) => {
         const leftCode = JSON.parse(win.aceDiffer.getEditors().left.getValue());
@@ -29,12 +29,12 @@ describe('Merging code', () => {
     });
 
     it('shows no new code arrow', () => {
-      cy.get('.acediff-new-code-connector-copy').should('not.exist');
+      cy.get('.acediff__newCodeConnector').should('not.exist');
     });
   });
 
   context('Merging deleted code', () => {
-    before(function () {
+    before(() => {
       cy.visit('http://localhost:8081/test/fixtures/');
     });
 
@@ -47,13 +47,13 @@ describe('Merging code', () => {
     });
 
     it('shows 2 deleted code arrows', () => {
-      cy.get('.acediff-deleted-code-connector-copy').should('have.length', 2);
+      cy.get('.acediff__deletedCodeConnector').should('have.length', 2);
     });
 
     it('merges code from left to right', () => {
-      cy.get('.acediff-deleted-code-connector-copy')
-      .last()
-      .click();
+      cy.get('.acediff__deletedCodeConnector')
+        .last()
+        .click();
 
       cy.window().then((win) => {
         const leftCode = JSON.parse(win.aceDiffer.getEditors().left.getValue());
