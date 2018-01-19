@@ -4,6 +4,7 @@ import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
 
 import getCurve from './visuals/getCurve';
+import ensureElement from './dom/ensureElement';
 
 const requireFunc = (ace.acequire || ace.require);
 
@@ -34,7 +35,7 @@ function AceDiff(options) {
     showConnectors: true,
     maxDiffs: 5000,
     left: {
-      id: 'acediff-left-editor',
+      id: null,
       content: null,
       mode: null,
       theme: null,
@@ -42,7 +43,7 @@ function AceDiff(options) {
       copyLinkEnabled: true,
     },
     right: {
-      id: 'acediff-right-editor',
+      id: null,
       content: null,
       mode: null,
       theme: null,
@@ -50,18 +51,36 @@ function AceDiff(options) {
       copyLinkEnabled: true,
     },
     classes: {
-      gutterID: 'acediff-gutter',
-      diff: 'acediff-diff',
-      connector: 'acediff-connector',
-      newCodeConnectorLink: 'acediff-new-code-connector-copy',
+      gutterID: 'acediff__gutter',
+      diff: 'acediff__diffLine',
+      connector: 'acediff__connector',
+      newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
-      deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+      deletedCodeConnectorLink: 'acediff__deletedCodeConnector',
       deletedCodeConnectorLinkContent: '&#8592;',
-      copyRightContainer: 'acediff-copy-right',
-      copyLeftContainer: 'acediff-copy-left',
+      copyRightContainer: 'acediff__copy--right',
+      copyLeftContainer: 'acediff__copy--left',
     },
     connectorYOffset: 0,
   }, options);
+
+  if (this.options.element === null) {
+    console.error('You need to specify an element for Ace-diff');
+    return;
+  }
+
+  const el = document.body.querySelector(this.options.element);
+
+  if (!el) {
+    console.error(`Can't find the specified element ${this.options.element}`);
+    return;
+  }
+
+  this.options.left.id = ensureElement(el, 'acediff__left');
+  this.options.right.id = ensureElement(el, 'acediff__right');
+  this.options.classes.gutterID = ensureElement(el, 'acediff__gutter');
+
+  el.innerHTML = `<div class="acediff__wrap">${el.innerHTML}</div>`;
 
   // instantiate the editors in an internal data structure
   // that will store a little info about the diffs and
