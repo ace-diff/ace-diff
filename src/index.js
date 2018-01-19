@@ -146,15 +146,15 @@ AceDiff.prototype = {
     this.editors.right.lineLengths = getLineLengths(this.editors.right);
 
     // parse the raw diff into something a little more palatable
-    let diffs = [];
-    let offset = {
+    const diffs = [];
+    const offset = {
       left: 0,
       right: 0,
     };
 
     diff.forEach(function (chunk) {
-      let chunkType = chunk[0];
-      let text = chunk[1];
+      const chunkType = chunk[0];
+      const text = chunk[1];
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -186,14 +186,14 @@ AceDiff.prototype = {
 
   destroy() {
     // destroy the two editors
-    let leftValue = this.editors.left.ace.getValue();
+    const leftValue = this.editors.left.ace.getValue();
     this.editors.left.ace.destroy();
     let oldDiv = this.editors.left.ace.container;
     let newDiv = oldDiv.cloneNode(false);
     newDiv.textContent = leftValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    let rightValue = this.editors.right.ace.getValue();
+    const rightValue = this.editors.right.ace.getValue();
     this.editors.right.ace.destroy();
     oldDiv = this.editors.right.ace.container;
     newDiv = oldDiv.cloneNode(false);
@@ -253,7 +253,7 @@ function addEventHandlers(acediff) {
   acediff.editors.right.ace.on('change', diff);
 
   if (acediff.options.left.copyLinkEnabled) {
-    on(`#${ acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
+    on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.LTR);
     });
   }
@@ -302,7 +302,7 @@ function copy(acediff, e, dir) {
 
   let contentToInsert = '';
   for (var i = startLine; i < endLine; i++) {
-    contentToInsert += `${getLine(sourceEditor, i) }\n`;
+    contentToInsert += `${getLine(sourceEditor, i)}\n`;
   }
 
   let startContent = '';
@@ -348,7 +348,7 @@ function showDiff(acediff, editor, startLine, endLine, className) {
     endLine = startLine;
   }
 
-  const classNames = `${className } ${ (endLine > startLine) ? 'lines' : 'targetOnly'}`;
+  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'}`;
   endLine--; // because endLine is always + 1
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
@@ -398,9 +398,9 @@ function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, right
   const curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
   const curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
-  const verticalLine1 = `L${ p2_x},${p2_y } ${ p4_x},${ p4_y}`;
-  const verticalLine2 = `L${p3_x },${ p3_y} ${p1_x},${p1_y}`;
-  const d = `${curve1} ${ verticalLine1 } ${ curve2 } ${verticalLine2}`;
+  const verticalLine1 = `L${p2_x},${p2_y} ${p4_x},${p4_y}`;
+  const verticalLine2 = `L${p3_x},${p3_y} ${p1_x},${p1_y}`;
+  const d = `${curve1} ${verticalLine1} ${curve2} ${verticalLine2}`;
 
   const el = document.createElementNS(C.SVG_NS, 'path');
   el.setAttribute('d', d);
@@ -438,7 +438,7 @@ function positionCopyContainers(acediff) {
   const leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
   const rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
 
-  acediff.copyRightContainer.style.cssText = `top: ${ -leftTopOffset }px`;
+  acediff.copyRightContainer.style.cssText = `top: ${-leftTopOffset}px`;
   acediff.copyLeftContainer.style.cssText = `top: ${-rightTopOffset}px`;
 }
 
@@ -811,12 +811,12 @@ function on(elSelector, eventName, selector, fn) {
   const element = (elSelector === 'document') ? document : document.querySelector(elSelector);
 
   element.addEventListener(eventName, (event) => {
-    let possibleTargets = element.querySelectorAll(selector);
-    let target = event.target;
+    const possibleTargets = element.querySelectorAll(selector);
+    const target = event.target;
 
     for (let i = 0, l = possibleTargets.length; i < l; i++) {
       let el = target;
-      let p = possibleTargets[i];
+      const p = possibleTargets[i];
 
       while (el && el !== element) {
         if (el === p) {
