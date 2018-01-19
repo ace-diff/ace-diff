@@ -1,5 +1,5 @@
 import ace from 'brace'; // eslint-disable-line
-import extend from 'lodash/extend';
+import merge from 'lodash/merge';
 import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
 
@@ -24,7 +24,7 @@ const C = {
 
 // our constructor
 function AceDiff(options) {
-  this.options = extend({
+  this.options = merge({
     mode: null,
     theme: null,
     element: null,
@@ -116,7 +116,7 @@ AceDiff.prototype = {
 
   // allows on-the-fly changes to the AceDiff instance settings
   setOptions(options) {
-    extend(this.options, options);
+    merge(this.options, options);
     this.diff();
   },
 
