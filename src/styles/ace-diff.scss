@@ -1,4 +1,10 @@
-.acediff {
+$connectorBackground: #d8f2ff;
+$connectorBorder: #a2d7f2;
+
+.acediff { // .acediff class itself got no styles
+
+  // We have to provide some dimensions for the ACE editor
+  // This will expand to whathever space is available
   &__wrap {
     display: flex;
     flex-direction: row;
@@ -8,14 +14,14 @@
     top: 0px;
     left: 0px;
 
-    /* these 3 lines are to prevents an unsightly scrolling bounce affect on Safari */
+    // these 3 lines are to prevents an unsightly scrolling bounce affect on Safari
     height: 100%;
     width: 100%;
     overflow: auto;
   }
+
   &__gutter {
     flex: 0 0 60px;
-    order: 2;
     border-left: 1px solid #999999;
     border-right: 1px solid #999999;
     background-color: #efefef;
@@ -29,32 +35,29 @@
     height: 100%;
     flex: 1;
   }
-  &__left {
-    order: 1;
-  }
-  &__right {
-    order: 3;
-  }
 
+  // The line that's rendered in ACE editor under diffed lines
   &__diffLine {
-    background-color: #d8f2ff;
-    border-top: 1px solid #a2d7f2;
-    border-bottom: 1px solid #a2d7f2;
+    background-color: $connectorBackground;
+    border-top: 1px solid $connectorBorder;
+    border-bottom: 1px solid $connectorBorder;
     position: absolute;
     z-index: 4;
     &.targetOnly {
       height: 0px !important;
-      border-top: 1px solid #a2d7f2;
+      border-top: 1px solid $connectorBorder;
       border-bottom: 0px;
       position: absolute;
     }
   }
 
+  // SVG connector
   &__connector {
-    fill: #d8f2ff;
-    stroke: #a2d7f2;
+    fill: $connectorBackground;
+    stroke: $connectorBorder;
   }
 
+  // Arrows for merging diffs
   &__copy--right,
   &__copy--left {
     position: relative;

@@ -77,8 +77,8 @@ function AceDiff(options) {
   }
 
   this.options.left.id = ensureElement(el, 'acediff__left');
-  this.options.right.id = ensureElement(el, 'acediff__right');
   this.options.classes.gutterID = ensureElement(el, 'acediff__gutter');
+  this.options.right.id = ensureElement(el, 'acediff__right');
 
   el.innerHTML = `<div class="acediff__wrap">${el.innerHTML}</div>`;
 
