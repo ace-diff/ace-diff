@@ -4,4 +4,7 @@ node_modules/*
 coverage
 cypress/videos
 cypress/screenshots
+cypress/fixtures
+cypress/plugins
+cypress/support
 dist

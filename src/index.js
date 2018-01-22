@@ -1,11 +1,15 @@
 import ace from 'brace'; // eslint-disable-line
-import extend from 'lodash/extend';
+import merge from 'lodash/merge';
 import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
 
 import getCurve from './visuals/getCurve';
+import ensureElement from './dom/ensureElement';
+import query from './dom/query';
 
-const { Range } = ace.require('ace/range');
+const requireFunc = (ace.acequire || ace.require);
+
+const { Range } = requireFunc('ace/range');
 
 const C = {
   DIFF_EQUAL: 0,
@@ -22,18 +26,17 @@ const C = {
 
 // our constructor
 function AceDiff(options) {
-  this.options = {};
-
-  extend(this.options, {
+  this.options = merge({
     mode: null,
     theme: null,
+    element: null,
     diffGranularity: C.DIFF_GRANULARITY_BROAD,
     lockScrolling: false, // not implemented yet
     showDiffs: true,
     showConnectors: true,
     maxDiffs: 5000,
     left: {
-      id: 'acediff-left-editor',
+      id: null,
       content: null,
       mode: null,
       theme: null,
@@ -41,7 +44,7 @@ function AceDiff(options) {
       copyLinkEnabled: true,
     },
     right: {
-      id: 'acediff-right-editor',
+      id: null,
       content: null,
       mode: null,
       theme: null,
@@ -49,18 +52,36 @@ function AceDiff(options) {
       copyLinkEnabled: true,
     },
     classes: {
-      gutterID: 'acediff-gutter',
-      diff: 'acediff-diff',
-      connector: 'acediff-connector',
-      newCodeConnectorLink: 'acediff-new-code-connector-copy',
+      gutterID: 'acediff__gutter',
+      diff: 'acediff__diffLine',
+      connector: 'acediff__connector',
+      newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
-      deletedCodeConnectorLink: 'acediff-deleted-code-connector-copy',
+      deletedCodeConnectorLink: 'acediff__deletedCodeConnector',
       deletedCodeConnectorLinkContent: '&#8592;',
-      copyRightContainer: 'acediff-copy-right',
-      copyLeftContainer: 'acediff-copy-left',
+      copyRightContainer: 'acediff__copy--right',
+      copyLeftContainer: 'acediff__copy--left',
     },
     connectorYOffset: 0,
   }, options);
+
+  if (this.options.element === null) {
+    console.error('You need to specify an element for Ace-diff');
+    return;
+  }
+
+  const el = document.body.querySelector(this.options.element);
+
+  if (!el) {
+    console.error(`Can't find the specified element ${this.options.element}`);
+    return;
+  }
+
+  this.options.left.id = ensureElement(el, 'acediff__left');
+  this.options.classes.gutterID = ensureElement(el, 'acediff__gutter');
+  this.options.right.id = ensureElement(el, 'acediff__right');
+
+  el.innerHTML = `<div class="acediff__wrap">${el.innerHTML}</div>`;
 
   // instantiate the editors in an internal data structure
   // that will store a little info about the diffs and
@@ -115,7 +136,7 @@ AceDiff.prototype = {
 
   // allows on-the-fly changes to the AceDiff instance settings
   setOptions(options) {
-    extend(this.options, options);
+    merge(this.options, options);
     this.diff();
   },
 
@@ -144,15 +165,15 @@ AceDiff.prototype = {
     this.editors.right.lineLengths = getLineLengths(this.editors.right);
 
     // parse the raw diff into something a little more palatable
-    let diffs = [];
-    let offset = {
+    const diffs = [];
+    const offset = {
       left: 0,
       right: 0,
     };
 
     diff.forEach(function (chunk) {
-      let chunkType = chunk[0];
-      let text = chunk[1];
+      const chunkType = chunk[0];
+      const text = chunk[1];
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -184,14 +205,14 @@ AceDiff.prototype = {
 
   destroy() {
     // destroy the two editors
-    let leftValue = this.editors.left.ace.getValue();
+    const leftValue = this.editors.left.ace.getValue();
     this.editors.left.ace.destroy();
     let oldDiv = this.editors.left.ace.container;
     let newDiv = oldDiv.cloneNode(false);
     newDiv.textContent = leftValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    let rightValue = this.editors.right.ace.getValue();
+    const rightValue = this.editors.right.ace.getValue();
     this.editors.right.ace.destroy();
     oldDiv = this.editors.right.ace.container;
     newDiv = oldDiv.cloneNode(false);
@@ -251,12 +272,12 @@ function addEventHandlers(acediff) {
   acediff.editors.right.ace.on('change', diff);
 
   if (acediff.options.left.copyLinkEnabled) {
-    on(`#${ acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
+    query.on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.LTR);
     });
   }
   if (acediff.options.right.copyLinkEnabled) {
-    on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
+    query.on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.RTL);
     });
   }
@@ -300,7 +321,7 @@ function copy(acediff, e, dir) {
 
   let contentToInsert = '';
   for (var i = startLine; i < endLine; i++) {
-    contentToInsert += `${getLine(sourceEditor, i) }\n`;
+    contentToInsert += `${getLine(sourceEditor, i)}\n`;
   }
 
   let startContent = '';
@@ -346,7 +367,7 @@ function showDiff(acediff, editor, startLine, endLine, className) {
     endLine = startLine;
   }
 
-  const classNames = `${className } ${ (endLine > startLine) ? 'lines' : 'targetOnly'}`;
+  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'}`;
   endLine--; // because endLine is always + 1
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
@@ -396,9 +417,9 @@ function addConnector(acediff, leftStartLine, leftEndLine, rightStartLine, right
   const curve1 = getCurve(p1_x, p1_y, p2_x, p2_y);
   const curve2 = getCurve(p4_x, p4_y, p3_x, p3_y);
 
-  const verticalLine1 = `L${ p2_x},${p2_y } ${ p4_x},${ p4_y}`;
-  const verticalLine2 = `L${p3_x },${ p3_y} ${p1_x},${p1_y}`;
-  const d = `${curve1} ${ verticalLine1 } ${ curve2 } ${verticalLine2}`;
+  const verticalLine1 = `L${p2_x},${p2_y} ${p4_x},${p4_y}`;
+  const verticalLine2 = `L${p3_x},${p3_y} ${p1_x},${p1_y}`;
+  const d = `${curve1} ${verticalLine1} ${curve2} ${verticalLine2}`;
 
   const el = document.createElementNS(C.SVG_NS, 'path');
   el.setAttribute('d', d);
@@ -436,7 +457,7 @@ function positionCopyContainers(acediff) {
   const leftTopOffset = acediff.editors.left.ace.getSession().getScrollTop();
   const rightTopOffset = acediff.editors.right.ace.getSession().getScrollTop();
 
-  acediff.copyRightContainer.style.cssText = `top: ${ -leftTopOffset }px`;
+  acediff.copyRightContainer.style.cssText = `top: ${-leftTopOffset}px`;
   acediff.copyLeftContainer.style.cssText = `top: ${-rightTopOffset}px`;
 }
 
@@ -798,32 +819,9 @@ function getScrollingInfo(acediff, dir) {
   return (dir == C.EDITOR_LEFT) ? acediff.editors.left.ace.getSession().getScrollTop() : acediff.editors.right.ace.getSession().getScrollTop();
 }
 
-
 function getEditorHeight(acediff) {
   // editorHeight: document.getElementById(acediff.options.left.id).clientHeight
   return document.getElementById(acediff.options.left.id).offsetHeight;
-}
-
-
-function on(elSelector, eventName, selector, fn) {
-  const element = (elSelector === 'document') ? document : document.querySelector(elSelector);
-
-  element.addEventListener(eventName, (event) => {
-    let possibleTargets = element.querySelectorAll(selector);
-    let target = event.target;
-
-    for (let i = 0, l = possibleTargets.length; i < l; i++) {
-      let el = target;
-      let p = possibleTargets[i];
-
-      while (el && el !== element) {
-        if (el === p) {
-          return fn.call(p, event);
-        }
-        el = el.parentNode;
-      }
-    }
-  });
 }
 
 export default AceDiff;

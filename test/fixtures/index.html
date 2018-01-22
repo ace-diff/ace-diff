@@ -3,21 +3,28 @@
 
 <head>
   <title>Ace-diff - Test page</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="../../dist/ace-diff.min.css">
 </head>
 
 <body>
 
-  <div id="flex-container">
-    <div>
-      <div id="acediff-left-editor">{
+  <div class="custom"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
+  <script src="../../dist/ace-diff.min.js"></script>
+
+  <script>
+    var aceDiffer = new AceDiff({
+      element: '.custom',
+      left: {
+        content: `{
         "name": "ace-diff",
         "version": "0.1.0",
         "date": "Mar 15, 2015",
         "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
         "main": "dist/ace-diff.js",
         "scripts": {
-          "test": "echo \"Error: no test specified\" && exit 1"
+          "test": "echo 'Error: no test specified' && exit 1"
         },
         "repository": {
           "type": "git",
@@ -43,20 +50,17 @@
           "grunt-contrib-watch": "~0.5.3",
           "grunt-contrib-jshint": "^0.10.0"
         }
-      }</div>
-    </div>
-
-    <div id="acediff-gutter"></div>
-
-    <div>
-      <div id="acediff-right-editor">{
+      }`,
+      },
+      right: {
+        content: `{
         "name": "ace-diff",
         "version": "0.1.1",
         "date": "Mar 21, 2015",
         "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
         "main": "dist/ace-diff.js",
         "scripts": {
-          "test": "echo \"Error: no test specified\" && exit 1"
+          "test": "echo 'Error: no test specified' && exit 1"
         },
         "repository": {
           "type": "git",
@@ -84,16 +88,8 @@
           "grunt-contrib-watch": "~0.5.3",
           "grunt-contrib-jshint": "^0.10.0"
         }
-      }</div>
-    </div>
-  </div>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
-  <script src="../../dist/ace-diff.min.js"></script>
-
-  <script>
-    var aceDiffer = new AceDiff({
-      mode: "ace/mode/json"
+      }`,
+      },
     });
   </script>
 
