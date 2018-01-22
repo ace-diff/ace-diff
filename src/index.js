@@ -5,6 +5,7 @@ import DiffMatchPatch from 'diff-match-patch';
 
 import getCurve from './visuals/getCurve';
 import ensureElement from './dom/ensureElement';
+import query from './dom/query';
 
 const requireFunc = (ace.acequire || ace.require);
 
@@ -271,12 +272,12 @@ function addEventHandlers(acediff) {
   acediff.editors.right.ace.on('change', diff);
 
   if (acediff.options.left.copyLinkEnabled) {
-    on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
+    query.on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.LTR);
     });
   }
   if (acediff.options.right.copyLinkEnabled) {
-    on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
+    query.on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.deletedCodeConnectorLink}`, (e) => {
       copy(acediff, e, C.RTL);
     });
   }
@@ -818,32 +819,9 @@ function getScrollingInfo(acediff, dir) {
   return (dir == C.EDITOR_LEFT) ? acediff.editors.left.ace.getSession().getScrollTop() : acediff.editors.right.ace.getSession().getScrollTop();
 }
 
-
 function getEditorHeight(acediff) {
   // editorHeight: document.getElementById(acediff.options.left.id).clientHeight
   return document.getElementById(acediff.options.left.id).offsetHeight;
-}
-
-
-function on(elSelector, eventName, selector, fn) {
-  const element = (elSelector === 'document') ? document : document.querySelector(elSelector);
-
-  element.addEventListener(eventName, (event) => {
-    const possibleTargets = element.querySelectorAll(selector);
-    const target = event.target;
-
-    for (let i = 0, l = possibleTargets.length; i < l; i++) {
-      let el = target;
-      const p = possibleTargets[i];
-
-      while (el && el !== element) {
-        if (el === p) {
-          return fn.call(p, event);
-        }
-        el = el.parentNode;
-      }
-    }
-  });
 }
 
 export default AceDiff;
