@@ -7,20 +7,17 @@ It's built on top of the excellent, but appallingly-named [google-diff-match-pat
 ## Dependencies
 - Ace (or [Brace](https://github.com/thlorenz/brace)) Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
 
-## Demos
+## Demos (TODO: Should be updated)
 Take a look at the `gh-pages` branch of this repo for some [demos](http://ace-diff.github.io/ace-diff/). The demos illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and how it works.
 
 
 ## Features
 
-- Compatible with any Ace Editor mode or theme
+- Compatible with any Ace/Brace Editor mode or theme
 - Accommodates realtime changes to one or both editors
 - Readonly option for left/right editors
-- Full control over all CSS/IDs for styling. This includes styling the actual diffs and the SVG gutter lines.
 - Control over how aggressively diffs are combined
 - Option to allow users to copy diffs from one side to the other
-- convenient API to do thing like changing options on the fly, getting the number of diffs, destroying it altogether.
-
 
 ## How to install
 
@@ -56,7 +53,6 @@ Grab ace-diff from CDN:
 Here's an example of how you'd instantiate AceDiff.
 
 ```js
-<script>
 var differ = new AceDiff({
   element: '.acediff',
   left: {
@@ -66,10 +62,11 @@ var differ = new AceDiff({
     content: 'your second file content here',
   },
 });
-</script>
 ```
 
 ### CSS
+
+**Because of the way how ACE is positioned, it's important to have Ace-diff running in some container with specified dimensions (and optionally with a `position: relative`)**
 
 Styling the elements is vitally important: the gutter should retain its width even if the user resizes his or her browser. But honestly, how you go about that is very much up to you: you can provide whatever CSS you want, depending on your scenario.
 
