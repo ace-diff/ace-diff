@@ -119,7 +119,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 
 ### Diffing settings
 
-- `element` (string or element object, required). The element for 
+- `element` (string<DOM selector> or element object, required). The element used for Ace-diff
 - `mode` (string, optional). this is the mode for the Ace Editor, e.g. `"ace/mode/javascript"`. Check out the Ace docs for that. This setting will be applied to both editors. I figured 99.999999% of the time you're going to want the same mode for both of them so you can just set it once here. If you're a mad genius and want to have different modes for each side, (a) *whoah man, what's your use-case?*, and (b) you can override this setting in one of the settings below. Read on.
 - `theme` (string, optional). This lets you set the theme for both editors.
 - `diffGranularity` (string, optional, default: `broad`). this has two options (`specific`, and `broad`). Basically this determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
