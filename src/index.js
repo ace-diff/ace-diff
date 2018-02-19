@@ -70,8 +70,8 @@ function AceDiff(options) {
     return;
   }
     
-  var el;  
-  if (this.options.element instanceof HTMLElement === true) {
+  let el;
+  if (this.options.element instanceof HTMLElement) {
     el = this.options.element;
   } else {
     el = document.body.querySelector(this.options.element);
