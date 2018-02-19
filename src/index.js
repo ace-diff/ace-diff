@@ -69,9 +69,14 @@ function AceDiff(options) {
     console.error('You need to specify an element for Ace-diff');
     return;
   }
-
-  const el = document.body.querySelector(this.options.element);
-
+    
+  let el;
+  if (this.options.element instanceof HTMLElement) {
+    el = this.options.element;
+  } else {
+    el = document.body.querySelector(this.options.element);
+  }
+    
   if (!el) {
     console.error(`Can't find the specified element ${this.options.element}`);
     return;
