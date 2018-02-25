@@ -3,6 +3,7 @@ import merge from 'lodash/merge';
 import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
 
+import normalizeContent from './helpers/normalizeContent';
 import getCurve from './visuals/getCurve';
 import ensureElement from './dom/ensureElement';
 import query from './dom/query';
@@ -69,14 +70,14 @@ function AceDiff(options) {
     console.error('You need to specify an element for Ace-diff');
     return;
   }
-    
+
   let el;
   if (this.options.element instanceof HTMLElement) {
     el = this.options.element;
   } else {
     el = document.body.querySelector(this.options.element);
   }
-    
+
   if (!el) {
     console.error(`Can't find the specified element ${this.options.element}`);
     return;
@@ -121,13 +122,8 @@ function AceDiff(options) {
   createCopyContainers(this);
   createGutter(this);
 
-  // if the data is being supplied by an option, set the editor values now
-  if (this.options.left.content) {
-    this.editors.left.ace.setValue(this.options.left.content, -1);
-  }
-  if (this.options.right.content) {
-    this.editors.right.ace.setValue(this.options.right.content, -1);
-  }
+  this.editors.left.ace.setValue(normalizeContent(this.options.left.content), -1);
+  this.editors.right.ace.setValue(normalizeContent(this.options.right.content), -1);
 
   // store the visible height of the editors (assumed the same)
   this.editors.editorHeight = getEditorHeight(this);
@@ -348,7 +344,7 @@ function copy(acediff, e, dir) {
   // keep track of the scroll height
   const h = targetEditor.ace.getSession().getScrollTop();
   targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
-  targetEditor.ace.getSession().setScrollTop(parseInt(h));
+  targetEditor.ace.getSession().setScrollTop(parseInt(h, 10));
 
   acediff.diff();
 }
