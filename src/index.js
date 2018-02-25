@@ -3,6 +3,7 @@ import merge from 'lodash/merge';
 import debounce from 'lodash/debounce';
 import DiffMatchPatch from 'diff-match-patch';
 
+import normalizeContent from './helpers/normalizeContent';
 import getCurve from './visuals/getCurve';
 import ensureElement from './dom/ensureElement';
 import query from './dom/query';
@@ -121,13 +122,8 @@ function AceDiff(options) {
   createCopyContainers(this);
   createGutter(this);
 
-  // if the data is being supplied by an option, set the editor values now
-  if (this.options.left.content) {
-    this.editors.left.ace.setValue(this.options.left.content, -1);
-  }
-  if (this.options.right.content) {
-    this.editors.right.ace.setValue(this.options.right.content, -1);
-  }
+  this.editors.left.ace.setValue(normalizeContent(this.options.left.content), -1);
+  this.editors.right.ace.setValue(normalizeContent(this.options.right.content), -1);
 
   // store the visible height of the editors (assumed the same)
   this.editors.editorHeight = getEditorHeight(this);
