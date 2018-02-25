@@ -70,14 +70,14 @@ function AceDiff(options) {
     console.error('You need to specify an element for Ace-diff');
     return;
   }
-    
+
   let el;
   if (this.options.element instanceof HTMLElement) {
     el = this.options.element;
   } else {
     el = document.body.querySelector(this.options.element);
   }
-    
+
   if (!el) {
     console.error(`Can't find the specified element ${this.options.element}`);
     return;
@@ -344,7 +344,7 @@ function copy(acediff, e, dir) {
   // keep track of the scroll height
   const h = targetEditor.ace.getSession().getScrollTop();
   targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
-  targetEditor.ace.getSession().setScrollTop(parseInt(h));
+  targetEditor.ace.getSession().setScrollTop(parseInt(h, 10));
 
   acediff.diff();
 }
