@@ -1,5 +1,5 @@
 describe('Ace-diff API', () => {
-  beforeEach(function () {
+  beforeEach(() => {
     cy.visit('http://localhost:8081/test/fixtures/');
   });
 
@@ -16,7 +16,7 @@ describe('Ace-diff API', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.options.diffGranularity).to.equal('broad');
         win.aceDiffer.setOptions({
-          diffGranularity: 'specific'
+          diffGranularity: 'specific',
         });
         expect(win.aceDiffer.options.diffGranularity).to.equal('specific');
       });

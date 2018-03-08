@@ -1,5 +1,5 @@
 describe('Ace-diff API', () => {
-  beforeEach(function () {
+  beforeEach(() => {
     cy.visit('http://localhost:8081/test/fixtures/newlines.html');
   });
 

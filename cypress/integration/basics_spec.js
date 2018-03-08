@@ -1,6 +1,6 @@
 describe('Basic usage', () => {
   context('Ace-diff init', () => {
-    beforeEach(function () {
+    beforeEach(() => {
       cy.visit('http://localhost:8081/test/fixtures/');
     });
 
