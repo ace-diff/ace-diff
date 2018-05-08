@@ -172,9 +172,16 @@ AceDiff.prototype = {
       right: 0,
     };
 
-    diff.forEach(function (chunk) {
+    diff.forEach(function (chunk, index, array) {
       const chunkType = chunk[0];
-      const text = chunk[1];
+      let text = chunk[1];
+
+      // Fix for #28 https://github.com/ace-diff/ace-diff/issues/28
+      if (array[index + 1] && text.endsWith('\n') && array[index + 1][1].startsWith('\n')) {
+        text += '\n';
+        diff[index][1] = text;
+        diff[index + 1][1] = diff[index + 1][1].replace(/^\n/, '');
+      }
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
