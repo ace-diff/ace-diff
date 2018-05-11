@@ -1,4 +1,4 @@
-export default function normalizeContent(value = '') {
-  const normalized = value.replace(/\r\n/g, '\n');
-  return normalized;
+export default function normalizeContent(defaultValue) {
+  const value = (defaultValue === undefined) ? '' : defaultValue;
+  return value.replace(/\r\n/g, '\n');
 }
