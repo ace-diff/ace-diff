@@ -9,5 +9,5 @@ export default function getCurve(startX, startY, endX, endY) {
   // M,N are the first curve control point, O,P the second control point
   // and Q,R are the final coords
 
-  return `M ${startX} ${startY} C ${halfWidth},${startY} ${halfWidth},${endY} ${endX},${endY}`;
+  return 'M {startX} {startY} C {halfWidth},{startY} {halfWidth},{endY} {endX},{endY}'.format(startX, startY, halfWidth, startY, halfWidth, endY, endX, endY);
 }
