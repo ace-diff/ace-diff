@@ -1,6 +1,7 @@
 import ace from 'brace'; // eslint-disable-line
 import merge from 'lodash/merge';
 import debounce from 'lodash/debounce';
+import throttle from 'lodash/throttle';
 import DiffMatchPatch from 'diff-match-patch';
 
 import normalizeContent from './helpers/normalizeContent';
@@ -71,23 +72,22 @@ function AceDiff(options) {
     return;
   }
 
-  let el;
   if (this.options.element instanceof HTMLElement) {
-    el = this.options.element;
+    this.el = this.options.element;
   } else {
-    el = document.body.querySelector(this.options.element);
+    this.el = document.body.querySelector(this.options.element);
   }
 
-  if (!el) {
+  if (!this.el) {
     console.error(`Can't find the specified element ${this.options.element}`);
     return;
   }
 
-  this.options.left.id = ensureElement(el, 'acediff__left');
-  this.options.classes.gutterID = ensureElement(el, 'acediff__gutter');
-  this.options.right.id = ensureElement(el, 'acediff__right');
+  this.options.left.id = ensureElement(this.el, 'acediff__left');
+  this.options.classes.gutterID = ensureElement(this.el, 'acediff__gutter');
+  this.options.right.id = ensureElement(this.el, 'acediff__right');
 
-  el.innerHTML = `<div class="acediff__wrap">${el.innerHTML}</div>`;
+  this.el.innerHTML = `<div class="acediff__wrap">${this.el.innerHTML}</div>`;
 
   // instantiate the editors in an internal data structure
   // that will store a little info about the diffs and
@@ -228,6 +228,7 @@ AceDiff.prototype = {
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
     document.getElementById(this.options.classes.gutterID).innerHTML = '';
+    removeEventHandlers();
   },
 };
 
@@ -255,25 +256,11 @@ function getTheme(acediff, editor) {
   return theme;
 }
 
+let removeEventHandlers = () => {};
 
 function addEventHandlers(acediff) {
-  let leftLastScrollTime = new Date().getTime(),
-    rightLastScrollTime = new Date().getTime(),
-    now;
-
-  acediff.editors.left.ace.getSession().on('changeScrollTop', (scroll) => {
-    now = new Date().getTime();
-    if (rightLastScrollTime + 50 < now) {
-      updateGap(acediff, 'left', scroll);
-    }
-  });
-
-  acediff.editors.right.ace.getSession().on('changeScrollTop', (scroll) => {
-    now = new Date().getTime();
-    if (leftLastScrollTime + 50 < now) {
-      updateGap(acediff, 'right', scroll);
-    }
-  });
+  acediff.editors.left.ace.getSession().on('changeScrollTop', throttle((scroll) => { updateGap(acediff, 'left', scroll); }, 16));
+  acediff.editors.right.ace.getSession().on('changeScrollTop', throttle((scroll) => { updateGap(acediff, 'right', scroll); }, 16));
 
   const diff = acediff.diff.bind(acediff);
   acediff.editors.left.ace.on('change', diff);
@@ -298,6 +285,9 @@ function addEventHandlers(acediff) {
   }, 250);
 
   window.addEventListener('resize', onResize);
+  removeEventHandlers = () => {
+    window.removeEventListener('resize', onResize);
+  };
 }
 
 
