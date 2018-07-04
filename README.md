@@ -31,6 +31,8 @@ import AceDiff from 'ace-diff';
 
 // optionally, include CSS, or use your own
 import 'ace-diff/dist/ace-diff.min.css';
+// Or use the dark mode
+import 'ace-diff/dist/ace-diff-dark.min.css';
 ```
 
 ### Use CDN
@@ -41,6 +43,9 @@ Grab ace-diff from CDN:
 
 <!-- optionally include CSS, or use your own -->
 <link href="https://unpkg.com/ace-diff@^2.0.0/dist/ace-diff.min.css" rel="stylesheet">
+
+<!-- optionally there is also a dark mode CSS -->
+<link href="https://unpkg.com/ace-diff@^2.0.0/dist/ace-diff-dark.min.css" rel="stylesheet">
 ```
 
 ### HTML

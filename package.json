@@ -7,7 +7,7 @@
   "unpkg": "dist/ace-diff.min.js",
   "scripts": {
     "build": "webpack",
-    "dev": "webpack --watch",
+    "dev": "webpack --watch & npm run serve",
     "serve": "npm run build && http-server . -p 8081 -s -c-1",
     "test": "NODE_ENV=test cypress run && npm run mocha",
     "mocha": "nyc --reporter=html mocha test/**/*.test.js",
