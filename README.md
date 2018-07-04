@@ -1,14 +1,14 @@
 # Ace-diff
 
-This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes differences in two documents and allows users to copy changes from to the other. If you're a developer, you've seen it a billion times; this is one for Ace Editor. :)
+This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes differences in two documents and allows users to copy changes from to the other.
 
 It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/) library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. Ace-diff just visualizes that information as line-diffs in the editors.
 
 ## Dependencies
 - Ace (or [Brace](https://github.com/thlorenz/brace)) Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
 
-## Demos (TODO: Should be updated)
-Take a look at the `gh-pages` branch of this repo for some [demos](http://ace-diff.github.io/ace-diff/). The demos illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and how it works.
+## Demos
+Take a look at [demos on Ace-diff page](https://ace-diff.github.io/ace-diff/). The demos illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and how it works.
 
 
 ## Features
