@@ -4,7 +4,9 @@ const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const autoprefixer = require('autoprefixer');
 
-const extractSass = new ExtractTextPlugin({ filename: 'ace-diff.min.css' });
+const extractSass = new ExtractTextPlugin({
+  filename: getPath => getPath('[name].min.css').replace('-light', ''),
+});
 
 // Using CSS import in /src would mean that anyone using this package
 // with /src would also need to include and transpile our CSS
@@ -12,7 +14,8 @@ const extractSass = new ExtractTextPlugin({ filename: 'ace-diff.min.css' });
 module.exports = {
   entry: {
     'ace-diff': './src/index.js',
-    ignore: './src/styles/ace-diff.scss', // We need a standalone file
+    'ace-diff-light': './src/styles/ace-diff.scss',
+    'ace-diff-dark': './src/styles/ace-diff-dark.scss',
   },
   output: {
     path: path.resolve(__dirname, 'dist'),
