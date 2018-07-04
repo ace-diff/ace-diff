@@ -1,80 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Ace-diff</title>
-    <script src="libs/jquery.js"></script>
-    <script src="libs/diff_match_patch.js"></script>
-    <link rel=stylesheet href="demos/bootstrap.min.css">
-    <link rel=stylesheet href="demos/styles.css">
+  <title>Ace-diff | Diff/merge for Ace editor</title>
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.1/css/bootstrap.min.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="A diff/merging wrapper for Ace Editor built on google-diff-match-patch" />
+	<meta property="og:title" content="Ace-diff | Diff/merge for Ace editor">
+	<meta property="og:description" content="A diff/merging wrapper for Ace Editor built on google-diff-match-patch">
+	<meta property="og:site_name" content="Ace-diff">
+	<meta property="og:image" content="https://ace-diff.github.io/ace-diff/demos/screenshot1.png">
+	<meta property="og:url" content="https://ace-diff.github.io/ace-diff/">
+	<meta name="twitter:card" content="summary">
 </head>
 <body>
 
-<nav class="navbar navbar-default">
-    <div class="container-fluid">
-        <div class="navbar-header">
-            <span class="navbar-brand">Ace-diff</span>
-        </div>
+<main class="container mt-5">
+	<div class="row">
+		<div class="col-sm-5">
+			<h1>
+				Ace-diff<br />
+				<small class="text-muted">Diff/merge for Ace editor</small>
+			</h1>
+				
+			<p>
+				Wrapper for the <a href="https://ace.c9.io">Ace Editor</a> to provide a 2-panel diffing/merging tool that visualizes differences
+				in two documents and allows users to copy changes from one doc to the other.
+			</p>
 
-        <ul class="nav navbar-nav navbar-right">
-            <li><a href="https://github.com/benkeen/ace-diff">Github</a></li>
-        </ul>
-    </div>
-</nav>
+			<a class="btn btn-primary" href="https://github.com/benkeen/ace-diff">Read doc on GitHub</a>
+		</div>
+		<div class="col-sm-7">
+			<img src="demos/screenshot1.png" alt="Ace-diff screenshot" class="img-fluid" />
+		</div>
+	</div>
 
-<div class="container">
-    <h1>Ace-diff</h1>
+	<h2>Demos</h2>
+	<p>Also checkout their source code to see the Ace-diff usage.</p>
+	<ul>
+		<li><a href="demos/demo1/">Basic full page</a></li>
+		<li><a href="demos/demo2/">Positioning in an element</a></li>
+		<li><a href="demos/demo3/">Dark theme</a></li>
+	</ul>
+</main>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-90409315-2"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
 
-    <div class="row">
-        <div class="col-sm-4">
-            <h4>About</h4>
-            <p>
-                This is a wrapper for Ace Editor to provide a 2-panel diffing/merging tool that visualizes differences
-                in two documents and allows users to copy changes from one doc to the other. If you're a developer,
-                you've seen it a billion times; this is one for Ace Editor.
-            </p>
-            <p>
-                It's built on top of <b>google-diff-match-patch</b> library, an algorithm for determining the diffs.
-                That handles the hard part: the computation of the diffs. This lib converts that raw diff info into
-                a visual representation on the screen for the user.
-            </p>
-            <p>
-                Click on the demos to the right to see how the script looks and operates. Then when you're ready,
-                click the button below to go to github for the documentation and code.
-            </p>
+  gtag('config', 'UA-90409315-2');
+</script>
 
-            <button class="btn btn-primary" onclick="window.location='https://github.com/benkeen/ace-diff'">Read doc on github</button>
-        </div>
-        <div class="col-sm-4">
-            <a href="demos/screenshot1.png" target="_blank">
-                <img src="demos/screenshot1.png" width="100%" style="border: 1px solid #999999; margin-top: 40px"/>
-            </a>
-            <a href="demos/screenshot2.png" target="_blank">
-                <img src="demos/screenshot2.png" width="100%" style="border: 1px solid #999999; margin-top: 40px"/>
-            </a>
-        </div>
-        <div class="col-sm-4">
-
-            <h4>Demos</h4>
-            <ul>
-                <li>
-                    <a href="demos/demo1/" target="_blank">Demo #1</a> -
-                    this is a full-page editor with all the default settings. The default editor content (a JSON document)
-                    is located in the page markup.
-                </li>
-                <li>
-                    <a href="demos/demo2/" target="_blank">Demo #2</a> -
-                    This demo passes the content to the AceDiff instance dynamically on page load, rather than rely
-                    on the content being in the target editor divs (e.g. for when the content is coming from the server).
-                    This makes the page load a lot smoother.
-                </li>
-                <li>
-                    <a href="demos/demo3/" target="_blank">Dark theme</a> - shows off custom diff styles with a darker
-                    theme.
-                </li>
-            </ul>
-        </div>
-    </div>
-</div>
 
 </body>
 </html>

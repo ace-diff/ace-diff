@@ -1,96 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Ace-diff - Demo #1</title>
-    <script src="../../libs/diff_match_patch.js"></script>
-    <link rel="stylesheet" href="styles.css">
+  <title>Ace-diff - Demo #1</title>
+  <!-- Include Ace editor first -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.3/ace.js"></script>
+  <!-- Include Ace-diff JS and CSS (using unpkg.com CDN in this case) -->
+  <script src="https://unpkg.com/ace-diff@^2"></script>
+  <link href="https://unpkg.com/ace-diff@^2/dist/ace-diff.min.css" rel="stylesheet">
 </head>
+
 <body>
+  <!-- Element we will use to render the Ace-diff -->
+  <div class="custom"></div>
 
-<div id="flex-container">
-    <div><div id="acediff-left-editor">{
-  "name": "ace-diff",
-  "version": "0.1.0",
-  "date": "Mar 15, 2015",
-  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
-  "main": "dist/ace-diff.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/benkeen/ace-diff.git"
-  },
-  "keywords": [
-    "ace",
-    "dif",
-    "diffing",
-    "ace editor",
-    "syntax highlighting"
-  ],
-  "author": "Ben Keen",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/benkeen/ace-diff/issues"
-  },
-  "homepage": "https://github.com/benkeen/ace-diff",
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-uglify": "^0.8.0",
-    "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-contrib-jshint": "^0.10.0"
-  }
-}
-</div></div>
-    <div id="acediff-gutter"></div>
-    <div><div id="acediff-right-editor">{
-  "name": "ace-diff",
-  "version": "0.1.1",
-  "date": "Mar 21, 2015",
-  "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
-  "main": "dist/ace-diff.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/benkeen/ace-diff.git"
-  },
-  "keywords": [
-    "ace",
-    "dif",
-    "diffing",
-    "merge",
-    "merging",
-    "ace editor",
-    "syntax highlighting"
-  ],
-  "author": "Ben Keen",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/benkeen/ace-diff/issues"
-  },
-  "homepage": "https://github.com/benkeen/ace-diff",
-  "devDependencies": {
-    "grunt": "^0.4.5",
-    "grunt-contrib-uglify": "^0.8.0",
-    "grunt-contrib-clean": "~0.5.0",
-    "grunt-contrib-watch": "~0.5.3",
-    "grunt-contrib-jshint": "^0.10.0"
-  }
-}
-</div></div>
-</div>
+  <script>
+    var aceDiffer = new AceDiff({
+      element: '.custom',
+      left: {
+        content: `# Dictionary of the Khazars
+## Female version
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.1.8/ace.js" type="text/javascript" charset="utf-8"></script>
-<script src="../../dist/ace-diff.js"></script>
+And he gave me a few of the Xeroxed sheets of paper lying on the table in
+front of him. As he passed them to me, his thumb brushed mine and I
+trembled from the touch. I had the sensation that our past and our future
+were in our fingers and that they had touched. And so, when I began to read
+the proffered pages, I at one moment lost the train of thought in text and
+drowned it in my own feelings. In these seconds of absence and
+self-oblivion, centuries passed with every read but uncomprehended and
+unabsorbed line, and when, after a few moments, I came to and re-established
+contact with the text, I knew that the reader who returns from the open seas
+of his feelings is no longer the same reader who embarked on that sea only a
+short while ago. I gained and learned more by not reading than by reading
+those pages, and when I asked Dr. Muawja where he had got them he said
+something that astonished me even more.`,
+      },
+      right: {
+        content: `# Dictionary of the Khazars
+## Male version
 
-<script>
-var aceDiffer = new AceDiff({
-    mode: "ace/mode/json"
-});
-</script>
-
+And he gave me a few of the Xeroxed sheets of paper lying on the table in
+front of him. I could have pulled the trigger then and there. There
+wouldn't be a better moment. There was only one lone witness present in the
+garden - and he was a child. But that's not what happened. I reached out
+and took those exciting sheets of paper, which I enclose in this letter.
+Taking them instead of firing my gun, I looked at those Saracen fingers with
+their nails like hazelnuts and I thought of the tree Halevi mentions in his
+book on the Khazars. I thought of how each and every one of us is just such
+a tree the taller we grow toward the sky, through the wind and rain toward
+God, the deeper we must sink our roots through the mud and subterranean
+waters toward hell. With these thoughts in my mind, I read the pages given
+me by the green-eyed Saracen. They shattered me, and in disbelief I asked
+Dr. Muawja where he had got them.`,
+      },
+    });
+  </script>
 </body>
 </html>
