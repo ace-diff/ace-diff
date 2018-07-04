@@ -108,9 +108,6 @@ function AceDiff(options) {
 
   addEventHandlers(this);
 
-  // assumption: both editors have same line heights
-  this.lineHeight = this.editors.left.ace.renderer.lineHeight;
-
   // set up the editors
   this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
   this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
@@ -128,7 +125,14 @@ function AceDiff(options) {
   // store the visible height of the editors (assumed the same)
   this.editors.editorHeight = getEditorHeight(this);
 
-  this.diff();
+  // The lineHeight is set to 0 initially and we need to wait for another tick to get it
+  // Thus moving the diff() with it
+  setTimeout(() => {
+    // assumption: both editors have same line heights
+    this.lineHeight = this.editors.left.ace.renderer.lineHeight;
+
+    this.diff();
+  }, 1);
 }
 
 
