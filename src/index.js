@@ -106,7 +106,7 @@ function AceDiff(options) {
     editorHeight: null,
   };
 
-  addEventHandlers(this);
+
 
   // set up the editors
   this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
@@ -115,9 +115,6 @@ function AceDiff(options) {
   this.editors.right.ace.setReadOnly(!this.options.right.editable);
   this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
   this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
-
-  createCopyContainers(this);
-  createGutter(this);
 
   this.editors.left.ace.setValue(normalizeContent(this.options.left.content), -1);
   this.editors.right.ace.setValue(normalizeContent(this.options.right.content), -1);
@@ -131,6 +128,9 @@ function AceDiff(options) {
     // assumption: both editors have same line heights
     this.lineHeight = this.editors.left.ace.renderer.lineHeight;
 
+    addEventHandlers(this);
+    createCopyContainers(this);
+    createGutter(this);
     this.diff();
   }, 1);
 }
