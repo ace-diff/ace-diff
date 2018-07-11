@@ -8,10 +8,7 @@ import normalizeContent from './helpers/normalizeContent';
 import getCurve from './visuals/getCurve';
 import ensureElement from './dom/ensureElement';
 import query from './dom/query';
-
-const requireFunc = (ace.acequire || ace.require);
-
-const { Range } = requireFunc('ace/range');
+const { Range } = ace.require('ace/range');
 
 const C = {
   DIFF_EQUAL: 0,
