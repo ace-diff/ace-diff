@@ -62,4 +62,22 @@ describe('Merging code', () => {
       });
     });
   });
+
+  context('Undo is working', () => {
+    before(() => {
+      cy.visit('http://localhost:8081/test/fixtures/');
+      cy.get('.acediff__deletedCodeConnector')
+        .last()
+        .click();
+    });
+
+    it('allows me to undo merges', () => {
+      cy.window().then((win) => {
+        win.aceDiffer.getEditors().left.undo();
+        const leftCode = JSON.parse(win.aceDiffer.getEditors().left.getValue());
+        const rightCode = JSON.parse(win.aceDiffer.getEditors().right.getValue());
+        expect(leftCode.keywords).to.not.deep.equal(rightCode.keywords);
+      });
+    });
+  });
 });
