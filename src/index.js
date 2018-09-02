@@ -298,13 +298,13 @@ function addEventHandlers(acediff) {
 function copy(acediff, e, dir) {
   const diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10);
   const diff = acediff.diffs[diffIndex];
-  let sourceEditor,
-    targetEditor;
+  let sourceEditor;
+  let targetEditor;
 
-  let startLine,
-    endLine,
-    targetStartLine,
-    targetEndLine;
+  let startLine;
+  let endLine;
+  let targetStartLine;
+  let targetEndLine;
   if (dir === C.LTR) {
     sourceEditor = acediff.editors.left;
     targetEditor = acediff.editors.right;
@@ -322,29 +322,13 @@ function copy(acediff, e, dir) {
   }
 
   let contentToInsert = '';
-  for (var i = startLine; i < endLine; i++) {
+  for (let i = startLine; i < endLine; i += 1) {
     contentToInsert += `${getLine(sourceEditor, i)}\n`;
   }
 
-  let startContent = '';
-  for (var i = 0; i < targetStartLine; i++) {
-    startContent += `${getLine(targetEditor, i)}\n`;
-  }
-
-  let endContent = '';
-  const totalLines = targetEditor.ace.getSession().getLength();
-  for (var i = targetEndLine; i < totalLines; i++) {
-    endContent += getLine(targetEditor, i);
-    if (i < totalLines - 1) {
-      endContent += '\n';
-    }
-  }
-
-  endContent = endContent.replace(/\s*$/, '');
-
   // keep track of the scroll height
   const h = targetEditor.ace.getSession().getScrollTop();
-  targetEditor.ace.getSession().setValue(startContent + contentToInsert + endContent);
+  targetEditor.ace.getSession().replace(new Range(targetStartLine, 0, targetEndLine, 0), contentToInsert);
   targetEditor.ace.getSession().setScrollTop(parseInt(h, 10));
 
   acediff.diff();
