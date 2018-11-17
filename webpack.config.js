@@ -1,12 +1,9 @@
 const path = require('path');
 const webpack = require('webpack');
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin');
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
 const autoprefixer = require('autoprefixer');
-
-const extractSass = new ExtractTextPlugin({
-  filename: getPath => getPath('[name].min.css').replace('-light', ''),
-});
+const cssnano = require('cssnano');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 // Using CSS import in /src would mean that anyone using this package
 // with /src would also need to include and transpile our CSS
@@ -32,26 +29,23 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            presets: [
-              ['env', { modules: false }],
-            ],
+            presets: ['@babel/preset-env'],
           },
         },
       },
       {
         test: /\.scss$/,
-        use: extractSass.extract({
-          use: [
-            { loader: 'css-loader', options: { minimize: true } },
-            {
-              loader: 'postcss-loader',
-              options: {
-                plugins() { return [autoprefixer('last 2 versions', 'ie 10')]; },
-              },
+        use: [
+          MiniCssExtractPlugin.loader,
+          { loader: 'css-loader' },
+          {
+            loader: 'postcss-loader',
+            options: {
+              plugins() { return [autoprefixer('> 5%'), cssnano]; },
             },
-            { loader: 'sass-loader' },
-          ],
-        }),
+          },
+          { loader: 'sass-loader' },
+        ],
       },
     ],
   },
@@ -64,7 +58,12 @@ module.exports = {
     },
   },
   plugins: [
-    extractSass,
+    new MiniCssExtractPlugin({
+      // Options similar to the same options in webpackOptions.output
+      // both options are optional
+      filename: '[name].css',
+      chunkFilename: '[id].css',
+    }),
     new UglifyJsPlugin(),
     new webpack.BannerPlugin('Ace-diff | github.com/ace-diff/ace-diff'),
   ],
