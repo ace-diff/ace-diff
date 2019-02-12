@@ -10,5 +10,3 @@ node_modules
 cypress.json
 index.html
 webpack.config.js
-dist/ace-diff-light.min.js
-dist/ace-diff-dark.min.js
