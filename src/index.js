@@ -115,6 +115,8 @@ function AceDiff(options) {
   this.editors.right.ace.setReadOnly(!this.options.right.editable);
   this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
   this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
+  this.editors.left.ace.$blockScrolling = Infinity;
+  this.editors.right.ace.$blockScrolling = Infinity;
 
   this.editors.left.ace.setValue(normalizeContent(this.options.left.content), -1);
   this.editors.right.ace.setValue(normalizeContent(this.options.right.content), -1);
