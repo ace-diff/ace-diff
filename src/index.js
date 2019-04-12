@@ -107,7 +107,6 @@ function AceDiff(options) {
   };
 
 
-
   // set up the editors
   this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
   this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
@@ -115,6 +114,10 @@ function AceDiff(options) {
   this.editors.right.ace.setReadOnly(!this.options.right.editable);
   this.editors.left.ace.setTheme(getTheme(this, C.EDITOR_LEFT));
   this.editors.right.ace.setTheme(getTheme(this, C.EDITOR_RIGHT));
+
+  // set to Infinity to prevent following deprecation message:
+  // Automatically scrolling cursor into view after selection change this will be disabled in the next version 
+  // https://github.com/ajaxorg/ace/issues/2499
   this.editors.left.ace.$blockScrolling = Infinity;
   this.editors.right.ace.$blockScrolling = Infinity;
 
