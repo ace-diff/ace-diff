@@ -107,6 +107,7 @@ function AceDiff(options) {
   };
 
 
+
   // set up the editors
   this.editors.left.ace.getSession().setMode(getMode(this, C.EDITOR_LEFT));
   this.editors.right.ace.getSession().setMode(getMode(this, C.EDITOR_RIGHT));
