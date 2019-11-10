@@ -39,6 +39,7 @@ import 'ace-diff/dist/ace-diff-dark.min.css';
 Grab ace-diff from CDN:
 
 ```html
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.3.3/ace.js"></script>
 <script src="https://unpkg.com/ace-diff@^2.0.0"></script>
 
 <!-- optionally include CSS, or use your own -->
