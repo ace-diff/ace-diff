@@ -19,6 +19,6 @@ function on(elSelector, eventName, selector, fn) {
   });
 }
 
-export default {
+module.exports = {
   on,
 };

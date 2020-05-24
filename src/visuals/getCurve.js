@@ -1,5 +1,5 @@
 // generates a Bezier curve in SVG format
-export default function getCurve(startX, startY, endX, endY) {
+module.exports = function getCurve(startX, startY, endX, endY) {
   const w = endX - startX;
   const halfWidth = startX + (w / 2);
 
@@ -10,4 +10,4 @@ export default function getCurve(startX, startY, endX, endY) {
   // and Q,R are the final coords
 
   return `M ${startX} ${startY} C ${halfWidth},${startY} ${halfWidth},${endY} ${endX},${endY}`;
-}
+};

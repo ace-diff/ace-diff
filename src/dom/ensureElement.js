@@ -5,7 +5,7 @@
  *
  * Returns ID of the element
  */
-export default function ensureElement(parent, elClass) {
+module.exports = function ensureElement(parent, elClass) {
   const guid = Math.random().toString(36).substr(2, 5);
   const newId = `js-${elClass}-${guid}`;
 
@@ -20,4 +20,4 @@ export default function ensureElement(parent, elClass) {
   el.className = elClass;
   el.id = newId;
   return el.id;
-}
+};

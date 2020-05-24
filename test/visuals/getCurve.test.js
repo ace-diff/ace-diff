@@ -1,6 +1,6 @@
 // import sinon from 'sinon';
-import { expect } from 'chai';
-import getCurve from '../../src/visuals/getCurve';
+const { expect } = require('chai');
+const getCurve = require('../../src/visuals/getCurve');
 
 describe('getCurve', () => {
   it('should export getCurve object', () => {

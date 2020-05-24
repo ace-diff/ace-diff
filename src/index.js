@@ -1,17 +1,12 @@
-import ace from 'brace'; // eslint-disable-line
-import merge from 'lodash/merge';
-import debounce from 'lodash/debounce';
-import throttle from 'lodash/throttle';
-import DiffMatchPatch from 'diff-match-patch';
+const merge = require('lodash/merge');
+const debounce = require('lodash/debounce');
+const throttle = require('lodash/throttle');
+const DiffMatchPatch = require('diff-match-patch');
 
-import normalizeContent from './helpers/normalizeContent';
-import getCurve from './visuals/getCurve';
-import ensureElement from './dom/ensureElement';
-import query from './dom/query';
-
-const requireFunc = (ace.acequire || ace.require);
-
-const { Range } = requireFunc('ace/range');
+const normalizeContent = require('./helpers/normalizeContent');
+const getCurve = require('./visuals/getCurve');
+const ensureElement = require('./dom/ensureElement');
+const query = require('./dom/query');
 
 const C = {
   DIFF_EQUAL: 0,
