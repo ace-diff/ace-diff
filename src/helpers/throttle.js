@@ -1,11 +1,21 @@
-module.exports = function throttle(delay, fn) {
-  let lastCall = 0;
+module.exports = function throttle(callback, wait, immediate = false) {
+  let timeout = null;
+  let initialCall = true;
+
   return (...args) => {
-    const now = (new Date()).getTime();
-    if (now - lastCall < delay) {
-      return;
+    const callNow = immediate && initialCall;
+    const next = () => {
+      callback.apply(this, args);
+      timeout = null;
+    };
+
+    if (callNow) {
+      initialCall = false;
+      next();
     }
-    lastCall = now;
-    fn(...args);
+
+    if (!timeout) {
+      timeout = setTimeout(next, wait);
+    }
   };
 };
