@@ -1,8 +1,8 @@
-const merge = require('lodash/merge');
-const debounce = require('lodash/debounce');
-const throttle = require('lodash/throttle');
 const DiffMatchPatch = require('diff-match-patch');
 
+const merge = require('./helpers/merge');
+const throttle = require('./helpers/throttle');
+const debounce = require('./helpers/debounce');
 const normalizeContent = require('./helpers/normalizeContent');
 const getCurve = require('./visuals/getCurve');
 const ensureElement = require('./dom/ensureElement');
