@@ -1,4 +1,3 @@
-// import sinon from 'sinon';
 const { expect } = require('chai');
 const getCurve = require('../../src/visuals/getCurve');
 

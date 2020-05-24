@@ -1,7 +1,7 @@
 describe('Merging code', () => {
   context('Merging new code', () => {
     before(() => {
-      cy.visit('http://localhost:8081/test/fixtures/');
+      cy.visit('http://localhost:8081/cypress-index.html');
     });
 
     it('shows different version and date in editors', () => {
@@ -35,7 +35,7 @@ describe('Merging code', () => {
 
   context('Merging deleted code', () => {
     before(() => {
-      cy.visit('http://localhost:8081/test/fixtures/');
+      cy.visit('http://localhost:8081/cypress-index.html');
     });
 
     it('shows different version and date in editors', () => {
@@ -65,7 +65,7 @@ describe('Merging code', () => {
 
   context('Undo is working', () => {
     before(() => {
-      cy.visit('http://localhost:8081/test/fixtures/');
+      cy.visit('http://localhost:8081/cypress-index.html');
       cy.get('.acediff__deletedCodeConnector')
         .last()
         .click();

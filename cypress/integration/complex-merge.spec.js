@@ -1,6 +1,6 @@
 describe('Ace-diff API', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:8081/test/fixtures/complex-merge.html');
+    cy.visit('http://localhost:8081/complex-merge.html');
   });
 
   context('Merging complex diff from the left', () => {
