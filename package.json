@@ -14,8 +14,7 @@
     "test": "NODE_ENV=test npm run mocha && cypress run",
     "mocha": "mocha test/**/*.test.js",
     "cypress": "cypress open",
-    "semantic-release": "semantic-release",
-    "travis-deploy-once": "travis-deploy-once"
+    "semantic-release": "semantic-release"
   },
   "repository": {
     "type": "git",
@@ -49,7 +48,6 @@
     "mocha": "^7.2.0",
     "parcel-bundler": "^1.12.4",
     "sass": "^1.26.5",
-    "semantic-release": "^17.0.7",
-    "travis-deploy-once": "^5.0.9"
+    "semantic-release": "^17.0.8"
   }
 }

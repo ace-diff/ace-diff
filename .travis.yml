@@ -1,16 +1,18 @@
+os: linux
+dist: xenial
 language: node_js
-sudo: false
-node_js:
-  - 12
-cache:
-  directories:
-    - node_modules
-    - ~/.cache
+node_js: 12
 install:
   - npm install
 script:
   - npm run build
   - npm run serve &
   - npm test
-after_success:
-  - npm run travis-deploy-once "npm run semantic-release"
+
+jobs:
+  include:
+    - stage: release
+      deploy:
+        provider: script
+        script:
+          - npm run semantic-release

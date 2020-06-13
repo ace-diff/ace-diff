@@ -1,11 +1,10 @@
-.nyc_output
 coverage
 cypress
-demos
-libs
-tests
+test
 node_modules
 
 .travis.yml
+.eslintrc.js
+.editorconfig
 cypress.json
 index.html
