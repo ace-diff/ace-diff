@@ -2,28 +2,32 @@
 
 This is a wrapper for [Ace Editor](http://ace.c9.io/) to provide a 2-panel diffing/merging tool that visualizes differences in two documents and allows users to copy changes from to the other.
 
-It's built on top of the excellent, but appallingly-named [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/) library (*buuuurn*). That lib handles the hard part: the computation of the document diffs. Ace-diff just visualizes that information as line-diffs in the editors.
+![Ace-diff demo](https://ace-diff.github.io/ace-diff/demos/screenshot1.png)
+
+It's built on top of [google-diff-match-patch](https://code.google.com/p/google-diff-match-patch/) library. That lib handles the hard part: the computation of the document diffs. Ace-diff just visualizes that information as line-diffs in the editors.
 
 ## Dependencies
-- Ace (or [Brace](https://github.com/thlorenz/brace)) Editor 1.1.8 or later (probably works on older versions, but I haven't confirmed)
+- Ace Editor: this could the [official Ace builds](https://github.com/ajaxorg/ace-builds), [Brace](https://github.com/thlorenz/brace) and any other similar Ace editor build (like the ones from public CDNs)
 
 ## Demos
 Take a look at [demos on Ace-diff page](https://ace-diff.github.io/ace-diff/). The demos illustrate a few different configurations and styles. Hopefully they'll give you a rough sense of what it does and how it works.
-
 
 ## Features
 
 - Compatible with any Ace/Brace Editor mode or theme
 - Accommodates realtime changes to one or both editors
 - Readonly option for left/right editors
-- Control over how aggressively diffs are combined
-- Option to allow users to copy diffs from one side to the other
+- Control how aggressively diffs are combined
+- Allow users to copy diffs from one side to the other
 
 ## How to install
 
-### Use npm
 ```bash
 npm i ace-diff -S
+
+…
+
+yarn add ace-diff
 ```
 
 ```js
@@ -39,13 +43,16 @@ import 'ace-diff/dist/ace-diff-dark.min.css';
 Grab ace-diff from CDN:
 
 ```html
-<script src="https://unpkg.com/ace-diff@^2.0.0"></script>
+<!-- Inlude Ace Editor - e.g. with this: -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.js"></script>
+
+<script src="https://unpkg.com/ace-diff@^3.0.0"></script>
 
 <!-- optionally include CSS, or use your own -->
-<link href="https://unpkg.com/ace-diff@^2.0.0/dist/ace-diff.min.css" rel="stylesheet">
+<link href="https://unpkg.com/ace-diff@^3.0.0/dist/ace-diff.min.css" rel="stylesheet">
 
 <!-- optionally there is also a dark mode CSS -->
-<link href="https://unpkg.com/ace-diff@^2.0.0/dist/ace-diff-dark.min.css" rel="stylesheet">
+<link href="https://unpkg.com/ace-diff@^3.0.0/dist/ace-diff-dark.min.css" rel="stylesheet">
 ```
 
 ### HTML
@@ -58,7 +65,26 @@ Grab ace-diff from CDN:
 Here's an example of how you'd instantiate AceDiff.
 
 ```js
-var differ = new AceDiff({
+const differ = new AceDiff({
+  ace: window.ace, // You Ace Editor instance
+  element: '.acediff',
+  left: {
+    content: 'your first file content here',
+  },
+  right: {
+    content: 'your second file content here',
+  },
+});
+```
+
+When using with Brace or any build system like Webpack, you can pass the editor as an option:
+
+```js
+// If you are using Brace editor, you can pass it as well
+const ace = require('brace');
+
+const differ = new AceDiff({
+  ace, // using Brace
   element: '.acediff',
   left: {
     content: 'your first file content here',
@@ -77,7 +103,7 @@ Styling the elements is vitally important: the gutter should retain its width ev
 
 If you want the ace editor's to change height/width based on a user's browser, I find using flexbox the best option - but hell, if you want to use a `<table>`, knock yourself out. :)
 
-Take a look at the [demos](http://ace-diff.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but include some different styles and class names just so you can see.
+Take a look at the [demos](https://ace-diff.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but include some different styles and class names just so you can see.
 
 
 ## Configuration
@@ -91,6 +117,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 
 ```javascript
 {
+  ace: window.ace,
   mode: null,
   theme: null,
   element: null,
@@ -124,6 +151,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 
 ### Diffing settings
 
+- `ace` (object, optional, default: `window.ace`). The Ace Editor instance to use.
 - `element` (string<DOM selector> or element object, required). The element used for Ace-diff
 - `mode` (string, optional). this is the mode for the Ace Editor, e.g. `"ace/mode/javascript"`. Check out the Ace docs for that. This setting will be applied to both editors. I figured 99.999999% of the time you're going to want the same mode for both of them so you can just set it once here. If you're a mad genius and want to have different modes for each side, (a) *whoah man, what's your use-case?*, and (b) you can override this setting in one of the settings below. Read on.
 - `theme` (string, optional). This lets you set the theme for both editors.

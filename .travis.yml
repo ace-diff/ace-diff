@@ -1,7 +1,7 @@
 language: node_js
 sudo: false
 node_js:
-  - 10
+  - 12
 cache:
   directories:
     - node_modules
@@ -9,6 +9,7 @@ cache:
 install:
   - npm install
 script:
+  - npm run build
   - npm run serve &
   - npm test
 after_success:

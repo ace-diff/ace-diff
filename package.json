@@ -5,12 +5,14 @@
   "main": "dist/ace-diff.min.js",
   "module": "src/index.js",
   "unpkg": "dist/ace-diff.min.js",
+  "browser": "dist/ace-diff.min.js",
   "scripts": {
-    "build": "webpack --mode production",
-    "dev": "webpack --mode development --watch & npm run serve",
-    "serve": "npm run build && http-server . -p 8081 -s -c-1",
-    "test": "NODE_ENV=test cypress run && npm run mocha",
-    "mocha": "nyc --reporter=html mocha test/**/*.test.js",
+    "build": "parcel build src/index.js --global AceDiff --out-file ace-diff.min.js && npm run build-css",
+    "build-css": "parcel build src/styles/ace-diff.scss --out-file ace-diff.min.css && parcel build src/styles/ace-diff-dark.scss --out-file ace-diff-dark.min.css",
+    "dev": "parcel serve test/fixtures/index.html --open -d .parcel-cache",
+    "serve": "parcel test/fixtures/*.html --global AceDiff -p 8081 --no-hmr -d .parcel-cache",
+    "test": "NODE_ENV=test npm run mocha && cypress run",
+    "mocha": "mocha test/**/*.test.js",
     "cypress": "cypress open",
     "semantic-release": "semantic-release",
     "travis-deploy-once": "travis-deploy-once"
@@ -34,37 +36,20 @@
     "url": "https://github.com/ace-diff/ace-diff/issues"
   },
   "homepage": "https://ace-diff.github.io/ace-diff/",
-  "devDependencies": {
-    "@babel/core": "^7.1.6",
-    "@babel/preset-env": "^7.1.6",
-    "@babel/register": "^7.0.0",
-    "autoprefixer": "^9.3.1",
-    "babel-loader": "^8.0.4",
-    "chai": "^4.2.0",
-    "css-loader": "^1.0.1",
-    "cssnano": "^4.1.7",
-    "cypress": "^3.1.1",
-    "eslint": "^5.9.0",
-    "eslint-config-airbnb-base": "^13.1.0",
-    "eslint-plugin-cypress": "^2.1.2",
-    "eslint-plugin-import": "^2.14.0",
-    "http-server": "^0.11.1",
-    "mini-css-extract-plugin": "^0.4.4",
-    "mocha": "^5.2.0",
-    "node-sass": "^4.10.0",
-    "nyc": "^13.1.0",
-    "postcss-loader": "^3.0.0",
-    "sass-loader": "^7.1.0",
-    "semantic-release": "^15.12.0",
-    "sinon": "^7.1.1",
-    "style-loader": "^0.23.1",
-    "travis-deploy-once": "^5.0.9",
-    "uglifyjs-webpack-plugin": "^2.0.1",
-    "webpack": "^4.25.1",
-    "webpack-cli": "^3.1.2"
-  },
   "dependencies": {
-    "diff-match-patch": "^1.0.4",
-    "lodash": "^4.17.11"
+    "diff-match-patch": "^1.0.5"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "cypress": "^4.6.0",
+    "eslint": "^6.8.0",
+    "eslint-config-airbnb-base": "^14.1.0",
+    "eslint-plugin-cypress": "^2.1.2",
+    "eslint-plugin-import": "^2.20.2",
+    "mocha": "^7.2.0",
+    "parcel-bundler": "^1.12.4",
+    "sass": "^1.26.5",
+    "semantic-release": "^17.0.7",
+    "travis-deploy-once": "^5.0.9"
   }
 }

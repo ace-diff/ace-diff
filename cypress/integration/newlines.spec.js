@@ -1,6 +1,6 @@
 describe('Ace-diff API', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:8081/test/fixtures/newlines.html');
+    cy.visit('http://localhost:8081/newlines.html');
   });
 
   context('Diffs with different EOL characters', () => {
