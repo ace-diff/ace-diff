@@ -5,7 +5,6 @@
   "main": "dist/ace-diff.min.js",
   "module": "src/index.js",
   "unpkg": "dist/ace-diff.min.js",
-  "browser": "dist/ace-diff.min.js",
   "scripts": {
     "build": "parcel build src/index.js --global AceDiff --out-file ace-diff.min.js && npm run build-css",
     "build-css": "parcel build src/styles/ace-diff.scss --out-file ace-diff.min.css && parcel build src/styles/ace-diff-dark.scss --out-file ace-diff-dark.min.css",
