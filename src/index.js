@@ -31,7 +31,7 @@ function getRangeModule(ace) {
 
   const requireFunc = (ace.acequire || ace.require);
   if (requireFunc) {
-    Range = requireFunc('ace/range');
+    return requireFunc('ace/range');
   }
 
   return false;
@@ -46,8 +46,6 @@ function AceDiff(options = {}) {
 
   // Current instance we pass around to other functions
   const acediff = this;
-
-  // TODO: try brace require
   const getDefaultAce = () => (window ? window.ace : undefined);
 
   acediff.options = merge({
@@ -275,7 +273,7 @@ AceDiff.prototype = {
   },
 };
 
-let removeEventHandlers = () => {};
+let removeEventHandlers = () => { };
 
 function addEventHandlers(acediff) {
   acediff.editors.left.ace.getSession().on('changeScrollTop', throttle(() => { updateGap(acediff); }, 16));
@@ -756,7 +754,7 @@ function simplifyDiffs(acediff, diffs) {
     let isGrouped = false;
     for (let i = 0; i < groupedDiffs.length; i += 1) {
       if (compare(Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine))
-          && compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
+        && compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
         // update the existing grouped diff to expand its horizons to include this new diff start + end lines
         groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
         groupedDiffs[i].rightStartLine = Math.min(diff.rightStartLine, groupedDiffs[i].rightStartLine);
