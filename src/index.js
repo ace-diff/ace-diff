@@ -37,6 +37,23 @@ function getRangeModule(ace) {
   return false;
 }
 
+function setupACE(editor) {
+  editor.setOptions({maxLines: Infinity})
+  editor.setShowPrintMargin(false)
+  editor.setShowFoldWidgets(false)
+  editor.setHighlightActiveLine(false)
+  editor.setHighlightActiveLine(false)
+  editor.setBehavioursEnabled(false)
+  editor.renderer.setShowGutter(false)
+  editor.clearSelection()
+  let session = editor.getSession()
+  session.setUseWorker(false)
+  session.setWrapLimitRange(null)
+  session.setUseWrapMode(true)
+  session.setNewLineMode('unix')
+  return editor
+}
+
 // our constructor
 function AceDiff(options = {}) {
   // Ensure instance is a constructor with `new`
@@ -148,6 +165,8 @@ function AceDiff(options = {}) {
 
 
   // set up the editors
+  setupACE(acediff.editors.left.ace)
+  setupACE(acediff.editors.right.ace)
   acediff.editors.left.ace.getSession().setMode(getMode(acediff, C.EDITOR_LEFT));
   acediff.editors.right.ace.getSession().setMode(getMode(acediff, C.EDITOR_RIGHT));
   acediff.editors.left.ace.setReadOnly(!acediff.options.left.editable);
@@ -159,7 +178,7 @@ function AceDiff(options = {}) {
   acediff.editors.right.ace.setValue(normalizeContent(acediff.options.right.content), -1);
 
   // store the visible height of the editors (assumed the same)
-  acediff.editors.editorHeight = getEditorHeight(acediff);
+  // acediff.editors.editorHeight = getEditorHeight(acediff);
 
   // The lineHeight is set to 0 initially and we need to wait for another tick to get it
   // Thus moving the diff() with it

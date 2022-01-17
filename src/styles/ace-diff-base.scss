@@ -5,11 +5,7 @@
   &__wrap {
     display: flex;
     flex-direction: row;
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    top: 0px;
-    left: 0px;
+    position: relative;
 
     // these 3 lines are to prevents an unsightly scrolling bounce affect on Safari
     height: 100%;
@@ -29,7 +25,6 @@
     }
   }
   &__left, &__right {
-    height: 100%;
     flex: 1;
   }
 
