@@ -44,7 +44,6 @@ function setupACE(editor) {
   editor.setHighlightActiveLine(false)
   editor.setHighlightActiveLine(false)
   editor.setBehavioursEnabled(false)
-  editor.renderer.setShowGutter(false)
   editor.clearSelection()
   let session = editor.getSession()
   session.setUseWorker(false)
