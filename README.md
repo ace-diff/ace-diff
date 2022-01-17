@@ -9,7 +9,8 @@ It adds char diffs and a git red/green styles
 
 ### preview
 ![image](https://user-images.githubusercontent.com/11417632/149726002-ee3a7e54-f677-4113-9ffa-67ee9ea932fb.png)
-![image](https://user-images.githubusercontent.com/11417632/149726010-b2ace7ea-2869-4866-800d-189f13a7900e.png)
+![image](https://user-images.githubusercontent.com/11417632/149726283-9610934d-c88c-4def-986f-3212b3ab852b.png)
+
 
 ## More Info
 See more info about `ace-diff` on [Ace-diff](https://github.com/ace-diff/ace-diff)
