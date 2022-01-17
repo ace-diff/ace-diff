@@ -46,6 +46,26 @@
       border-bottom: 0px;
       position: absolute;
     }
+    &.right {
+      background-color: $connectorBackgroundRight;
+    }
+  }
+
+  &__diffChar {
+    background-color: $charDiffBackground;
+    border-top: 1px solid $connectorBorder;
+    border-bottom: 1px solid $connectorBorder;
+    position: absolute;
+    z-index: 5;
+    &.targetOnly {
+      height: 0px !important;
+      border-top: 1px solid $connectorBorder;
+      border-bottom: 0px;
+      position: absolute;
+    }
+    &.right {
+      background-color: $charDiffBackgroundRight
+    }
   }
 
   // SVG connector

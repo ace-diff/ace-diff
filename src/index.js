@@ -57,6 +57,7 @@ function AceDiff(options = {}) {
     lockScrolling: false, // not implemented yet
     showDiffs: true,
     showConnectors: true,
+    charDiffs: true,
     maxDiffs: 5000,
     left: {
       id: null,
@@ -77,6 +78,7 @@ function AceDiff(options = {}) {
     classes: {
       gutterID: 'acediff__gutter',
       diff: 'acediff__diffLine',
+      diffChar: 'acediff__diffChar',
       connector: 'acediff__connector',
       newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
@@ -359,14 +361,15 @@ function getLineLengths(editor) {
 
 
 // shows a diff in one of the two editors.
-function showDiff(acediff, editor, startLine, endLine, className) {
+function showDiff(acediff, editor, startLine, endLine, chars, className, classChar) {
   const editorInstance = acediff.editors[editor];
 
   if (endLine < startLine) { // can this occur? Just in case.
     endLine = startLine;
   }
 
-  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'}`;
+  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'} ${editor}`;
+  const classChars = `${classChar} ${editor}`;
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
   editorInstance.markers.push(
@@ -379,8 +382,22 @@ function showDiff(acediff, editor, startLine, endLine, className) {
       ), classNames, 'fullLine',
     ),
   );
-}
 
+  if(acediff.options.charDiffs) {
+    chars.forEach((char) => {
+      editorInstance.markers.push(
+        editorInstance.ace.session.addMarker(
+          new Range(
+            char.lineStart,
+            char.start,
+            char.lineEnd - 1,
+            char.end,
+          ), classChars, 'text',
+        )
+      )
+    })
+  }
+}
 
 // called onscroll. Updates the gap to ensure the connectors are all lining up
 function updateGap(acediff) {
@@ -544,6 +561,8 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: info.endLine + 1,
       rightStartLine,
       rightEndLine: rightStartLine + numRows,
+      leftStartChar: info.startChar,
+      leftEndChar: info.endChar,
     };
   } else {
     var info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText);
@@ -586,6 +605,8 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: leftStartLine + numRows,
       rightStartLine: info.startLine,
       rightEndLine: info.endLine + 1,
+      rightStartChar: info.startChar,
+      rightEndChar: info.endChar,
     };
   }
 
@@ -743,9 +764,21 @@ function simplifyDiffs(acediff, diffs) {
     return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_SPECIFIC) ? val < 1 : val <= 1;
   }
 
+  function generateDiff(diff) {
+    let newDiff = Object.assign({
+                    leftChars: [],
+                    rightChars: []
+    }, diff)
+    if(diff.leftEndChar)
+      newDiff.leftChars.push({start: diff.leftStartChar, end: diff.leftEndChar, lineStart: diff.leftStartLine, lineEnd: diff.leftEndLine});
+    if(diff.rightEndChar)
+      newDiff.rightChars.push({start: diff.rightStartChar, end: diff.rightEndChar, lineStart: diff.rightStartLine, lineEnd: diff.rightEndLine});
+    return newDiff
+  }
+
   diffs.forEach((diff, index) => {
     if (index === 0) {
-      groupedDiffs.push(diff);
+      groupedDiffs.push(generateDiff(diff));
       return;
     }
 
@@ -760,13 +793,18 @@ function simplifyDiffs(acediff, diffs) {
         groupedDiffs[i].rightStartLine = Math.min(diff.rightStartLine, groupedDiffs[i].rightStartLine);
         groupedDiffs[i].leftEndLine = Math.max(diff.leftEndLine, groupedDiffs[i].leftEndLine);
         groupedDiffs[i].rightEndLine = Math.max(diff.rightEndLine, groupedDiffs[i].rightEndLine);
+
+        if(diff.leftStartChar)
+          groupedDiffs[i].leftChars.push({start: diff.leftStartChar, end: diff.leftEndChar, lineStart: diff.leftStartLine, lineEnd: diff.leftEndLine});
+        if(diff.rightStartChar)
+          groupedDiffs[i].rightChars.push({start: diff.rightStartChar, end: diff.rightEndChar, lineStart: diff.rightStartLine, lineEnd: diff.rightEndLine});
         isGrouped = true;
         break;
       }
     }
 
     if (!isGrouped) {
-      groupedDiffs.push(diff);
+      groupedDiffs.push(generateDiff(diff));
     }
   });
 
@@ -789,8 +827,8 @@ function decorate(acediff) {
 
   acediff.diffs.forEach((info, diffIndex) => {
     if (acediff.options.showDiffs) {
-      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, acediff.options.classes.diff);
-      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, acediff.options.classes.diff);
+      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, info.leftChars, acediff.options.classes.diff, acediff.options.classes.diffChar);
+      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, info.rightChars, acediff.options.classes.diff, acediff.options.classes.diffChar);
 
       if (acediff.options.showConnectors) {
         addConnector(acediff, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
