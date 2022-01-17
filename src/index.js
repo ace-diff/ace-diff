@@ -168,7 +168,8 @@ function AceDiff(options = {}) {
     acediff.lineHeight = acediff.editors.left.ace.renderer.lineHeight;
 
     addEventHandlers(acediff);
-    createCopyContainers(acediff);
+    if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+      createCopyContainers(acediff);
     createGutter(acediff);
     acediff.diff();
   }, 1);
@@ -823,7 +824,8 @@ function simplifyDiffs(acediff, diffs) {
 
 function decorate(acediff) {
   clearGutter(acediff);
-  clearArrows(acediff);
+  if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+    clearArrows(acediff);
 
   acediff.diffs.forEach((info, diffIndex) => {
     if (acediff.options.showDiffs) {
@@ -833,7 +835,9 @@ function decorate(acediff) {
       if (acediff.options.showConnectors) {
         addConnector(acediff, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
       }
-      addCopyArrows(acediff, info, diffIndex);
+
+      if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+        addCopyArrows(acediff, info, diffIndex);
     }
   }, acediff);
 }
