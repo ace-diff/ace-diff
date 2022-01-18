@@ -181,7 +181,11 @@ function AceDiff(options = {}) {
 
   // The lineHeight is set to 0 initially and we need to wait for another tick to get it
   // Thus moving the diff() with it
-  setTimeout(() => {
+  function initialAceDiff(acediff) {
+     if(!document.getElementById(acediff.options.classes.gutterID)) {
+      setTimeout(function() {initialAceDiff(acediff)}, 500);
+      return;
+    }
     // assumption: both editors have same line heights
     acediff.lineHeight = acediff.editors.left.ace.renderer.lineHeight;
 
@@ -190,6 +194,10 @@ function AceDiff(options = {}) {
       createCopyContainers(acediff);
     createGutter(acediff);
     acediff.diff();
+  }
+
+  setTimeout(() => {
+    initialAceDiff(acediff)
   }, 1);
 }
 
