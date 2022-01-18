@@ -699,7 +699,7 @@ function getCharsOnLine(editor, line) {
 
 function getLineForCharPosition(editor, offsetChars) {
   const lines = editor.ace.getSession().doc.getAllLines();
-  let foundLine = 0;
+  let foundLine = lines.length - 1;
   let runningTotal = 0;
 
   for (let i = 0; i < lines.length; i += 1) {
