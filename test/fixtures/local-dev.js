@@ -77,3 +77,25 @@ const AceDiffInstance = new AceDiff({
 }`,
   },
 });
+
+
+const aceA = ace.edit(document.querySelector('.ace-a'))
+const aceB = ace.edit(document.querySelector('.ace-b'))
+
+const sessA = ace.createEditSession('some A content')
+const sessB = ace.createEditSession('some B content')
+aceA.setSession(sessA)
+aceB.setSession(sessB)
+
+
+const acediff2 = new AceDiff({
+  element: '.split',
+  left: {
+    ace: aceA,
+  },
+  right: {
+    ace: aceB
+  }
+})
+debugger
+console.log(acediff2)
