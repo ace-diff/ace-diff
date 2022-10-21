@@ -330,6 +330,11 @@ AceDiff.prototype = {
     decorate(this);
   },
 
+  clear() {
+    clearDiffs(this);
+    clearGutter(this);
+  },
+
   destroy() {
     // destroy the two editors
     const leftValue = this.editors.left.ace.getValue();
