@@ -165,7 +165,7 @@ function AceDiff(options = {}) {
     let rel = rightAce.container
     assignElement(rel, 'acediff__right')
     acediff.options.right.id = rel.id
-    acediff.el.insertBefore(gutter, rel)
+    acediff.el.insertBefore(gutter, lel.nextSibling)
   } else {
     acediff.options.left.id = ensureElement(acediff.el, 'acediff__left');
     acediff.options.classes.gutterID = ensureElement(acediff.el, 'acediff__gutter');
