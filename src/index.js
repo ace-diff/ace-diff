@@ -106,6 +106,7 @@ function AceDiff(options = {}) {
       diff: 'acediff__diffLine',
       diffChar: 'acediff__diffChar',
       diffGutter: 'acediff__diffGutter',
+      lastGutter: 'last',
       connector: 'acediff__connector',
       newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
@@ -453,7 +454,7 @@ function showDiff(acediff, editor, startLine, endLine, chars, className, classCh
   const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'} ${editor}`;
   const classChars = `${classChar} ${editor}`;
   const classGutters = `${classGutter} ${editor}`;
-  const lastGutter = 'last'
+  const lastGutter = acediff.options.classes.lastGutter
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
   editorInstance.markers.push(
@@ -504,6 +505,9 @@ function clearDiffs(acediff) {
   acediff.editors.right.markers.forEach((marker) => {
     acediff.editors.right.ace.getSession().removeMarker(marker);
   }, acediff);
+  document.querySelector(acediff.options.classes.diffGutter).forEach((item) => {
+    item.classList.remove(C.EDITOR_LEFT, C.EDITOR_RIGHT, acediff.options.classes.diffGutter, acediff.options.classes.lastGutter)
+  })
 }
 
 
