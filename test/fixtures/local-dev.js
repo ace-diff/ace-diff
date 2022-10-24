@@ -97,5 +97,4 @@ const acediff2 = new AceDiff({
     ace: aceB
   }
 })
-debugger
 console.log(acediff2)

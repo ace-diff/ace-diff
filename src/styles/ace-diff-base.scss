@@ -1,3 +1,12 @@
+.ace_gutter-cell:not(.acediff__diffGutter) + .acediff__diffGutter {
+  border-top: 1px solid $connectorBorder;
+  border-bottom: 1px solid transparent;
+}
+.acediff__diffGutter.last {
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid $connectorBorder;
+}
+
 .acediff { // .acediff class itself got no styles
 
   // We have to provide some dimensions for the ACE editor
@@ -28,13 +37,30 @@
     flex: 1;
   }
 
-  // The line that's rendered in ACE editor under diffed lines
+  // The line that\'s rendered in ACE editor under diffed lines
   &__diffLine {
     background-color: $connectorBackground;
     border-top: 1px solid $connectorBorder;
     border-bottom: 1px solid $connectorBorder;
     position: absolute;
     z-index: 4;
+    &.targetOnly {
+      height: 0px !important;
+      border-top: 1px solid $connectorBorder;
+      border-bottom: 0px;
+      position: absolute;
+    }
+    &.right {
+      background-color: $connectorBackgroundRight;
+    }
+  }
+
+
+  &__diffGutter {
+    background-color: $connectorBackground;
+    position: absolute;
+    z-index: 4;
+
     &.targetOnly {
       height: 0px !important;
       border-top: 1px solid $connectorBorder;

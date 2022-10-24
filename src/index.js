@@ -105,6 +105,7 @@ function AceDiff(options = {}) {
       gutterID: 'acediff__gutter',
       diff: 'acediff__diffLine',
       diffChar: 'acediff__diffChar',
+      diffGutter: 'acediff__diffGutter',
       connector: 'acediff__connector',
       newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
@@ -442,7 +443,7 @@ function getLineLengths(editor) {
 
 
 // shows a diff in one of the two editors.
-function showDiff(acediff, editor, startLine, endLine, chars, className, classChar) {
+function showDiff(acediff, editor, startLine, endLine, chars, className, classChar, classGutter) {
   const editorInstance = acediff.editors[editor];
 
   if (endLine < startLine) { // can this occur? Just in case.
@@ -451,6 +452,8 @@ function showDiff(acediff, editor, startLine, endLine, chars, className, classCh
 
   const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'} ${editor}`;
   const classChars = `${classChar} ${editor}`;
+  const classGutters = `${classGutter} ${editor}`;
+  const lastGutter = 'last'
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
   editorInstance.markers.push(
@@ -478,6 +481,10 @@ function showDiff(acediff, editor, startLine, endLine, chars, className, classCh
       )
     })
   }
+  for(let line = startLine; line < endLine; line ++) {
+    editorInstance.ace.session.addGutterDecoration(line, classGutters)
+  }
+  editorInstance.ace.session.addGutterDecoration(endLine - 1, lastGutter)
 }
 
 // called onscroll. Updates the gap to ensure the connectors are all lining up
@@ -909,8 +916,16 @@ function decorate(acediff) {
 
   acediff.diffs.forEach((info, diffIndex) => {
     if (acediff.options.showDiffs) {
-      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, info.leftChars, acediff.options.classes.diff, acediff.options.classes.diffChar);
-      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, info.rightChars, acediff.options.classes.diff, acediff.options.classes.diffChar);
+      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, info.leftChars,
+               acediff.options.classes.diff,
+               acediff.options.classes.diffChar,
+               acediff.options.classes.diffGutter
+              );
+      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, info.rightChars,
+               acediff.options.classes.diff,
+               acediff.options.classes.diffChar,
+               acediff.options.classes.diffGutter
+              );
 
       if (acediff.options.showConnectors) {
         addConnector(acediff, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
