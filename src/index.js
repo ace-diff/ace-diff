@@ -37,6 +37,22 @@ function getRangeModule(ace) {
   return false;
 }
 
+function setupACE(editor) {
+  editor.setOptions({maxLines: Infinity})
+  editor.setShowPrintMargin(false)
+  editor.setShowFoldWidgets(false)
+  editor.setHighlightActiveLine(false)
+  editor.setHighlightActiveLine(false)
+  editor.setBehavioursEnabled(false)
+  editor.clearSelection()
+  let session = editor.getSession()
+  session.setUseWorker(false)
+  session.setWrapLimitRange(null)
+  session.setUseWrapMode(true)
+  session.setNewLineMode('unix')
+  return editor
+}
+
 // our constructor
 function AceDiff(options = {}) {
   // Ensure instance is a constructor with `new`
@@ -48,6 +64,16 @@ function AceDiff(options = {}) {
   const acediff = this;
   const getDefaultAce = () => (window ? window.ace : undefined);
 
+  const leftAce = options?.left?.ace
+  const rightAce = options?.right?.ace
+  if(leftAce) {
+    delete options.left.ace
+    options.left.content = leftAce.getValue()
+  }
+  if(rightAce) {
+    delete options.right.ace
+    options.right.content = rightAce.getValue()
+  }
   acediff.options = merge({
     ace: getDefaultAce(),
     mode: null,
@@ -57,6 +83,7 @@ function AceDiff(options = {}) {
     lockScrolling: false, // not implemented yet
     showDiffs: true,
     showConnectors: true,
+    charDiffs: true,
     maxDiffs: 5000,
     left: {
       id: null,
@@ -77,6 +104,9 @@ function AceDiff(options = {}) {
     classes: {
       gutterID: 'acediff__gutter',
       diff: 'acediff__diffLine',
+      diffChar: 'acediff__diffChar',
+      diffGutter: 'acediff__diffGutter',
+      lastGutter: 'last',
       connector: 'acediff__connector',
       newCodeConnectorLink: 'acediff__newCodeConnector',
       newCodeConnectorLinkContent: '&#8594;',
@@ -103,7 +133,7 @@ function AceDiff(options = {}) {
     return new Error(errMessage);
   }
 
-  if (acediff.options.element === null) {
+  if (acediff.options.element === null && (!leftAce || !rightAce)) {
     const errMessage = 'You need to specify an element for Ace-diff - `options.element` is missing';
     console.error(errMessage);
     return new Error(errMessage);
@@ -115,37 +145,76 @@ function AceDiff(options = {}) {
     acediff.el = document.body.querySelector(acediff.options.element);
   }
 
-  if (!acediff.el) {
+  if (!acediff.el && !leftAce) {
     const errMessage = `Can't find the specified element ${acediff.options.element}`;
     console.error(errMessage);
     return new Error(errMessage);
   }
 
-  acediff.options.left.id = ensureElement(acediff.el, 'acediff__left');
-  acediff.options.classes.gutterID = ensureElement(acediff.el, 'acediff__gutter');
-  acediff.options.right.id = ensureElement(acediff.el, 'acediff__right');
+  if(leftAce) {
+    let assignElement = (el, elClass) => {
+      let newId = (elClass) => `js-${elClass}-${Math.random().toString(36).substr(2, 5)}`
+      el.classList.add(elClass)
+      el.id = newId(elClass)
+    }
+    let lel = leftAce.container
+    assignElement(lel, 'acediff__left')
+    acediff.options.left.id = lel.id
 
-  acediff.el.innerHTML = `<div class="acediff__wrap">${acediff.el.innerHTML}</div>`;
+    let gutter = document.createElement('div')
+    assignElement(gutter, 'acediff__gutter')
+    acediff.options.classes.gutterID = gutter.id
+    let rel = rightAce.container
+    assignElement(rel, 'acediff__right')
+    acediff.options.right.id = rel.id
+    acediff.el.insertBefore(gutter, lel.nextSibling)
+  } else {
+    acediff.options.left.id = ensureElement(acediff.el, 'acediff__left');
+    acediff.options.classes.gutterID = ensureElement(acediff.el, 'acediff__gutter');
+    acediff.options.right.id = ensureElement(acediff.el, 'acediff__right');
 
-  // instantiate the editors in an internal data structure
-  // that will store a little info about the diffs and
-  // editor content
-  acediff.editors = {
-    left: {
-      ace: ace.edit(acediff.options.left.id),
-      markers: [],
-      lineLengths: [],
-    },
-    right: {
-      ace: ace.edit(acediff.options.right.id),
-      markers: [],
-      lineLengths: [],
-    },
-    editorHeight: null,
-  };
+    acediff.el.innerHTML = `<div class="acediff__wrap">${acediff.el.innerHTML}</div>`;
+  }
 
 
-  // set up the editors
+  if(!leftAce) {
+    // instantiate the editors in an internal data structure
+    // that will store a little info about the diffs and
+    // editor content
+    acediff.editors = {
+      left: {
+        ace: ace.edit(acediff.options.left.id),
+        markers: [],
+        lineLengths: [],
+      },
+      right: {
+        ace: ace.edit(acediff.options.right.id),
+        markers: [],
+        lineLengths: [],
+      },
+      editorHeight: null,
+    };
+
+    // set up the editors
+
+  } else {
+    acediff.editors = {
+      left: {
+        ace: leftAce,
+        markers: [],
+        lineLengths: [],
+      },
+      right: {
+        ace: rightAce,
+        markers: [],
+        lineLengths: [],
+      },
+      editorHeight: null,
+    }
+  }
+
+  setupACE(acediff.editors.left.ace)
+  setupACE(acediff.editors.right.ace)
   acediff.editors.left.ace.getSession().setMode(getMode(acediff, C.EDITOR_LEFT));
   acediff.editors.right.ace.getSession().setMode(getMode(acediff, C.EDITOR_RIGHT));
   acediff.editors.left.ace.setReadOnly(!acediff.options.left.editable);
@@ -156,19 +225,30 @@ function AceDiff(options = {}) {
   acediff.editors.left.ace.setValue(normalizeContent(acediff.options.left.content), -1);
   acediff.editors.right.ace.setValue(normalizeContent(acediff.options.right.content), -1);
 
+
+
   // store the visible height of the editors (assumed the same)
-  acediff.editors.editorHeight = getEditorHeight(acediff);
+  // acediff.editors.editorHeight = getEditorHeight(acediff);
 
   // The lineHeight is set to 0 initially and we need to wait for another tick to get it
   // Thus moving the diff() with it
-  setTimeout(() => {
+  function initialAceDiff(acediff) {
+    if(!document.getElementById(acediff.options.classes.gutterID)) {
+      setTimeout(function() {initialAceDiff(acediff)}, 500);
+      return;
+    }
     // assumption: both editors have same line heights
     acediff.lineHeight = acediff.editors.left.ace.renderer.lineHeight;
 
     addEventHandlers(acediff);
-    createCopyContainers(acediff);
+    if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+      createCopyContainers(acediff);
     createGutter(acediff);
     acediff.diff();
+  }
+
+  setTimeout(() => {
+    initialAceDiff(acediff)
   }, 1);
 }
 
@@ -250,6 +330,11 @@ AceDiff.prototype = {
 
     clearDiffs(this);
     decorate(this);
+  },
+
+  clear() {
+    clearDiffs(this);
+    clearGutter(this);
   },
 
   destroy() {
@@ -359,14 +444,17 @@ function getLineLengths(editor) {
 
 
 // shows a diff in one of the two editors.
-function showDiff(acediff, editor, startLine, endLine, className) {
+function showDiff(acediff, editor, startLine, endLine, chars, className, classChar, classGutter) {
   const editorInstance = acediff.editors[editor];
 
   if (endLine < startLine) { // can this occur? Just in case.
     endLine = startLine;
   }
 
-  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'}`;
+  const classNames = `${className} ${(endLine > startLine) ? 'lines' : 'targetOnly'} ${editor}`;
+  const classChars = `${classChar} ${editor}`;
+  const classGutters = `${classGutter} ${editor}`;
+  const lastGutter = acediff.options.classes.lastGutter
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
   editorInstance.markers.push(
@@ -379,8 +467,26 @@ function showDiff(acediff, editor, startLine, endLine, className) {
       ), classNames, 'fullLine',
     ),
   );
-}
 
+  if(acediff.options.charDiffs) {
+    chars.forEach((char) => {
+      editorInstance.markers.push(
+        editorInstance.ace.session.addMarker(
+          new Range(
+            char.lineStart,
+            char.start,
+            char.lineEnd - 1,
+            char.end,
+          ), classChars, 'text',
+        )
+      )
+    })
+  }
+  for(let line = startLine; line < endLine; line ++) {
+    editorInstance.ace.session.addGutterDecoration(line, classGutters)
+  }
+  editorInstance.ace.session.addGutterDecoration(endLine - 1, lastGutter)
+}
 
 // called onscroll. Updates the gap to ensure the connectors are all lining up
 function updateGap(acediff) {
@@ -399,6 +505,9 @@ function clearDiffs(acediff) {
   acediff.editors.right.markers.forEach((marker) => {
     acediff.editors.right.ace.getSession().removeMarker(marker);
   }, acediff);
+  document.querySelectorAll(acediff.options.classes.diffGutter).forEach((item) => {
+    item.classList.remove(C.EDITOR_LEFT, C.EDITOR_RIGHT, acediff.options.classes.diffGutter, acediff.options.classes.lastGutter)
+  })
 }
 
 
@@ -532,10 +641,10 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       (info.startChar > 0 || (sameLineInsert && diffText.length < numCharsOnLeftEditorStartLine))
 
       // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
-      && numCharsOnLineOtherEditor > 0
+        && numCharsOnLineOtherEditor > 0
 
       // if the text being inserted starts mid-line
-      && (info.startChar < numCharsOnLeftEditorStartLine)) {
+        && (info.startChar < numCharsOnLeftEditorStartLine)) {
       numRows++;
     }
 
@@ -544,6 +653,8 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: info.endLine + 1,
       rightStartLine,
       rightEndLine: rightStartLine + numRows,
+      leftStartChar: info.startChar,
+      leftEndChar: info.endChar,
     };
   } else {
     var info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText);
@@ -574,10 +685,10 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       (info.startChar > 0 || (sameLineInsert && diffText.length < numCharsOnRightEditorStartLine))
 
       // if the right editor line was empty, it's ALWAYS a single line insert [not an OR above?]
-      && numCharsOnLineOtherEditor > 0
+        && numCharsOnLineOtherEditor > 0
 
       // if the text being inserted starts mid-line
-      && (info.startChar < numCharsOnRightEditorStartLine)) {
+        && (info.startChar < numCharsOnRightEditorStartLine)) {
       numRows++;
     }
 
@@ -586,6 +697,8 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: leftStartLine + numRows,
       rightStartLine: info.startLine,
       rightEndLine: info.endLine + 1,
+      rightStartChar: info.startChar,
+      rightEndChar: info.endChar,
     };
   }
 
@@ -651,7 +764,7 @@ function getCharsOnLine(editor, line) {
 
 function getLineForCharPosition(editor, offsetChars) {
   const lines = editor.ace.getSession().doc.getAllLines();
-  let foundLine = 0;
+  let foundLine = lines.length - 1;
   let runningTotal = 0;
 
   for (let i = 0; i < lines.length; i += 1) {
@@ -733,9 +846,9 @@ function clearArrows(acediff) {
 
 
 /*
-  * This combines multiple rows where, say, line 1 => line 1, line 2 => line 2, line 3-4 => line 3. That could be
-  * reduced to a single connector line 1=4 => line 1-3
-  */
+ * This combines multiple rows where, say, line 1 => line 1, line 2 => line 2, line 3-4 => line 3. That could be
+ * reduced to a single connector line 1=4 => line 1-3
+ */
 function simplifyDiffs(acediff, diffs) {
   const groupedDiffs = [];
 
@@ -743,9 +856,21 @@ function simplifyDiffs(acediff, diffs) {
     return (acediff.options.diffGranularity === C.DIFF_GRANULARITY_SPECIFIC) ? val < 1 : val <= 1;
   }
 
+  function generateDiff(diff) {
+    let newDiff = Object.assign({
+      leftChars: [],
+      rightChars: []
+    }, diff)
+    if(diff.leftEndChar)
+      newDiff.leftChars.push({start: diff.leftStartChar, end: diff.leftEndChar, lineStart: diff.leftStartLine, lineEnd: diff.leftEndLine});
+    if(diff.rightEndChar)
+      newDiff.rightChars.push({start: diff.rightStartChar, end: diff.rightEndChar, lineStart: diff.rightStartLine, lineEnd: diff.rightEndLine});
+    return newDiff
+  }
+
   diffs.forEach((diff, index) => {
     if (index === 0) {
-      groupedDiffs.push(diff);
+      groupedDiffs.push(generateDiff(diff));
       return;
     }
 
@@ -754,19 +879,24 @@ function simplifyDiffs(acediff, diffs) {
     let isGrouped = false;
     for (let i = 0; i < groupedDiffs.length; i += 1) {
       if (compare(Math.abs(diff.leftStartLine - groupedDiffs[i].leftEndLine))
-        && compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
+          && compare(Math.abs(diff.rightStartLine - groupedDiffs[i].rightEndLine))) {
         // update the existing grouped diff to expand its horizons to include this new diff start + end lines
         groupedDiffs[i].leftStartLine = Math.min(diff.leftStartLine, groupedDiffs[i].leftStartLine);
         groupedDiffs[i].rightStartLine = Math.min(diff.rightStartLine, groupedDiffs[i].rightStartLine);
         groupedDiffs[i].leftEndLine = Math.max(diff.leftEndLine, groupedDiffs[i].leftEndLine);
         groupedDiffs[i].rightEndLine = Math.max(diff.rightEndLine, groupedDiffs[i].rightEndLine);
+
+        if(diff.leftStartChar)
+          groupedDiffs[i].leftChars.push({start: diff.leftStartChar, end: diff.leftEndChar, lineStart: diff.leftStartLine, lineEnd: diff.leftEndLine});
+        if(diff.rightStartChar)
+          groupedDiffs[i].rightChars.push({start: diff.rightStartChar, end: diff.rightEndChar, lineStart: diff.rightStartLine, lineEnd: diff.rightEndLine});
         isGrouped = true;
         break;
       }
     }
 
     if (!isGrouped) {
-      groupedDiffs.push(diff);
+      groupedDiffs.push(generateDiff(diff));
     }
   });
 
@@ -785,17 +915,28 @@ function simplifyDiffs(acediff, diffs) {
 
 function decorate(acediff) {
   clearGutter(acediff);
-  clearArrows(acediff);
+  if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+    clearArrows(acediff);
 
   acediff.diffs.forEach((info, diffIndex) => {
     if (acediff.options.showDiffs) {
-      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, acediff.options.classes.diff);
-      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, acediff.options.classes.diff);
+      showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, info.leftChars,
+               acediff.options.classes.diff,
+               acediff.options.classes.diffChar,
+               acediff.options.classes.diffGutter
+              );
+      showDiff(acediff, C.EDITOR_RIGHT, info.rightStartLine, info.rightEndLine, info.rightChars,
+               acediff.options.classes.diff,
+               acediff.options.classes.diffChar,
+               acediff.options.classes.diffGutter
+              );
 
       if (acediff.options.showConnectors) {
         addConnector(acediff, info.leftStartLine, info.leftEndLine, info.rightStartLine, info.rightEndLine);
       }
-      addCopyArrows(acediff, info, diffIndex);
+
+      if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
+        addCopyArrows(acediff, info, diffIndex);
     }
   }, acediff);
 }

@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ace-diff/ace-diff.git"
+    "url": "https://github.com/smallst/ace-diff.git"
   },
   "keywords": [
     "ace",
@@ -28,12 +28,11 @@
     "ace editor",
     "syntax highlighting"
   ],
-  "author": "Ben Keen",
+  "author": "smallst",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/ace-diff/ace-diff/issues"
+    "url": "https://github.com/smallst/ace-diff/issues"
   },
-  "homepage": "https://ace-diff.github.io/ace-diff/",
   "dependencies": {
     "diff-match-patch": "^1.0.5"
   },
