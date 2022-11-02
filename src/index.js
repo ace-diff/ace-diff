@@ -505,7 +505,7 @@ function clearDiffs(acediff) {
   acediff.editors.right.markers.forEach((marker) => {
     acediff.editors.right.ace.getSession().removeMarker(marker);
   }, acediff);
-  document.querySelector(acediff.options.classes.diffGutter).forEach((item) => {
+  document.querySelectorAll(acediff.options.classes.diffGutter).forEach((item) => {
     item.classList.remove(C.EDITOR_LEFT, C.EDITOR_RIGHT, acediff.options.classes.diffGutter, acediff.options.classes.lastGutter)
   })
 }
