@@ -1,6 +1,8 @@
 describe('Ace-diff API', () => {
   beforeEach(() => {
     cy.visit('http://localhost:8081/cypress-index.html');
+    cy.get('.acediff__wrap').should('have.length', 1);
+    cy.wait(100);
   });
 
   context('getEditors()', () => {
