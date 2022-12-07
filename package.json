@@ -46,6 +46,6 @@
     "jest": "^29.3.1",
     "parcel-bundler": "^1.12.5",
     "sass": "^1.26.5",
-    "semantic-release": "^17.0.8"
+    "semantic-release": "^19.0.5"
   }
 }
