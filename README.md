@@ -44,7 +44,7 @@ Grab ace-diff from CDN:
 
 ```html
 <!-- Inlude Ace Editor - e.g. with this: -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.11/ace.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>
 
 <script src="https://unpkg.com/ace-diff@^3.0.0"></script>
 
