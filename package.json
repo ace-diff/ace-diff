@@ -10,8 +10,8 @@
     "build-css": "parcel build src/styles/ace-diff.scss --out-file ace-diff.min.css && parcel build src/styles/ace-diff-dark.scss --out-file ace-diff-dark.min.css",
     "dev": "parcel serve test/fixtures/index.html --open -d .parcel-cache",
     "serve": "parcel test/fixtures/*.html --global AceDiff -p 8081 --no-hmr -d .parcel-cache",
-    "test": "NODE_ENV=test npm run mocha && cypress run",
-    "mocha": "mocha test/**/*.test.js",
+    "test": "npm run jest && cypress run",
+    "jest": "jest",
     "cypress": "cypress open",
     "semantic-release": "semantic-release"
   },
@@ -38,15 +38,14 @@
     "diff-match-patch": "^1.0.5"
   },
   "devDependencies": {
-    "chai": "^4.2.0",
-    "cypress": "^4.6.0",
+    "cypress": "^12.0.1",
     "eslint": "^6.8.0",
     "eslint-config-airbnb-base": "^14.1.0",
     "eslint-plugin-cypress": "^2.1.2",
     "eslint-plugin-import": "^2.20.2",
-    "mocha": "^7.2.0",
-    "parcel-bundler": "^1.12.4",
+    "jest": "^29.3.1",
+    "parcel-bundler": "^1.12.5",
     "sass": "^1.26.5",
-    "semantic-release": "^17.0.8"
+    "semantic-release": "^19.0.5"
   }
 }

@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Reach out on jakub@mikul.as
+Reach out to jakub@mikul.as

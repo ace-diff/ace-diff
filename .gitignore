@@ -6,7 +6,6 @@ cypress/videos
 cypress/screenshots
 cypress/fixtures
 cypress/plugins
-cypress/support
 dist
 .cache
 .DS_Store
