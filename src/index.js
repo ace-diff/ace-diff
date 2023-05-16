@@ -229,7 +229,6 @@ AceDiff.prototype = {
       right: 0,
     };
 
-    console.log(diff);
     diff.forEach((chunk, index, array) => {
       const chunkType = chunk[0];
       let text = chunk[1];
@@ -267,7 +266,6 @@ AceDiff.prototype = {
 
     // simplify our computed diffs; this groups together multiple diffs on subsequent lines
     this.diffs = simplifyDiffs(this, diffs);
-    console.log(diffs);
 
     // if we're dealing with too many diffs, fail silently
     if (this.diffs.length > this.options.maxDiffs) {
@@ -576,7 +574,6 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
   if (diffType === C.DIFF_INSERT) {
     // pretty confident this returns the right stuff for the left editor: start & end line & char
     var info = getSingleDiffInfo(acediff.editors.left, offsetLeft, diffText);
-    console.log(info);
 
     // this is the ACTUAL undoctored current line in the other editor. It's always right. Doesn't mean it's
     // going to be used as the start line for the diff though.
@@ -628,7 +625,6 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
     };
   } else {
     var info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText);
-    console.log(info);
 
     var currentLineOtherEditor = getLineForCharPosition(
       acediff.editors.left,
@@ -674,7 +670,6 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       rightEndLine: info.endLine + 1,
     };
   }
-  console.log(lineInfo);
 
   return lineInfo;
 }
