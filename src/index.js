@@ -2,24 +2,25 @@
 /* eslint-disable no-console */
 /* eslint-disable max-len */
 
-// Diffing library
-const DiffMatchPatch = require("diff-match-patch");
+/* Using local update by @dmsnell:
+https://github.com/dmsnell/diff-match-patch/blob/issues/69-broken-surrogate-pairs/javascript/diff_match_patch_uncompressed.js
+*/
+import { diff_match_patch } from "./diff-match-patch";
+import merge from "./helpers/merge";
+import throttle from "./helpers/throttle";
+import debounce from "./helpers/debounce";
+import normalizeContent from "./helpers/normalizeContent";
 
-const merge = require("./helpers/merge");
-const throttle = require("./helpers/throttle");
-const debounce = require("./helpers/debounce");
-const normalizeContent = require("./helpers/normalizeContent");
+import getCurve from "./visuals/getCurve";
+import getMode from "./visuals/getMode";
+import getTheme from "./visuals/getTheme";
+import getLine from "./visuals/getLine";
+import getEditorHeight from "./visuals/getEditorHeight";
+import createArrow from "./visuals/createArrow";
 
-const getCurve = require("./visuals/getCurve");
-const getMode = require("./visuals/getMode");
-const getTheme = require("./visuals/getTheme");
-const getLine = require("./visuals/getLine");
-const getEditorHeight = require("./visuals/getEditorHeight");
-const createArrow = require("./visuals/createArrow");
-
-const ensureElement = require("./dom/ensureElement");
-const query = require("./dom/query");
-const C = require("./constants");
+import ensureElement from "./dom/ensureElement";
+import query from "./dom/query";
+import C from "./constants";
 
 // Range module placeholder
 let Range;
@@ -213,7 +214,7 @@ AceDiff.prototype = {
   // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
   // but just to be safe, it's included
   diff() {
-    const dmp = new DiffMatchPatch();
+    const dmp = new diff_match_patch();
     const val1 = this.editors.left.ace.getSession().getValue();
     const val2 = this.editors.right.ace.getSession().getValue();
     const diff = dmp.diff_main(val2, val1);
@@ -229,20 +230,9 @@ AceDiff.prototype = {
       right: 0,
     };
 
-    diff.forEach((chunk, index, array) => {
+    diff.forEach((chunk) => {
       const chunkType = chunk[0];
       let text = chunk[1];
-
-      // Fix for #28 https://github.com/ace-diff/ace-diff/issues/28
-      if (
-        array[index + 1] &&
-        text.endsWith("\n") &&
-        array[index + 1][1].startsWith("\n")
-      ) {
-        text += "\n";
-        diff[index][1] = text;
-        diff[index + 1][1] = diff[index + 1][1].replace(/^\n/, "");
-      }
 
       // oddly, occasionally the algorithm returns a diff with no changes made
       if (text.length === 0) {
@@ -424,7 +414,7 @@ function showDiff(acediff, editor, startLine, endLine, className) {
   }
 
   const classNames = `${className} ${
-    endLine !== startLine ? "lines" : "targetOnly"
+    endLine > startLine ? "lines" : "targetOnly"
   }`;
 
   if (endLine > startLine) {
@@ -566,11 +556,6 @@ function positionCopyContainers(acediff) {
 function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
   let lineInfo = {};
 
-  // this was added in to hack around an oddity with the Google lib. Sometimes it would include a newline
-  // as the first char for a diff, other times not - and it would change when you were typing on-the-fly. This
-  // is used to level things out so the diffs don't appear to shift around
-  const newContentStartsWithNewline = /^\n/.test(diffText);
-
   if (diffType === C.DIFF_INSERT) {
     // pretty confident this returns the right stuff for the left editor: start & end line & char
     var info = getSingleDiffInfo(acediff.editors.left, offsetLeft, diffText);
@@ -590,8 +575,6 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       info.startLine
     );
 
-    // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
-    // back from google as being on the last char of the previous line so we need to bump it up one
     let rightStartLine = currentLineOtherEditor;
     if (offsetRight !== 0) {
       rightStartLine += 1;
@@ -639,8 +622,6 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       info.startLine
     );
 
-    // this is necessary because if a new diff starts on the FIRST char of the left editor, the diff can comes
-    // back from google as being on the last char of the previous line so we need to bump it up one
     let leftStartLine = currentLineOtherEditor;
     if (offsetLeft !== 0) {
       leftStartLine += 1;
@@ -913,4 +894,4 @@ function decorate(acediff) {
   }, acediff);
 }
 
-module.exports = AceDiff;
+export default AceDiff;
