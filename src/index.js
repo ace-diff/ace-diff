@@ -523,8 +523,12 @@ function clearDiffs(acediff) {
   acediff.editors.right.diffGutters.forEach((line) => {
     acediff.editors.right.ace.session.removeGutterDecoration(line, `${acediff.options.classes.diffGutter} ${C.EDITOR_RIGHT}`);
   }, acediff);
-  acediff.editors.left.ace.session.removeGutterDecoration(acediff.editors.left.diffGutterLastline, lastGutter);
-  acediff.editors.right.ace.session.removeGutterDecoration(acediff.editors.right.diffGutterLastline, lastGutter);
+  if(acediff.editors.left.diffGutterLastLine) {
+    acediff.editors.left.ace.session.removeGutterDecoration(acediff.editors.left.diffGutterLastLine, lastGutter);
+  }
+  if(acediff.editors.left.diffGutterLastLine) {
+    acediff.editors.right.ace.session.removeGutterDecoration(acediff.editors.right.diffGutterLastLine, lastGutter);
+  }
 }
 
 
