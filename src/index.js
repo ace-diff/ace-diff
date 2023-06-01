@@ -185,11 +185,15 @@ function AceDiff(options = {}) {
       left: {
         ace: ace.edit(acediff.options.left.id),
         markers: [],
+        diffGutters: [],
+        diffGutterLastLine: null,
         lineLengths: [],
       },
       right: {
         ace: ace.edit(acediff.options.right.id),
         markers: [],
+        diffGutters: [],
+        diffGutterLastLine: null,
         lineLengths: [],
       },
       editorHeight: null,
@@ -202,11 +206,15 @@ function AceDiff(options = {}) {
       left: {
         ace: leftAce,
         markers: [],
+        diffGutters: [],
+        diffGutterLastLine: null,
         lineLengths: [],
       },
       right: {
         ace: rightAce,
         markers: [],
+        diffGutters: [],
+        diffGutterLastLine: null,
         lineLengths: [],
       },
       editorHeight: null,
@@ -484,8 +492,10 @@ function showDiff(acediff, editor, startLine, endLine, chars, className, classCh
   }
   for(let line = startLine; line < endLine; line ++) {
     editorInstance.ace.session.addGutterDecoration(line, classGutters)
+    editorInstance.diffGutters.push(line)
   }
   editorInstance.ace.session.addGutterDecoration(endLine - 1, lastGutter)
+  editorInstance.diffGutterLastLine = endLine - 1
 }
 
 // called onscroll. Updates the gap to ensure the connectors are all lining up
@@ -505,9 +515,16 @@ function clearDiffs(acediff) {
   acediff.editors.right.markers.forEach((marker) => {
     acediff.editors.right.ace.getSession().removeMarker(marker);
   }, acediff);
-  document.querySelectorAll('.' + acediff.options.classes.diffGutter).forEach((item) => {
-    item.classList.remove(C.EDITOR_LEFT, C.EDITOR_RIGHT, acediff.options.classes.diffGutter, acediff.options.classes.lastGutter)
-  })
+
+  const lastGutter = acediff.options.classes.lastGutter
+  acediff.editors.left.diffGutters.forEach((line) => {
+    acediff.editors.left.ace.session.removeGutterDecoration(line, `${acediff.options.classes.diffGutter} ${C.EDITOR_LEFT}`);
+  }, acediff);
+  acediff.editors.right.diffGutters.forEach((line) => {
+    acediff.editors.right.ace.session.removeGutterDecoration(line, `${acediff.options.classes.diffGutter} ${C.EDITOR_RIGHT}`);
+  }, acediff);
+  acediff.editors.left.ace.session.removeGutterDecoration(acediff.editors.left.diffGutterLastline, lastGutter);
+  acediff.editors.right.ace.session.removeGutterDecoration(acediff.editors.right.diffGutterLastline, lastGutter);
 }
 
 
@@ -918,8 +935,8 @@ function decorate(acediff) {
   if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
     clearArrows(acediff);
 
-  acediff.diffs.forEach((info, diffIndex) => {
-    if (acediff.options.showDiffs) {
+  if (acediff.options.showDiffs) {
+    acediff.diffs.forEach((info, diffIndex) => {
       showDiff(acediff, C.EDITOR_LEFT, info.leftStartLine, info.leftEndLine, info.leftChars,
                acediff.options.classes.diff,
                acediff.options.classes.diffChar,
@@ -937,8 +954,8 @@ function decorate(acediff) {
 
       if(acediff.options.left.copyLinkEnabled || acediff.options.right.copyLinkEnabled)
         addCopyArrows(acediff, info, diffIndex);
-    }
-  }, acediff);
+    }, acediff);
+  }
 }
 
 module.exports = AceDiff;
