@@ -268,12 +268,13 @@ AceDiff.prototype = {
     newDiv.textContent = rightValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    document.getElementById(this.options.classes.gutterID).innerHTML = '';
-    removeEventHandlers();
+    const elementById = document.getElementById(this.options.classes.gutterID);
+    if (elementById) {
+      elementById.innerHTML = '';
+    }
+    this.removeEventHandlers();
   },
 };
-
-let removeEventHandlers = () => { };
 
 function addEventHandlers(acediff) {
   acediff.editors.left.ace.getSession().on('changeScrollTop', throttle(() => { updateGap(acediff); }, 16));
@@ -302,7 +303,7 @@ function addEventHandlers(acediff) {
   }, 250);
 
   window.addEventListener('resize', onResize);
-  removeEventHandlers = () => {
+  acediff.removeEventHandlers = () => {
     window.removeEventListener('resize', onResize);
   };
 }
