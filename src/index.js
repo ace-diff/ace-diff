@@ -268,7 +268,10 @@ AceDiff.prototype = {
     newDiv.textContent = rightValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    document.getElementById(this.options.classes.gutterID).innerHTML = '';
+    const elementById = document.getElementById(this.options.classes.gutterID);
+    if (elementById) {
+      elementById.innerHTML = '';
+    }
     removeEventHandlers();
   },
 };
