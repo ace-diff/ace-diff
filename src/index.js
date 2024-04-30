@@ -280,8 +280,8 @@ function addEventHandlers(acediff) {
   acediff.editors.right.ace.getSession().on('changeScrollTop', throttle(() => { updateGap(acediff); }, 16));
 
   const diff = acediff.diff.bind(acediff);
-  acediff.editors.left.ace.on('change', diff);
-  acediff.editors.right.ace.on('change', diff);
+  acediff.editors.left.ace.on('change', debounce(diff, 400));
+  acediff.editors.right.ace.on('change', debounce(diff, 400));
 
   if (acediff.options.left.copyLinkEnabled) {
     query.on(`#${acediff.options.classes.gutterID}`, 'click', `.${acediff.options.classes.newCodeConnectorLink}`, (e) => {
