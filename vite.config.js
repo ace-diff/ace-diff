@@ -12,6 +12,10 @@ export default defineConfig({
       preserveEntrySignatures: 'strict',
     },
   },
+  test: {
+    publicDir: 'test/fixtures',
+    root: 'test/fixtures',
+  },
   server: {
     port: 8081,
   },

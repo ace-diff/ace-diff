@@ -6,7 +6,7 @@
   "main": "dist/ace-diff.min.js",
   "scripts": {
     "serve": "vite build --watch --mode dev-server",
-    "dev": "vite server test/fixtures/*.html --port 8081",
+    "dev": "vite server test --port 8081",
     "build": "vite build",
     "lint": "eslint src",
     "test": "npm run jest && cypress run",
@@ -34,7 +34,11 @@
   },
   "homepage": "https://ace-diff.github.io/ace-diff/",
   "devDependencies": {
+    "cypress": "^14.3.3",
+    "@babel/core": "^7.25.2",
+    "@babel/preset-env": "^7.25.4",
     "@testing-library/jest-dom": "^6.6.3",
+    "babel-jest": "^29.7.0",
     "eslint": "9.25.1",
     "eslint-config-prettier": "10.1.2",
     "eslint-plugin-prettier": "5.2.6",
@@ -43,9 +47,6 @@
     "prettier": "3.5.3",
     "sass": "1.87.0",
     "semantic-release": "^24.2.4",
-    "vite": "6.3.4",
-    "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.4",
-    "babel-jest": "^29.7.0"
+    "vite": "6.3.4"
   }
 }
