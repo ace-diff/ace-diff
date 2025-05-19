@@ -1,7 +1,8 @@
-.acediff { // .acediff class itself got no styles
+.acediff {
+  // .acediff class itself got no styles
 
   // We have to provide some dimensions for the ACE editor
-  // This will expand to whathever space is available
+  // This will expand to whatever space is available
   &__wrap {
     display: flex;
     flex-direction: row;
@@ -13,7 +14,6 @@
 
     // these 3 lines are to prevents an unsightly scrolling bounce affect on Safari
     height: 100%;
-    width: 100%;
     overflow: auto;
   }
 
@@ -28,7 +28,8 @@
       background-color: $gutterBackground;
     }
   }
-  &__left, &__right {
+  &__left,
+  &__right {
     height: 100%;
     flex: 1;
   }
@@ -61,7 +62,7 @@
 
     div {
       color: $copyArrowsColor;
-      text-shadow: 1px 1px rgba(invert($copyArrowsColor), .7);
+      text-shadow: 1px 1px rgba(invert($copyArrowsColor), 0.7);
       position: absolute;
       margin: 2px 3px;
       cursor: pointer;
@@ -83,4 +84,3 @@
     }
   }
 }
-
