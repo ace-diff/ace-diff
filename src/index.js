@@ -20,8 +20,6 @@ import ensureElement from './dom/ensureElement.js'
 import query from './dom/query.js'
 import C from './constants.js'
 
-import * as classes from './styles/ace-diff.module.scss';
-
 // Range module placeholder
 let Range
 
@@ -286,11 +284,11 @@ AceDiff.prototype = {
     newDiv.textContent = rightValue
     oldDiv.parentNode.replaceChild(newDiv, oldDiv)
 
-    const elementById = document.getElementById(this.options.classes.gutterID);
+    const elementById = document.getElementById(this.options.classes.gutterID)
     if (elementById) {
-      elementById.innerHTML = '';
+      elementById.innerHTML = ''
     }
-    this.removeEventHandlers();
+    this.removeEventHandlers()
   },
 }
 
