@@ -7,7 +7,7 @@ cypress/screenshots
 cypress/fixtures
 cypress/plugins
 dist
-.cache
+.parcel-cache
 .DS_Store
 .parcel-cache
 .vscode

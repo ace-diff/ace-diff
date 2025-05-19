@@ -1,4 +1,4 @@
-const getCurve = require('../../src/visuals/getCurve');
+import getCurve from '../../src/visuals/getCurve';
 
 describe('getCurve', () => {
   it('should export getCurve object', () => {
