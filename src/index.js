@@ -282,12 +282,11 @@ AceDiff.prototype = {
     newDiv.textContent = rightValue;
     oldDiv.parentNode.replaceChild(newDiv, oldDiv);
 
-    document.getElementById(this.options.classes.gutterID).innerHTML = "";
-    removeEventHandlers();
+    document.getElementById(this.options.classes.gutterID).innerHTML = '';
+    this.removeEventHandlers();
   },
 };
 
-let removeEventHandlers = () => {};
 
 function addEventHandlers(acediff) {
   acediff.editors.left.ace.getSession().on(
@@ -337,9 +336,9 @@ function addEventHandlers(acediff) {
     acediff.diff();
   }, 250);
 
-  window.addEventListener("resize", onResize);
-  removeEventHandlers = () => {
-    window.removeEventListener("resize", onResize);
+  window.addEventListener('resize', onResize);
+  acediff.removeEventHandlers = () => {
+    window.removeEventListener('resize', onResize);
   };
 }
 
