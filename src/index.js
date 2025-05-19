@@ -284,13 +284,24 @@ AceDiff.prototype = {
     newDiv.textContent = rightValue
     oldDiv.parentNode.replaceChild(newDiv, oldDiv)
 
+<<<<<<< HEAD
     document.getElementById(this.options.classes.gutterID).innerHTML = ''
     removeEventHandlers()
+=======
+    const elementById = document.getElementById(this.options.classes.gutterID);
+    if (elementById) {
+      elementById.innerHTML = '';
+    }
+    this.removeEventHandlers();
+>>>>>>> master
   },
 }
 
+<<<<<<< HEAD
 let removeEventHandlers = () => {}
 
+=======
+>>>>>>> master
 function addEventHandlers(acediff) {
   acediff.editors.left.ace.getSession().on(
     'changeScrollTop',
