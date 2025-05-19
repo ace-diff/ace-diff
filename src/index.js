@@ -20,6 +20,8 @@ import ensureElement from './dom/ensureElement.js'
 import query from './dom/query.js'
 import C from './constants.js'
 
+import * as classes from './styles/ace-diff.module.scss';
+
 // Range module placeholder
 let Range
 
