@@ -341,7 +341,7 @@ function addEventHandlers(acediff) {
   }, 250)
 
   window.addEventListener('resize', onResize)
-  removeEventHandlers = () => {
+  acediff.removeEventHandlers = () => {
     window.removeEventListener('resize', onResize)
   }
 }

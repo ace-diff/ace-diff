@@ -1,4 +1,4 @@
-import AceDiff from '../../src/index';
+import AceDiff from '../../src/index'
 
 const AceDiffInstance = new AceDiff({
   element: '.custom',
@@ -76,4 +76,4 @@ const AceDiffInstance = new AceDiff({
   }
 }`,
   },
-});
+})
