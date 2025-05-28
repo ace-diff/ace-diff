@@ -13,15 +13,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: stable
-          components: rustfmt
 
-      - name: Install
-        run: npm ci
-      - name: Build
-        run: npm run build
+      - name: Install and Build
+        run: |
+          npm ci
+          npm install @parcel/rust-linux-x64-gnu
+          npm run build
       - name: Run static server in the background
         run: npm run serve &
       - name: Run tests
