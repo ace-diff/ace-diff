@@ -8,23 +8,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
+      - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+          components: rustfmt
 
       - name: Install
         run: npm ci
-
       - name: Build
         run: npm run build
-
       - name: Run static server in the background
         run: npm run serve &
-
       - name: Run tests
         run: npm test
 
