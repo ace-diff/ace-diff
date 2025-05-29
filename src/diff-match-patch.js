@@ -47,7 +47,6 @@ const diff_match_patch = function () {
   this.Patch_DeleteThreshold = 0.5
   // Chunk size for context length.
   this.Patch_Margin = 4
-
   // The number of bits in an int.
   this.Match_MaxBits = 32
 }

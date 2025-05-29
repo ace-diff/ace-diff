@@ -207,20 +207,18 @@ AceDiff.prototype = {
     }
   },
 
-  // our main diffing function. I actually don't think this needs to exposed: it's called automatically,
-  // but just to be safe, it's included
+  // our main diffing function. I actually don't think this needs to exposed:
+  // it's called automatically, but just to be safe, it's included
   diff() {
     const dmp = new diff_match_patch()
     const val1 = this.editors.left.ace.getSession().getValue()
     const val2 = this.editors.right.ace.getSession().getValue()
     // Main diff method that calculates the diffs
     const diff = dmp.diff_main(val2, val1)
-    // console.log(JSON.stringify(diff)) // Debug the diffs
 
     // diff_cleanupSemantic can change the diffs by adjusting them
     // left or right to align things so check the diffs after when debugging
     dmp.diff_cleanupSemantic(diff)
-    // console.log(JSON.stringify(diff)) // Debug the diffs
 
     this.editors.left.lineLengths = getLineLengths(this.editors.left)
     this.editors.right.lineLengths = getLineLengths(this.editors.right)
