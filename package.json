@@ -11,8 +11,7 @@
     "dev": "parcel serve test/fixtures/index.html --open",
     "serve": "parcel test/fixtures/*.html -p 8081",
     "lint": "eslint src",
-    "test": "npm run jest && cypress run",
-    "jest": "jest",
+    "test": "cypress run",
     "cypress": "cypress open",
     "semantic-release": "semantic-release"
   },

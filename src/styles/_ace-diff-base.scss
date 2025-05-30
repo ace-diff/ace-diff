@@ -1,3 +1,12 @@
+@use "sass:color";
+
+$connectorBackground: #d8f2ff !default;
+$connectorBorder: #a2d7f2 !default;
+$gutterBackground: #efefef !default;
+$copyArrowsColor: #000 !default;
+$mergeRightColor: #c98100 !default;
+$mergeLeftColor: #004ea0 !default;
+
 .acediff {
   // .acediff class itself got no styles
 
@@ -19,8 +28,8 @@
 
   &__gutter {
     flex: 0 0 60px;
-    border-left: 1px solid darken($gutterBackground, 20);
-    border-right: 1px solid darken($gutterBackground, 20);
+    border-left: 1px solid color.adjust($gutterBackground, $lightness: -20%);
+    border-right: 1px solid color.adjust($gutterBackground, $lightness: -20%);
     background-color: $gutterBackground;
     overflow: hidden;
 
@@ -62,7 +71,7 @@
 
     div {
       color: $copyArrowsColor;
-      text-shadow: 1px 1px rgba(invert($copyArrowsColor), 0.7);
+      text-shadow: 1px 1px rgba(color.invert($copyArrowsColor), 0.7);
       position: absolute;
       margin: 2px 3px;
       cursor: pointer;
