@@ -20,6 +20,7 @@ jobs:
           npm install @parcel/rust-linux-x64-gnu
           npm install @parcel/watcher-linux-x64-glibc
           npm install @swc/core-linux-x64-gnu
+          npm install lightningcss-linux-x64-gnu
           npm run build
       - name: Run static server in the background
         run: npm run serve &

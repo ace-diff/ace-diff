@@ -3,7 +3,7 @@
 /* Using local update by @dmsnell:
 https://github.com/dmsnell/diff-match-patch/blob/issues/69-broken-surrogate-pairs/javascript/diff_match_patch_uncompressed.js
 */
-import diff_match_patch from './diff-match-patch.js'
+import { makeDiff, cleanupSemantic } from '@sanity/diff-match-patch'
 import merge from './helpers/merge.js'
 import throttle from './helpers/throttle.js'
 import debounce from './helpers/debounce.js'
@@ -210,15 +210,10 @@ AceDiff.prototype = {
   // our main diffing function. I actually don't think this needs to exposed:
   // it's called automatically, but just to be safe, it's included
   diff() {
-    const dmp = new diff_match_patch()
     const val1 = this.editors.left.ace.getSession().getValue()
     const val2 = this.editors.right.ace.getSession().getValue()
     // Main diff method that calculates the diffs
-    const diff = dmp.diff_main(val2, val1)
-
-    // diff_cleanupSemantic can change the diffs by adjusting them
-    // left or right to align things so check the diffs after when debugging
-    dmp.diff_cleanupSemantic(diff)
+    const diff = cleanupSemantic(makeDiff(val2, val1))
 
     this.editors.left.lineLengths = getLineLengths(this.editors.left)
     this.editors.right.lineLengths = getLineLengths(this.editors.right)
@@ -347,6 +342,7 @@ function addEventHandlers(acediff) {
 function copy(acediff, e, dir) {
   const diffIndex = parseInt(e.target.getAttribute('data-diff-index'), 10)
   const diff = acediff.diffs[diffIndex]
+
   let sourceEditor
   let targetEditor
 
@@ -377,9 +373,9 @@ function copy(acediff, e, dir) {
     // because when it is inserted the first one is effectively eaten
     // by the replace and merging of the lines
     // However if the targetStartLine is the very top then we don't
-    if (i === startLine && contentToInsert === '' && targetStartLine != 0) {
-      contentToInsert += '\n'
-    }
+    // if (i === startLine && contentToInsert === '' && targetStartLine != 0) {
+    //   contentToInsert += '\n'
+    // }
     // Only add a trailing newline if we're not on the final line
     if (i < sourceEditor.ace.getSession().getLength() - 1) {
       contentToInsert += '\n'
@@ -398,6 +394,8 @@ function copy(acediff, e, dir) {
 }
 
 function getLineLengths(editor) {
+  // getAllLines() returns an array of strings, each string is a line in the editor
+  // however the lines do not include the newline character at the end, so we need to add 1
   const lines = editor.ace.getSession().doc.getAllLines()
   const lineLengths = []
   lines.forEach((line) => {
@@ -713,14 +711,17 @@ function getLineForCharPosition(editor, offsetChars) {
 
   for (let i = 0; i < lines.length; i += 1) {
     runningTotal += lines[i].length + 1 // +1 needed for newline char
-    if (offsetChars < runningTotal) {
+    if (offsetChars <= runningTotal) {
       foundLine = i
+      if (offsetChars === runningTotal && i < lines.length - 1) {
+        foundLine += 1
+      }
       break
     }
   }
   // If we're past the end of the buffer then we need to bump the line total
   // because we're basically inserting after the last line
-  if (runningTotal > editor.ace.getSession().getValue().length) {
+  if (runningTotal >= editor.ace.getSession().getValue().length) {
     foundLine += 1
   }
   return foundLine

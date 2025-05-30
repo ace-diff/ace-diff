@@ -36,6 +36,9 @@
   },
   "browserslist": "> 0.2%, chrome >= 80, edge >= 80, firefox ESR, safari >= 13.1, not dead, not ie 11, not op_mini all",
   "homepage": "https://ace-diff.github.io/ace-diff/",
+  "dependencies": {
+    "@sanity/diff-match-patch": "3.2.0"
+  },
   "devDependencies": {
     "parcel": "^2.15.0",
     "@parcel/transformer-sass": "^2.15.2",

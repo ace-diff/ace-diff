@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Ace-diff - Test page</title>
+  <link rel="stylesheet" href="../../dist/ace-diff.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js" type="text/javascript"
+    charset="utf-8"></script>
+  <script type="module" src="../../dist/ace-diff.min.js"></script>
+</head>
+
+<body>
+  <div class="custom"></div>
+
+  <script type="module">
+    import AceDiff from '../../src/index'
+    window.aceDiffer = new AceDiff({
+      element: '.custom',
+      left: {
+        content: `mid
+end`,
+      },
+      right: {
+        content: `something new
+mid
+end`,
+      },
+    });
+  </script>
+</body>
+
+</html>
