@@ -4,27 +4,27 @@
 <head>
   <title>Ace-diff - Test page</title>
   <link rel="stylesheet" href="../../dist/ace-diff.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js" type="text/javascript"
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js" type="text/javascript"
     charset="utf-8"></script>
-  <script src="../../dist/ace-diff.min.js"></script>
+  <script type="module" src="../../dist/ace-diff.min.js"></script>
 </head>
 
 <body>
   <div class="custom"></div>
 
-  <script>
-    var aceDiffer = new AceDiff({
+  <script type="module">
+    import AceDiff from '../../src/index'
+    window.aceDiffer = new AceDiff({
       element: '.custom',
       left: {
         content: `start
 
-something else
+something new
 
 end`,
       },
       right: {
-        content: `starts
-mid
+        content: `start
 end`,
       },
     });

@@ -2,4 +2,4 @@
 
 ## Reporting a Vulnerability
 
-Reach out to jakub@mikul.as
+Reach out to jason@openc3.com

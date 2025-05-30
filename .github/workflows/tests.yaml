@@ -8,23 +8,22 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
+      - uses: actions/checkout@v4
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 20
 
-      - name: Install
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
+      - name: Install and Build
+        run: |
+          npm ci
+          npm install @parcel/rust-linux-x64-gnu
+          npm install @parcel/watcher-linux-x64-glibc
+          npm install @swc/core-linux-x64-gnu
+          npm install lightningcss-linux-x64-gnu
+          npm run build
       - name: Run static server in the background
         run: npm run serve &
-
       - name: Run tests
         run: npm test
 
