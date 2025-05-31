@@ -1,8 +1,4 @@
 /* eslint-disable no-console */
-
-/* Using local update by @dmsnell:
-https://github.com/dmsnell/diff-match-patch/blob/issues/69-broken-surrogate-pairs/javascript/diff_match_patch_uncompressed.js
-*/
 import { makeDiff, cleanupSemantic } from '@sanity/diff-match-patch'
 import merge from './helpers/merge.js'
 import throttle from './helpers/throttle.js'
