@@ -22,7 +22,9 @@ export default function merge(target, source) {
         if (!target[key] || !isObject(target[key])) {
           target[key] = source[key]
         }
-        merge(target[key], source[key])
+        if (target[key] != source[key]) {
+          merge(target[key], source[key]);
+        }
       } else {
         Object.assign(target, { [key]: source[key] })
       }
