@@ -23,36 +23,23 @@ Take a look at [demos on Ace-diff page](https://ace-diff.github.io/ace-diff/). T
 ## How to install
 
 ```bash
-npm i ace-diff -S
+npm i @openc3/ace-diff -S
+npm i ace-builds -S
 
 …
 
-yarn add ace-diff
+yarn add @openc3/ace-diff
+yarn add ace-builds
 ```
 
 ```js
-import AceDiff from 'ace-diff';
+import AceDiff from '@openc3/ace-diff';
+import * as ace from 'ace-builds'
 
 // optionally, include CSS, or use your own
-import 'ace-diff/dist/ace-diff.min.css';
+import '@openc3/ace-diff/dist/ace-diff.min.css';
 // Or use the dark mode
-import 'ace-diff/dist/ace-diff-dark.min.css';
-```
-
-### Use CDN
-Grab ace-diff from CDN:
-
-```html
-<!-- Inlude Ace Editor - e.g. with this: -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.13.1/ace.js"></script>
-
-<script src="https://unpkg.com/ace-diff@^3.0.0"></script>
-
-<!-- optionally include CSS, or use your own -->
-<link href="https://unpkg.com/ace-diff@^3.0.0/dist/ace-diff.min.css" rel="stylesheet">
-
-<!-- optionally there is also a dark mode CSS -->
-<link href="https://unpkg.com/ace-diff@^3.0.0/dist/ace-diff-dark.min.css" rel="stylesheet">
+import '@openc3/ace-diff/dist/ace-diff-dark.min.css';
 ```
 
 ### HTML
@@ -186,8 +173,12 @@ There are a few API methods available on your AceDiff instance.
 
 
 ## Browser Support
+
 All modern browsers. Open a ticket if you find otherwise.
 
+## COSMOS
+
+Ace-diff is in active use in the [COSMOS](https://github.com/openc3/cosmos) project and is maintained by the OpenC3 team. See the [PluginDialog](https://github.com/OpenC3/cosmos/blob/ec5be5bb237fe397eb97ed2f026eaf7affd8b02f/openc3-cosmos-init/plugins/packages/openc3-vue-common/src/tools/admin/PluginDialog.vue) for a full example.
 
 ## License
 MIT.
