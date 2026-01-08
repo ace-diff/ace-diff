@@ -1,5 +1,5 @@
 {
-  "name": "@openc3/ace-diff",
+  "name": "ace-diff",
   "version": "0.0.0-development",
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
   "source": "src/index.js",
@@ -39,14 +39,14 @@
     "@sanity/diff-match-patch": "3.2.0"
   },
   "devDependencies": {
-    "parcel": "^2.15.0",
-    "@parcel/transformer-sass": "^2.15.2",
-    "@parcel/babel-preset-env": "^2.15.2",
-    "cypress": "^14.3.3",
-    "eslint": "9.25.1",
-    "eslint-config-prettier": "10.1.2",
-    "eslint-plugin-prettier": "5.2.6",
-    "prettier": "3.5.3",
-    "sass": "1.87.0"
+    "@parcel/babel-preset-env": "^2.16.3",
+    "@parcel/transformer-sass": "^2.16.3",
+    "cypress": "^15.8.2",
+    "eslint": "9.39.2",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-prettier": "5.5.4",
+    "parcel": "^2.16.3",
+    "prettier": "3.7.4",
+    "sass": "1.97.2"
   }
 }
