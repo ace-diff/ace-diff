@@ -344,49 +344,43 @@ function copy(acediff, e, dir) {
 
   let sourceEditor
   let targetEditor
+  let sourceStartOffset
+  let sourceEndOffset
+  let targetStartOffset
+  let targetEndOffset
 
-  let startLine
-  let endLine
-  let targetStartLine
-  let targetEndLine
   if (dir === C.LTR) {
     sourceEditor = acediff.editors.left
     targetEditor = acediff.editors.right
-    startLine = diff.leftStartLine
-    endLine = diff.leftEndLine
-    targetStartLine = diff.rightStartLine
-    targetEndLine = diff.rightEndLine
+    sourceStartOffset = diff.leftStartOffset
+    sourceEndOffset = diff.leftEndOffset
+    targetStartOffset = diff.rightStartOffset
+    targetEndOffset = diff.rightEndOffset
   } else {
     sourceEditor = acediff.editors.right
     targetEditor = acediff.editors.left
-    startLine = diff.rightStartLine
-    endLine = diff.rightEndLine
-    targetStartLine = diff.leftStartLine
-    targetEndLine = diff.leftEndLine
+    sourceStartOffset = diff.rightStartOffset
+    sourceEndOffset = diff.rightEndOffset
+    targetStartOffset = diff.leftStartOffset
+    targetEndOffset = diff.leftEndOffset
   }
 
-  let contentToInsert = ''
-  for (let i = startLine; i < endLine; i += 1) {
-    contentToInsert += getLine(sourceEditor, i)
-    // JMT: If the first line is blank we add an extra newline
-    // because when it is inserted the first one is effectively eaten
-    // by the replace and merging of the lines
-    // However if the targetStartLine is the very top then we don't
-    // if (i === startLine && contentToInsert === '' && targetStartLine != 0) {
-    //   contentToInsert += '\n'
-    // }
-    // Only add a trailing newline if we're not on the final line
-    if (i < sourceEditor.ace.getSession().getLength() - 1) {
-      contentToInsert += '\n'
-    }
-  }
+  // Get the content to insert using character offsets from the source
+  const sourceValue = sourceEditor.ace.getValue()
+  const contentToInsert = sourceValue.substring(sourceStartOffset, sourceEndOffset)
+
+  // Use Ace's built-in indexToPosition for precise character-to-position conversion
+  const targetDoc = targetEditor.ace.getSession().doc
+  const startPos = targetDoc.indexToPosition(targetStartOffset)
+  const endPos = targetDoc.indexToPosition(targetEndOffset)
 
   // keep track of the scroll height
   const h = targetEditor.ace.getSession().getScrollTop()
 
+  // Use character-precise range for the replacement
   targetEditor.ace
     .getSession()
-    .replace(new Range(targetStartLine, 0, targetEndLine, 0), contentToInsert)
+    .replace(new Range(startPos.row, startPos.column, endPos.row, endPos.column), contentToInsert)
   targetEditor.ace.getSession().setScrollTop(parseInt(h, 10))
 
   acediff.diff()
@@ -600,6 +594,11 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: info.endLine + 1,
       rightStartLine,
       rightEndLine: rightStartLine + numRows,
+      // Store character offsets for precise copy operations
+      leftStartOffset: offsetLeft,
+      leftEndOffset: offsetLeft + diffText.length,
+      rightStartOffset: offsetRight,
+      rightEndOffset: offsetRight,
     }
   } else {
     let info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText)
@@ -640,6 +639,11 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndLine: leftStartLine + numRows,
       rightStartLine: info.startLine,
       rightEndLine: info.endLine + 1,
+      // Store character offsets for precise copy operations
+      leftStartOffset: offsetLeft,
+      leftEndOffset: offsetLeft,
+      rightStartOffset: offsetRight,
+      rightEndOffset: offsetRight + diffText.length,
     }
   }
 
@@ -832,6 +836,23 @@ function simplifyDiffs(acediff, diffs) {
         groupedDiffs[i].rightEndLine = Math.max(
           diff.rightEndLine,
           groupedDiffs[i].rightEndLine,
+        )
+        // Also expand character offset ranges
+        groupedDiffs[i].leftStartOffset = Math.min(
+          diff.leftStartOffset,
+          groupedDiffs[i].leftStartOffset,
+        )
+        groupedDiffs[i].leftEndOffset = Math.max(
+          diff.leftEndOffset,
+          groupedDiffs[i].leftEndOffset,
+        )
+        groupedDiffs[i].rightStartOffset = Math.min(
+          diff.rightStartOffset,
+          groupedDiffs[i].rightStartOffset,
+        )
+        groupedDiffs[i].rightEndOffset = Math.max(
+          diff.rightEndOffset,
+          groupedDiffs[i].rightEndOffset,
         )
         isGrouped = true
         break
