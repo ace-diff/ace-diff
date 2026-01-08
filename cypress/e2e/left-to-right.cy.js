@@ -63,8 +63,7 @@ describe('Left to Right Merge', () => {
 
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
-        // TODO: Currently the right editor is not updated correctly after merging
-        // expect(win.aceDiffer.getEditors().right.getValue()).to.equal("start\nend\nsomething new")
+        expect(win.aceDiffer.getEditors().right.getValue()).to.equal("start\nend\nsomething new")
       })
     })
   })
