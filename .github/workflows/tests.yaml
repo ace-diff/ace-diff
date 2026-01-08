@@ -14,15 +14,20 @@ jobs:
         with:
           node-version: 20
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install and Build
         run: |
-          npm ci
-          npm install @parcel/rust-linux-x64-gnu
-          npm install @parcel/watcher-linux-x64-glibc
-          npm install @swc/core-linux-x64-gnu
-          npm install lightningcss-linux-x64-gnu
-          npm run build
+          pnpm install
+          pnpm add @parcel/rust-linux-x64-gnu
+          pnpm add @parcel/watcher-linux-x64-glibc
+          pnpm add @swc/core-linux-x64-gnu
+          pnpm add lightningcss-linux-x64-gnu
+          pnpm run build
       - name: Run static server in the background
-        run: npm run serve &
+        run: pnpm run serve &
       - name: Run tests
-        run: npm test
+        run: pnpm test

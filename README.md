@@ -23,11 +23,14 @@ Take a look at [demos on Ace-diff page](https://ace-diff.github.io/ace-diff/). T
 ## How to install
 
 ```bash
+pnpm add @openc3/ace-diff
+pnpm add ace-builds
+
+# or with npm
 npm i @openc3/ace-diff -S
 npm i ace-builds -S
 
-…
-
+# or with yarn
 yarn add @openc3/ace-diff
 yarn add ace-builds
 ```
