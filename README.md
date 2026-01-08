@@ -96,6 +96,63 @@ If you want the ace editor's to change height/width based on a user's browser, I
 
 Take a look at the [demos](https://ace-diff.github.io/ace-diff/) for some ideas. They all use flexbox for the layouts, but include some different styles and class names just so you can see.
 
+## Theming
+
+Ace-diff uses CSS custom properties (variables) for colors, making it easy to match your Ace editor theme. The default styles use a light theme.
+
+### CSS Custom Properties
+
+Override these variables to customize the appearance:
+
+```css
+.acediff {
+  --acediff-gutter-bg: #efefef;          /* Gutter background */
+  --acediff-gutter-border: #bcbcbc;      /* Gutter border color */
+  --acediff-diff-bg: #d8f2ff;            /* Diff highlight background */
+  --acediff-diff-border: #a2d7f2;        /* Diff highlight border */
+  --acediff-arrow-color: #000;           /* Copy arrow color */
+  --acediff-arrow-shadow: rgba(255, 255, 255, 0.7);  /* Arrow text shadow */
+  --acediff-arrow-hover-left: #004ea0;   /* Left arrow hover color */
+  --acediff-arrow-hover-right: #c98100;  /* Right arrow hover color */
+}
+```
+
+### Theme Presets
+
+We provide a preset for the Twilight Ace theme. Import it after the base CSS:
+
+```js
+import 'ace-diff/dist/ace-diff.min.css'
+import 'ace-diff/dist/ace-diff-twilight.min.css'
+```
+
+Then set the Ace editor theme to match:
+
+```js
+const differ = new AceDiff({
+  theme: 'ace/theme/twilight',
+  // ... other options
+})
+```
+
+### Creating Custom Themes
+
+To create your own theme preset, simply override the CSS variables:
+
+```css
+/* My custom dark theme */
+.acediff {
+  --acediff-gutter-bg: #1e1e1e;
+  --acediff-gutter-border: #333;
+  --acediff-diff-bg: #264f78;
+  --acediff-diff-border: #1e3a5f;
+  --acediff-arrow-color: #fff;
+  --acediff-arrow-shadow: rgba(0, 0, 0, 0.7);
+  --acediff-arrow-hover-left: #569cd6;
+  --acediff-arrow-hover-right: #ce9178;
+}
+```
+
 ## Configuration
 
 You can configure your Ace-diff instance through a number of config settings. This object is what you pass to the constructor, like the **JavaScript** section above.

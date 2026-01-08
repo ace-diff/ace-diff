@@ -17,7 +17,6 @@ import query from './dom/query.js'
 import C from './constants.js'
 
 import './styles/ace-diff.scss'
-import './styles/ace-diff-dark.scss'
 
 // Range module placeholder
 let Range
@@ -132,7 +131,7 @@ export default function AceDiff(options = {}) {
   )
   acediff.options.right.id = ensureElement(acediff.el, 'acediff__right')
 
-  acediff.el.innerHTML = `<div class="acediff__wrap">${acediff.el.innerHTML}</div>`
+  acediff.el.innerHTML = `<div class="acediff acediff__wrap">${acediff.el.innerHTML}</div>`
 
   // instantiate the editors in an internal data structure
   // that will store a little info about the diffs and

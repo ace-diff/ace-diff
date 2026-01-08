@@ -6,7 +6,7 @@
   "main": "dist/ace-diff.min.js",
   "module": "dist/module.js",
   "scripts": {
-    "build": "parcel build",
+    "build": "parcel build && sass src/styles/ace-diff-twilight.scss dist/ace-diff-twilight.min.css --style=compressed",
     "watch": "parcel watch",
     "dev": "parcel serve test/fixtures/index.html --open",
     "serve": "parcel test/fixtures/*.html -p 8081",

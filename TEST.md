@@ -1,30 +1,68 @@
-## Unit testing
+# Testing
 
-The jest tests require adding to the `devDependencies` in `package.json`:
+This project uses [Cypress](https://www.cypress.io/) for end-to-end testing.
 
-    "@babel/core": "^7.27.3",
-    "babel-jest": "^30.0.0-beta.3",
-    "jest": "^29.3.1",
-    "jest-environment-jsdom": "^29.7.0",
-    "@testing-library/jest-dom": "^6.6.3",
+## Prerequisites
 
-as well as adding a babel.config.json file like the following:
+Make sure dependencies are installed:
 
-    {
-      "presets": [
-        [
-          "@parcel/babel-preset-env",
-          {
-            "targets": {
-              "node": "current"
-            }
-          }
-        ]
-      ]
-    }
+```bash
+pnpm install
+```
 
-However, once we create that the `parcel` build complains with:
+## Start the Development Server
 
-    @parcel/transformer-babel: Parcel includes transpilation by default. Babel config babel.config.json contains only redundant presets. Deleting it may significantly improve build performance.
+Tests require the development server to be running on port 8081. Start it before running any tests:
 
-Since we're not really doing much unit testing with `jest`, the babel.config.json file has been removed and only the cypress tests are run.
+```bash
+pnpm serve
+```
+
+Keep this running and use a separate terminal for the test commands below.
+
+## Running Tests
+
+### Headless Mode (CI)
+
+Run all tests in headless mode:
+
+```bash
+pnpm test
+```
+
+Run a specific test file:
+
+```bash
+pnpm test -- --spec "cypress/e2e/themes.cy.js"
+```
+
+### Interactive Mode
+
+Open the Cypress Test Runner for interactive debugging:
+
+```bash
+pnpm cypress
+```
+
+This opens a browser where you can select and run individual tests.
+
+## Test Structure
+
+Tests are located in `cypress/e2e/`:
+
+| Test File | Description |
+|-----------|-------------|
+| `api.cy.js` | Tests for the AceDiff API methods |
+| `basics.cy.js` | Basic initialization and rendering |
+| `blank-lines.cy.js` | Handling of blank line diffs and merges |
+| `diff-granularity.cy.js` | Broad vs specific diff granularity |
+| `issue-93.cy.js` | Regression test for issue #93 |
+| `left-to-right.cy.js` | Left-to-right merge operations |
+| `merging.cy.js` | General merge functionality |
+| `newlines.cy.js` | Handling of different EOL characters |
+| `right-to-left.cy.js` | Right-to-left merge operations |
+| `themes.cy.js` | Light and dark theme CSS verification |
+
+## Test Fixtures
+
+HTML test fixtures are in `test/fixtures/`. Each fixture sets up an AceDiff instance with specific content for testing. You can view them directly at http://localhost:8081 when the server is running.
