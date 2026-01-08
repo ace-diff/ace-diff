@@ -37,19 +37,19 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
       - name: Update version
         run: pnpm version ${{ github.event.inputs.version }}
 
-      - name: Publish @openc3/ace-diff
+      - name: Publish ace-diff
         run: pnpm publish --access public --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Commit and tag release
+      - name: Push the tag
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add package.json
-          git commit -m "Release v${{ github.event.inputs.version }}"
-          git tag "v${{ github.event.inputs.version }}"
           git push origin HEAD --tags
