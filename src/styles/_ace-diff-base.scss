@@ -4,6 +4,7 @@
   --acediff-gutter-border: #bcbcbc;
   --acediff-diff-bg: #d8f2ff;
   --acediff-diff-border: #a2d7f2;
+  --acediff-diff-char-bg: #b8e2f5;
   --acediff-arrow-color: #000;
   --acediff-arrow-shadow: rgba(255, 255, 255, 0.7);
   --acediff-arrow-hover-left: #004ea0;
@@ -57,6 +58,18 @@
       border-bottom: 0px;
       position: absolute;
     }
+  }
+
+  // Character-level diff highlighting (darker shade within diff lines)
+  &__diffChar {
+    background-color: var(--acediff-diff-char-bg);
+    position: absolute;
+    z-index: 5;
+  }
+
+  // Gutter decoration for diff lines
+  &__diffGutter {
+    background-color: var(--acediff-diff-bg) !important;
   }
 
   // SVG connector

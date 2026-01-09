@@ -21,6 +21,8 @@ Take a look at [demos on Ace-diff page](https://ace-diff.github.io/ace-diff/). T
 - Readonly option for left/right editors
 - Control how aggressively diffs are combined
 - Allow users to copy diffs from one side to the other
+- Character-level diff highlighting (shows exact changes within lines)
+- Gutter decorations marking changed lines
 
 ## How to install
 
@@ -168,8 +170,10 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
   theme: null,
   element: null,
   diffGranularity: 'broad',
+  lockScrolling: true,
   showDiffs: true,
   showConnectors: true,
+  charDiffs: true,
   maxDiffs: 5000,
   left: {
     id: null,
@@ -190,6 +194,8 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
   classes: {
     gutterID: 'acediff__gutter',
     diff: 'acediff__diffLine',
+    diffChar: 'acediff__diffChar',
+    diffGutter: 'acediff__diffGutter',
     connector: 'acediff__connector',
     newCodeConnectorLink: 'acediff__newCodeConnector',
     newCodeConnectorLinkContent: '&#8594;',
@@ -199,6 +205,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
     copyLeftContainer: 'acediff__copy--left',
   },
   connectorYOffset: 0,
+  onDiffReady: null,
 }
 ```
 
@@ -209,8 +216,10 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 - `mode` (string, optional). this is the mode for the Ace Editor, e.g. `"ace/mode/javascript"`. Check out the Ace docs for that. This setting will be applied to both editors. I figured 99.999999% of the time you're going to want the same mode for both of them so you can just set it once here. If you're a mad genius and want to have different modes for each side, (a) _whoah man, what's your use-case?_, and (b) you can override this setting in one of the settings below. Read on.
 - `theme` (string, optional). This lets you set the theme for both editors.
 - `diffGranularity` (string, optional, default: `broad`). this has two options (`specific`, and `broad`). Basically this determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
+- `lockScrolling` (boolean, optional, default: `true`). Synchronizes scrolling between the left and right editors. When enabled, scrolling one editor will scroll the other proportionally. Set to `false` to allow independent scrolling.
 - `showDiffs` (boolean, optional, default: `true`). Whether or not the diffs are enabled. This basically turns everything off.
 - `showConnectors` (boolean, optional, default: `true`). Whether or not the gutter in the middle show show connectors visualizing where the left and right changes map to one another.
+- `charDiffs` (boolean, optional, default: `true`). When enabled, highlights the specific characters that changed within a line, not just the whole line. Provides more granular diff visualization.
 - `maxDiffs` (integer, optional, default: `5000`). This was added a safety precaution. For really massive files with vast numbers of diffs, it's possible the Ace instances or AceDiff will become too laggy. This simply disables the diffing altogether once you hit a certain number of diffs.
 - `left/right`. this object contains settings specific to the leftmost editor.
 - `left.content / right.content` (string, optional, default: `null`). If you like, when you instantiate AceDiff you can include the content that should appear in the leftmost editor via this property.
@@ -219,11 +228,14 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 - `left.editable / right.editable` (boolean, optional, default: `true`). Whether the left editor is editable or not.
 - `left.copyLinkEnabled / right.copyLinkEnabled` (boolean, optional, default: `true`). Whether the copy to right/left arrows should appear.
 - `connectorYOffset` (integer, optional, default: `0`). Vertical offset for connector lines in the gutter.
+- `onDiffReady` (function, optional, default: `null`). Callback function invoked after diffs are computed and displayed. Receives the diffs array as its argument. Useful for scrolling to the first diff or implementing diff navigation.
 
 ### Classes
 
 - `gutterID`: the ID for the gutter element between editors
 - `diff`: the class for a diff line on either editor
+- `diffChar`: the class for character-level diff highlighting (used when `charDiffs` is enabled)
+- `diffGutter`: the class for gutter decorations on diff lines
 - `connector`: the SVG connector class
 - `newCodeConnectorLink`: the class for the copy-to-right link element
 - `newCodeConnectorLinkContent`: the content of the copy to right link. Defaults to a unicode right arrow ('&#8594;')
@@ -240,6 +252,7 @@ There are a few API methods available on your AceDiff instance.
 - `aceInstance.setOptions()`: this lets you set many of the above options on the fly. Note: certain things used during the construction of the editor, like the classes can't be overridden.
 - `aceInstance.getNumDiffs()`: returns the number of diffs currently being displayed.
 - `aceInstance.diff()`: updates the diff. This shouldn't ever be required because AceDiff automatically recognizes the key events like changes to the editor and window resizing. But I've included it because there may always be that fringe case...
+- `aceInstance.clear()`: clears all diff markers, gutter decorations, and connectors without destroying the editors. Useful when you want to temporarily hide diffs.
 - `aceInstance.destroy()`: destroys the AceDiff instance. Basically this just destroys both editors and cleans out the gutter.
 
 ## Browser Support

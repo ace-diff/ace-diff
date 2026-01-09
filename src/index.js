@@ -52,9 +52,10 @@ export default function AceDiff(options = {}) {
       theme: null,
       element: null,
       diffGranularity: C.DIFF_GRANULARITY_BROAD,
-      lockScrolling: false, // not implemented yet
+      lockScrolling: true,
       showDiffs: true,
       showConnectors: true,
+      charDiffs: true,
       maxDiffs: 5000,
       left: {
         id: null,
@@ -75,6 +76,8 @@ export default function AceDiff(options = {}) {
       classes: {
         gutterID: 'acediff__gutter',
         diff: 'acediff__diffLine',
+        diffChar: 'acediff__diffChar',
+        diffGutter: 'acediff__diffGutter',
         connector: 'acediff__connector',
         newCodeConnectorLink: 'acediff__newCodeConnector',
         newCodeConnectorLinkContent: '&#8594;',
@@ -84,6 +87,7 @@ export default function AceDiff(options = {}) {
         copyLeftContainer: 'acediff__copy--left',
       },
       connectorYOffset: 0,
+      onDiffReady: null,
     },
     options,
   )
@@ -141,11 +145,13 @@ export default function AceDiff(options = {}) {
       ace: ace.edit(acediff.options.left.id),
       markers: [],
       lineLengths: [],
+      diffGutters: [],
     },
     right: {
       ace: ace.edit(acediff.options.right.id),
       markers: [],
       lineLengths: [],
+      diffGutters: [],
     },
     editorHeight: null,
   }
@@ -157,6 +163,8 @@ export default function AceDiff(options = {}) {
     .setMode(getMode(acediff, C.EDITOR_RIGHT))
   acediff.editors.left.ace.setReadOnly(!acediff.options.left.editable)
   acediff.editors.right.ace.setReadOnly(!acediff.options.right.editable)
+  acediff.editors.left.ace.setShowFoldWidgets(false)
+  acediff.editors.right.ace.setShowFoldWidgets(false)
   acediff.editors.left.ace.setTheme(getTheme(acediff, C.EDITOR_LEFT))
   acediff.editors.right.ace.setTheme(getTheme(acediff, C.EDITOR_RIGHT))
 
@@ -257,6 +265,16 @@ AceDiff.prototype = {
 
     clearDiffs(this)
     decorate(this)
+
+    if (typeof this.options.onDiffReady === 'function') {
+      this.options.onDiffReady(this.diffs)
+    }
+  },
+
+  clear() {
+    clearDiffs(this)
+    clearGutter(this)
+    clearArrows(this)
   },
 
   destroy() {
@@ -284,15 +302,62 @@ AceDiff.prototype = {
 }
 
 function addEventHandlers(acediff) {
+  // Flag to prevent infinite scroll loops when lockScrolling is enabled
+  let isSyncingScroll = false
+
+  // Helper to sync scroll between editors using proportional positioning
+  function syncScroll(sourceEditor, targetEditor) {
+    if (!acediff.options.lockScrolling || isSyncingScroll) {
+      return
+    }
+
+    const sourceSession = sourceEditor.ace.getSession()
+    const targetSession = targetEditor.ace.getSession()
+
+    const sourceScrollTop = sourceSession.getScrollTop()
+
+    // Calculate the maximum scroll position for source editor
+    // This is: (total content height) - (visible viewport height)
+    const sourceLineCount = sourceSession.getLength()
+    const sourceContentHeight = sourceLineCount * acediff.lineHeight
+    const sourceViewportHeight = sourceEditor.ace.renderer.$size.scrollerHeight
+    const sourceMaxScroll = Math.max(
+      0,
+      sourceContentHeight - sourceViewportHeight,
+    )
+
+    // Calculate the scroll ratio (0 to 1)
+    const scrollRatio =
+      sourceMaxScroll > 0 ? sourceScrollTop / sourceMaxScroll : 0
+
+    // Calculate the maximum scroll position for target editor
+    const targetLineCount = targetSession.getLength()
+    const targetContentHeight = targetLineCount * acediff.lineHeight
+    const targetViewportHeight = targetEditor.ace.renderer.$size.scrollerHeight
+    const targetMaxScroll = Math.max(
+      0,
+      targetContentHeight - targetViewportHeight,
+    )
+
+    // Apply the same scroll ratio to target editor
+    const targetScrollTop = scrollRatio * targetMaxScroll
+
+    isSyncingScroll = true
+    targetSession.setScrollTop(targetScrollTop)
+    isSyncingScroll = false
+  }
+
   acediff.editors.left.ace.getSession().on(
     'changeScrollTop',
     throttle(() => {
+      syncScroll(acediff.editors.left, acediff.editors.right)
       updateGap(acediff)
     }, 16),
   )
   acediff.editors.right.ace.getSession().on(
     'changeScrollTop',
     throttle(() => {
+      syncScroll(acediff.editors.right, acediff.editors.left)
       updateGap(acediff)
     }, 16),
   )
@@ -366,7 +431,10 @@ function copy(acediff, e, dir) {
 
   // Get the content to insert using character offsets from the source
   const sourceValue = sourceEditor.ace.getValue()
-  const contentToInsert = sourceValue.substring(sourceStartOffset, sourceEndOffset)
+  const contentToInsert = sourceValue.substring(
+    sourceStartOffset,
+    sourceEndOffset,
+  )
 
   // Use Ace's built-in indexToPosition for precise character-to-position conversion
   const targetDoc = targetEditor.ace.getSession().doc
@@ -379,7 +447,10 @@ function copy(acediff, e, dir) {
   // Use character-precise range for the replacement
   targetEditor.ace
     .getSession()
-    .replace(new Range(startPos.row, startPos.column, endPos.row, endPos.column), contentToInsert)
+    .replace(
+      new Range(startPos.row, startPos.column, endPos.row, endPos.column),
+      contentToInsert,
+    )
   targetEditor.ace.getSession().setScrollTop(parseInt(h, 10))
 
   acediff.diff()
@@ -397,7 +468,7 @@ function getLineLengths(editor) {
 }
 
 // shows a diff in one of the two editors.
-function showDiff(acediff, editor, startLine, endLine, className) {
+function showDiff(acediff, editor, startLine, endLine, chars, className) {
   const editorInstance = acediff.editors[editor]
 
   if (endLine < startLine) {
@@ -407,20 +478,42 @@ function showDiff(acediff, editor, startLine, endLine, className) {
 
   const classNames = `${className} ${
     endLine > startLine ? 'lines' : 'targetOnly'
-  }`
+  } ${editor}`
 
-  if (endLine > startLine) {
-    endLine -= 1 /* because endLine is usually + 1 */
+  let markerEndLine = endLine
+  if (markerEndLine > startLine) {
+    markerEndLine -= 1 /* because endLine is usually + 1 */
   }
 
   // to get Ace to highlight the full row we just set the start and end chars to 0 and 1
   editorInstance.markers.push(
     editorInstance.ace.session.addMarker(
-      new Range(startLine, 0, endLine, 1),
+      new Range(startLine, 0, markerEndLine, 1),
       classNames,
       'fullLine',
     ),
   )
+
+  // Add character-level highlighting if charDiffs is enabled
+  if (acediff.options.charDiffs && chars && chars.length > 0) {
+    const charClassName = `${acediff.options.classes.diffChar} ${editor}`
+    chars.forEach((char) => {
+      editorInstance.markers.push(
+        editorInstance.ace.session.addMarker(
+          new Range(char.lineStart, char.start, char.lineEnd - 1, char.end),
+          charClassName,
+          'text',
+        ),
+      )
+    })
+  }
+
+  // Add gutter decorations for diff lines
+  const gutterClassName = `${acediff.options.classes.diffGutter} ${editor}`
+  for (let line = startLine; line < endLine; line += 1) {
+    editorInstance.ace.session.addGutterDecoration(line, gutterClassName)
+    editorInstance.diffGutters.push({ line, className: gutterClassName })
+  }
 }
 
 // called onscroll. Updates the gap to ensure the connectors are all lining up
@@ -433,12 +526,31 @@ function updateGap(acediff) {
 }
 
 function clearDiffs(acediff) {
+  // Clear markers
   acediff.editors.left.markers.forEach((marker) => {
     acediff.editors.left.ace.getSession().removeMarker(marker)
   }, acediff)
   acediff.editors.right.markers.forEach((marker) => {
     acediff.editors.right.ace.getSession().removeMarker(marker)
   }, acediff)
+  acediff.editors.left.markers = []
+  acediff.editors.right.markers = []
+
+  // Clear gutter decorations
+  acediff.editors.left.diffGutters.forEach((gutter) => {
+    acediff.editors.left.ace.session.removeGutterDecoration(
+      gutter.line,
+      gutter.className,
+    )
+  }, acediff)
+  acediff.editors.right.diffGutters.forEach((gutter) => {
+    acediff.editors.right.ace.session.removeGutterDecoration(
+      gutter.line,
+      gutter.className,
+    )
+  }, acediff)
+  acediff.editors.left.diffGutters = []
+  acediff.editors.right.diffGutters = []
 }
 
 function addConnector(
@@ -598,6 +710,9 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndOffset: offsetLeft + diffText.length,
       rightStartOffset: offsetRight,
       rightEndOffset: offsetRight,
+      // Store character positions for charDiffs highlighting
+      leftStartChar: info.startChar,
+      leftEndChar: info.endChar,
     }
   } else {
     let info = getSingleDiffInfo(acediff.editors.right, offsetRight, diffText)
@@ -643,6 +758,9 @@ function computeDiff(acediff, diffType, offsetLeft, offsetRight, diffText) {
       leftEndOffset: offsetLeft,
       rightStartOffset: offsetRight,
       rightEndOffset: offsetRight + diffText.length,
+      // Store character positions for charDiffs highlighting
+      rightStartChar: info.startChar,
+      rightEndChar: info.endChar,
     }
   }
 
@@ -782,14 +900,20 @@ function clearGutter(acediff) {
   // gutter.innerHTML = '';
 
   const gutterEl = document.getElementById(acediff.options.classes.gutterID)
-  gutterEl.removeChild(acediff.gutterSVG)
+  if (acediff.gutterSVG) {
+    gutterEl.removeChild(acediff.gutterSVG)
+  }
 
   createGutter(acediff)
 }
 
 function clearArrows(acediff) {
-  acediff.copyLeftContainer.innerHTML = ''
-  acediff.copyRightContainer.innerHTML = ''
+  if (acediff.copyLeftContainer) {
+    acediff.copyLeftContainer.innerHTML = ''
+  }
+  if (acediff.copyRightContainer) {
+    acediff.copyRightContainer.innerHTML = ''
+  }
 }
 
 /*
@@ -805,9 +929,35 @@ function simplifyDiffs(acediff, diffs) {
       : val <= 1
   }
 
+  // Helper to create a diff object with character arrays for charDiffs
+  function createDiffWithChars(diff) {
+    const newDiff = Object.assign({}, diff, {
+      leftChars: [],
+      rightChars: [],
+    })
+    // Add character range info if present
+    if (diff.leftEndChar !== undefined) {
+      newDiff.leftChars.push({
+        start: diff.leftStartChar,
+        end: diff.leftEndChar,
+        lineStart: diff.leftStartLine,
+        lineEnd: diff.leftEndLine,
+      })
+    }
+    if (diff.rightEndChar !== undefined) {
+      newDiff.rightChars.push({
+        start: diff.rightStartChar,
+        end: diff.rightEndChar,
+        lineStart: diff.rightStartLine,
+        lineEnd: diff.rightEndLine,
+      })
+    }
+    return newDiff
+  }
+
   diffs.forEach((diff, index) => {
     if (index === 0) {
-      groupedDiffs.push(diff)
+      groupedDiffs.push(createDiffWithChars(diff))
       return
     }
 
@@ -853,13 +1003,30 @@ function simplifyDiffs(acediff, diffs) {
           diff.rightEndOffset,
           groupedDiffs[i].rightEndOffset,
         )
+        // Add character ranges to the grouped diff
+        if (diff.leftEndChar !== undefined) {
+          groupedDiffs[i].leftChars.push({
+            start: diff.leftStartChar,
+            end: diff.leftEndChar,
+            lineStart: diff.leftStartLine,
+            lineEnd: diff.leftEndLine,
+          })
+        }
+        if (diff.rightEndChar !== undefined) {
+          groupedDiffs[i].rightChars.push({
+            start: diff.rightStartChar,
+            end: diff.rightEndChar,
+            lineStart: diff.rightStartLine,
+            lineEnd: diff.rightEndLine,
+          })
+        }
         isGrouped = true
         break
       }
     }
 
     if (!isGrouped) {
-      groupedDiffs.push(diff)
+      groupedDiffs.push(createDiffWithChars(diff))
     }
   })
 
@@ -889,6 +1056,7 @@ function decorate(acediff) {
         C.EDITOR_LEFT,
         info.leftStartLine,
         info.leftEndLine,
+        info.leftChars,
         acediff.options.classes.diff,
       )
       showDiff(
@@ -896,6 +1064,7 @@ function decorate(acediff) {
         C.EDITOR_RIGHT,
         info.rightStartLine,
         info.rightEndLine,
+        info.rightChars,
         acediff.options.classes.diff,
       )
 
