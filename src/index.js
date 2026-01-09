@@ -85,6 +85,7 @@ export default function AceDiff(options = {}) {
         copyLeftContainer: 'acediff__copy--left',
       },
       connectorYOffset: 0,
+      onDiffReady: null,
     },
     options,
   )
@@ -258,6 +259,10 @@ AceDiff.prototype = {
 
     clearDiffs(this)
     decorate(this)
+
+    if (typeof this.options.onDiffReady === 'function') {
+      this.options.onDiffReady(this.diffs)
+    }
   },
 
   destroy() {
