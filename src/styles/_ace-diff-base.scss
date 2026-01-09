@@ -6,6 +6,7 @@ $gutterBackground: #efefef !default;
 $copyArrowsColor: #000 !default;
 $mergeRightColor: #c98100 !default;
 $mergeLeftColor: #004ea0 !default;
+$charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !default;
 
 .acediff {
   // .acediff class itself got no styles
@@ -56,6 +57,18 @@ $mergeLeftColor: #004ea0 !default;
       border-bottom: 0px;
       position: absolute;
     }
+  }
+
+  // Character-level diff highlighting (darker shade within diff lines)
+  &__diffChar {
+    background-color: $charDiffBackground;
+    position: absolute;
+    z-index: 5;
+  }
+
+  // Gutter decoration for diff lines
+  &__diffGutter {
+    background-color: $connectorBackground !important;
   }
 
   // SVG connector
