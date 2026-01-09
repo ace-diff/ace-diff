@@ -162,6 +162,8 @@ export default function AceDiff(options = {}) {
     .setMode(getMode(acediff, C.EDITOR_RIGHT))
   acediff.editors.left.ace.setReadOnly(!acediff.options.left.editable)
   acediff.editors.right.ace.setReadOnly(!acediff.options.right.editable)
+  acediff.editors.left.ace.setShowFoldWidgets(false)
+  acediff.editors.right.ace.setShowFoldWidgets(false)
   acediff.editors.left.ace.setTheme(getTheme(acediff, C.EDITOR_LEFT))
   acediff.editors.right.ace.setTheme(getTheme(acediff, C.EDITOR_RIGHT))
 
