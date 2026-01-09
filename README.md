@@ -148,6 +148,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
     copyLeftContainer: 'acediff__copy--left',
   },
   connectorYOffset: 0,
+  onDiffReady: null,
 }
 ```
 
@@ -170,6 +171,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 - `left.editable / right.editable` (boolean, optional, default: `true`). Whether the left editor is editable or not.
 - `left.copyLinkEnabled / right.copyLinkEnabled` (boolean, optional, default: `true`). Whether the copy to right/left arrows should appear.
 - `connectorYOffset` (integer, optional, default: `0`). Vertical offset for connector lines in the gutter.
+- `onDiffReady` (function, optional, default: `null`). Callback function invoked after diffs are computed and displayed. Receives the diffs array as its argument. Useful for scrolling to the first diff or implementing diff navigation.
 
 ### Classes
 

@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Ace-diff - onDiffReady Test</title>
+    <link rel="stylesheet" href="../../dist/ace-diff.min.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+  </head>
+
+  <body>
+    <div class="custom"></div>
+
+    <script type="module">
+      import AceDiff from '../../src/index'
+
+      window.diffReadyCalls = []
+
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        onDiffReady: (diffs) => {
+          window.diffReadyCalls.push(diffs)
+        },
+        left: {
+          content: 'line 1\nline 2\nline 3',
+        },
+        right: {
+          content: 'line 1\nmodified line 2\nline 3',
+        },
+      })
+    </script>
+  </body>
+</html>
