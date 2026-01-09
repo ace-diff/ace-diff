@@ -111,6 +111,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
   theme: null,
   element: null,
   diffGranularity: 'broad',
+  lockScrolling: true,
   showDiffs: true,
   showConnectors: true,
   maxDiffs: 5000,
@@ -152,6 +153,7 @@ Here are all the defaults. I'll explain each one in details below. Note: you onl
 - `mode` (string, optional). this is the mode for the Ace Editor, e.g. `"ace/mode/javascript"`. Check out the Ace docs for that. This setting will be applied to both editors. I figured 99.999999% of the time you're going to want the same mode for both of them so you can just set it once here. If you're a mad genius and want to have different modes for each side, (a) _whoah man, what's your use-case?_, and (b) you can override this setting in one of the settings below. Read on.
 - `theme` (string, optional). This lets you set the theme for both editors.
 - `diffGranularity` (string, optional, default: `broad`). this has two options (`specific`, and `broad`). Basically this determines how aggressively AceDiff combines diffs to simplify the interface. I found that often it's a judgement call as to whether multiple diffs on one side should be grouped. This setting provides a little control over it.
+- `lockScrolling` (boolean, optional, default: `true`). Synchronizes scrolling between the left and right editors. When enabled, scrolling one editor will scroll the other proportionally. Set to `false` to allow independent scrolling.
 - `showDiffs` (boolean, optional, default: `true`). Whether or not the diffs are enabled. This basically turns everything off.
 - `showConnectors` (boolean, optional, default: `true`). Whether or not the gutter in the middle show show connectors visualizing where the left and right changes map to one another.
 - `maxDiffs` (integer, optional, default: `5000`). This was added a safety precaution. For really massive files with vast numbers of diffs, it's possible the Ace instances or AceDiff will become too laggy. This simply disables the diffing altogether once you hit a certain number of diffs.
