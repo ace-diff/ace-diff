@@ -75,20 +75,12 @@ describe('Scroll unlocking', () => {
 
         const { left, right } = win.aceDiffer.getEditors()
 
-        // Scroll left editor to 50%
-        const leftSession = left.getSession()
-        const leftLineCount = leftSession.getLength()
-        const leftMaxScroll =
-          leftLineCount * win.aceDiffer.lineHeight -
-          left.renderer.$size.scrollerHeight
+        // Scroll left editor to a fixed amount
+        left.getSession().setScrollTop(500)
 
-        leftSession.setScrollTop(leftMaxScroll / 2)
-
-        cy.wait(50).then(() => {
-          // Right editor should have scrolled proportionally
-          const rightSession = right.getSession()
-          const rightScrollTop = rightSession.getScrollTop()
-          expect(rightScrollTop).to.be.greaterThan(0)
+        // Use Cypress retry to wait for scroll sync
+        cy.wrap(right.getSession(), { timeout: 2000 }).should((rightSession) => {
+          expect(rightSession.getScrollTop()).to.be.greaterThan(0)
         })
       })
     })
