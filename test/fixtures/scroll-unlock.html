@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Ace-diff - Scroll Unlock Test</title>
+    <link rel="stylesheet" href="../../dist/ace-diff.min.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <style>
+      .custom {
+        height: 300px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="custom"></div>
+
+    <script type="module">
+      import AceDiff from '../../src/index'
+
+      // Generate content with many lines for scrolling
+      const leftLines = []
+      const rightLines = []
+
+      for (let i = 1; i <= 100; i++) {
+        leftLines.push(`// Left line ${i}`)
+      }
+
+      // Right side has more lines to test independent scrolling
+      for (let i = 1; i <= 150; i++) {
+        rightLines.push(`// Right line ${i}`)
+      }
+
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        lockScrolling: false,
+        left: {
+          content: leftLines.join('\n'),
+        },
+        right: {
+          content: rightLines.join('\n'),
+        },
+      })
+    </script>
+  </body>
+</html>

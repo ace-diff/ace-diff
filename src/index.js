@@ -53,7 +53,7 @@ export default function AceDiff(options = {}) {
       theme: null,
       element: null,
       diffGranularity: C.DIFF_GRANULARITY_BROAD,
-      lockScrolling: false, // not implemented yet
+      lockScrolling: true,
       showDiffs: true,
       showConnectors: true,
       maxDiffs: 5000,
@@ -285,15 +285,62 @@ AceDiff.prototype = {
 }
 
 function addEventHandlers(acediff) {
+  // Flag to prevent infinite scroll loops when lockScrolling is enabled
+  let isSyncingScroll = false
+
+  // Helper to sync scroll between editors using proportional positioning
+  function syncScroll(sourceEditor, targetEditor) {
+    if (!acediff.options.lockScrolling || isSyncingScroll) {
+      return
+    }
+
+    const sourceSession = sourceEditor.ace.getSession()
+    const targetSession = targetEditor.ace.getSession()
+
+    const sourceScrollTop = sourceSession.getScrollTop()
+
+    // Calculate the maximum scroll position for source editor
+    // This is: (total content height) - (visible viewport height)
+    const sourceLineCount = sourceSession.getLength()
+    const sourceContentHeight = sourceLineCount * acediff.lineHeight
+    const sourceViewportHeight = sourceEditor.ace.renderer.$size.scrollerHeight
+    const sourceMaxScroll = Math.max(
+      0,
+      sourceContentHeight - sourceViewportHeight,
+    )
+
+    // Calculate the scroll ratio (0 to 1)
+    const scrollRatio =
+      sourceMaxScroll > 0 ? sourceScrollTop / sourceMaxScroll : 0
+
+    // Calculate the maximum scroll position for target editor
+    const targetLineCount = targetSession.getLength()
+    const targetContentHeight = targetLineCount * acediff.lineHeight
+    const targetViewportHeight = targetEditor.ace.renderer.$size.scrollerHeight
+    const targetMaxScroll = Math.max(
+      0,
+      targetContentHeight - targetViewportHeight,
+    )
+
+    // Apply the same scroll ratio to target editor
+    const targetScrollTop = scrollRatio * targetMaxScroll
+
+    isSyncingScroll = true
+    targetSession.setScrollTop(targetScrollTop)
+    isSyncingScroll = false
+  }
+
   acediff.editors.left.ace.getSession().on(
     'changeScrollTop',
     throttle(() => {
+      syncScroll(acediff.editors.left, acediff.editors.right)
       updateGap(acediff)
     }, 16),
   )
   acediff.editors.right.ace.getSession().on(
     'changeScrollTop',
     throttle(() => {
+      syncScroll(acediff.editors.right, acediff.editors.left)
       updateGap(acediff)
     }, 16),
   )
@@ -367,7 +414,10 @@ function copy(acediff, e, dir) {
 
   // Get the content to insert using character offsets from the source
   const sourceValue = sourceEditor.ace.getValue()
-  const contentToInsert = sourceValue.substring(sourceStartOffset, sourceEndOffset)
+  const contentToInsert = sourceValue.substring(
+    sourceStartOffset,
+    sourceEndOffset,
+  )
 
   // Use Ace's built-in indexToPosition for precise character-to-position conversion
   const targetDoc = targetEditor.ace.getSession().doc
@@ -380,7 +430,10 @@ function copy(acediff, e, dir) {
   // Use character-precise range for the replacement
   targetEditor.ace
     .getSession()
-    .replace(new Range(startPos.row, startPos.column, endPos.row, endPos.column), contentToInsert)
+    .replace(
+      new Range(startPos.row, startPos.column, endPos.row, endPos.column),
+      contentToInsert,
+    )
   targetEditor.ace.getSession().setScrollTop(parseInt(h, 10))
 
   acediff.diff()
