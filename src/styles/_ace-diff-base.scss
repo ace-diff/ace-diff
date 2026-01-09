@@ -1,15 +1,14 @@
-@use "sass:color";
-
-$connectorBackground: #d8f2ff !default;
-$connectorBorder: #a2d7f2 !default;
-$gutterBackground: #efefef !default;
-$copyArrowsColor: #000 !default;
-$mergeRightColor: #c98100 !default;
-$mergeLeftColor: #004ea0 !default;
-$charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !default;
-
 .acediff {
-  // .acediff class itself got no styles
+  // CSS Custom Properties with light theme defaults
+  --acediff-gutter-bg: #efefef;
+  --acediff-gutter-border: #bcbcbc;
+  --acediff-diff-bg: #d8f2ff;
+  --acediff-diff-border: #a2d7f2;
+  --acediff-diff-char-bg: #b8e2f5;
+  --acediff-arrow-color: #000;
+  --acediff-arrow-shadow: rgba(255, 255, 255, 0.7);
+  --acediff-arrow-hover-left: #004ea0;
+  --acediff-arrow-hover-right: #c98100;
 
   // We have to provide some dimensions for the ACE editor
   // This will expand to whatever space is available
@@ -29,15 +28,16 @@ $charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !defau
 
   &__gutter {
     flex: 0 0 60px;
-    border-left: 1px solid color.adjust($gutterBackground, $lightness: -20%);
-    border-right: 1px solid color.adjust($gutterBackground, $lightness: -20%);
-    background-color: $gutterBackground;
+    border-left: 1px solid var(--acediff-gutter-border);
+    border-right: 1px solid var(--acediff-gutter-border);
+    background-color: var(--acediff-gutter-bg);
     overflow: hidden;
 
     svg {
-      background-color: $gutterBackground;
+      background-color: var(--acediff-gutter-bg);
     }
   }
+
   &__left,
   &__right {
     height: 100%;
@@ -46,14 +46,15 @@ $charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !defau
 
   // The line that's rendered in ACE editor under diffed lines
   &__diffLine {
-    background-color: $connectorBackground;
-    border-top: 1px solid $connectorBorder;
-    border-bottom: 1px solid $connectorBorder;
+    background-color: var(--acediff-diff-bg);
+    border-top: 1px solid var(--acediff-diff-border);
+    border-bottom: 1px solid var(--acediff-diff-border);
     position: absolute;
     z-index: 4;
+
     &.targetOnly {
       height: 0px !important;
-      border-top: 1px solid $connectorBorder;
+      border-top: 1px solid var(--acediff-diff-border);
       border-bottom: 0px;
       position: absolute;
     }
@@ -61,20 +62,20 @@ $charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !defau
 
   // Character-level diff highlighting (darker shade within diff lines)
   &__diffChar {
-    background-color: $charDiffBackground;
+    background-color: var(--acediff-diff-char-bg);
     position: absolute;
     z-index: 5;
   }
 
   // Gutter decoration for diff lines
   &__diffGutter {
-    background-color: $connectorBackground !important;
+    background-color: var(--acediff-diff-bg) !important;
   }
 
   // SVG connector
   &__connector {
-    fill: $connectorBackground;
-    stroke: $connectorBorder;
+    fill: var(--acediff-diff-bg);
+    stroke: var(--acediff-diff-border);
   }
 
   // Arrows for merging diffs
@@ -83,15 +84,16 @@ $charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !defau
     position: relative;
 
     div {
-      color: $copyArrowsColor;
-      text-shadow: 1px 1px rgba(color.invert($copyArrowsColor), 0.7);
+      color: var(--acediff-arrow-color);
+      text-shadow: 1px 1px var(--acediff-arrow-shadow);
       position: absolute;
       margin: 2px 3px;
       cursor: pointer;
     }
   }
+
   &__copy--right div:hover {
-    color: $mergeLeftColor;
+    color: var(--acediff-arrow-hover-left);
   }
 
   &__copy--left {
@@ -101,7 +103,7 @@ $charDiffBackground: color.adjust($connectorBackground, $lightness: -15%) !defau
       right: 0px;
 
       &:hover {
-        color: $mergeRightColor;
+        color: var(--acediff-arrow-hover-right);
       }
     }
   }
