@@ -41,3 +41,13 @@ jobs:
 
       - name: Run tests
         run: pnpm test
+
+      - name: Upload Cypress artifacts on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: cypress-artifacts
+          path: |
+            cypress/screenshots
+            cypress/videos
+          retention-days: 7

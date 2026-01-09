@@ -64,7 +64,27 @@ describe('Scroll unlocking', () => {
     beforeEach(() => {
       cy.visit('http://localhost:8081/scroll-unlock.html')
       cy.get('.acediff__wrap').should('have.length', 1)
-      cy.wait(100)
+
+      // Wait for Ace editor to be fully rendered by checking for line numbers in the gutter
+      cy.get('.ace_gutter-cell').should('exist')
+
+      // In headless mode, Ace may not calculate lineHeight properly without a resize
+      // Force resize and wait for layout to complete
+      cy.window().then((win) => {
+        const { left, right } = win.aceDiffer.getEditors()
+        left.resize(true)
+        right.resize(true)
+      })
+
+      // Wait for resize to complete and lineHeight to be calculated
+      cy.wait(300)
+
+      // Update lineHeight if still 0 (defensive workaround for headless mode)
+      cy.window().then((win) => {
+        if (win.aceDiffer.lineHeight === 0) {
+          win.aceDiffer.lineHeight = win.aceDiffer.editors.left.ace.renderer.lineHeight
+        }
+      })
     })
 
     it('can enable lockScrolling after initialization', () => {
@@ -73,15 +93,20 @@ describe('Scroll unlocking', () => {
         win.aceDiffer.setOptions({ lockScrolling: true })
         expect(win.aceDiffer.options.lockScrolling).to.equal(true)
 
-        const { left, right } = win.aceDiffer.getEditors()
+        const { left } = win.aceDiffer.getEditors()
 
-        // Scroll left editor to a fixed amount
+        // Scroll left editor - this triggers 'changeScrollTop' event
+        // which is throttled (16ms) and then syncs to right editor
         left.getSession().setScrollTop(500)
+      })
 
-        // Use Cypress retry to wait for scroll sync
-        cy.wrap(right.getSession(), { timeout: 2000 }).should((rightSession) => {
-          expect(rightSession.getScrollTop()).to.be.greaterThan(0)
-        })
+      // Wait for throttled scroll handler (16ms) plus buffer
+      cy.wait(100)
+
+      // Verify scroll synced
+      cy.window().then((win) => {
+        const { right } = win.aceDiffer.getEditors()
+        expect(right.getSession().getScrollTop()).to.be.greaterThan(0)
       })
     })
 
