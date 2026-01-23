@@ -2,7 +2,7 @@
   "name": "ace-diff",
   "version": "3.3.0",
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
-  "source": "src/index.js",
+  "source": "src/index.ts",
   "main": "dist/ace-diff.min.js",
   "module": "dist/module.js",
   "scripts": {
@@ -47,6 +47,7 @@
     "eslint-plugin-prettier": "5.5.4",
     "parcel": "^2.16.3",
     "prettier": "3.7.4",
-    "sass": "1.97.2"
+    "sass": "1.97.2",
+    "typescript": "^5.9.3"
   }
 }
