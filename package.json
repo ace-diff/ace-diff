@@ -39,15 +39,19 @@
     "@sanity/diff-match-patch": "3.2.0"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
     "@parcel/babel-preset-env": "^2.16.3",
     "@parcel/transformer-sass": "^2.16.3",
     "cypress": "^15.8.2",
     "eslint": "9.39.2",
     "eslint-config-prettier": "10.1.8",
     "eslint-plugin-prettier": "5.5.4",
+    "globals": "^17.1.0",
     "parcel": "^2.16.3",
     "prettier": "3.7.4",
     "sass": "1.97.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.53.1"
   }
 }
