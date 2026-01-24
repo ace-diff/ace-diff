@@ -1,37 +1,38 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <title>Ace-diff - Diff Granularity Test</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <script type="module" src="../../dist/ace-diff.min.js"></script>
+  </head>
 
-<head>
-  <title>Ace-diff - Diff Granularity Test</title>
-  <link rel="stylesheet" href="../../dist/ace-diff.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js" type="text/javascript"
-    charset="utf-8"></script>
-  <script type="module" src="../../dist/ace-diff.min.js"></script>
-</head>
+  <body>
+    <div class="custom"></div>
 
-<body>
-  <div class="custom"></div>
-
-  <script type="module">
-    import AceDiff from '../../src/index'
-    // Create adjacent diffs that may be grouped differently based on granularity
-    window.aceDiffer = new AceDiff({
-      element: '.custom',
-      diffGranularity: 'broad',
-      left: {
-        content: `line1
+    <script type="module">
+      import AceDiff from '../../dist/index.mjs'
+      // Create adjacent diffs that may be grouped differently based on granularity
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        diffGranularity: 'broad',
+        left: {
+          content: `line1
 changed2
 changed3
 line4`,
-      },
-      right: {
-        content: `line1
+        },
+        right: {
+          content: `line1
 original2
 original3
 line4`,
-      },
-    });
-  </script>
-</body>
-
+        },
+      })
+    </script>
+  </body>
 </html>

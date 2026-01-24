@@ -1,40 +1,41 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <title>Ace-diff - Twilight Theme Test</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <link rel="stylesheet" href="../../dist/styles-twilight.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <style>
+      .custom {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
+    </style>
+  </head>
 
-<head>
-  <title>Ace-diff - Twilight Theme Test</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js" type="text/javascript"
-    charset="utf-8"></script>
-  <style>
-    .custom {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      left: 0;
-      right: 0;
-    }
-  </style>
-</head>
+  <body>
+    <div class="custom"></div>
 
-<body>
-  <div class="custom"></div>
+    <script type="module">
+      import AceDiff from '../../dist/index.mjs'
 
-  <script type="module">
-    import AceDiff from '../../src/index'
-    // Import twilight theme AFTER the base styles (which are imported by index)
-    import '../../src/styles/ace-diff-twilight.scss'
-
-    window.aceDiffer = new AceDiff({
-      element: '.custom',
-      theme: 'ace/theme/twilight',
-      left: {
-        content: 'line 1\nline 2\nline 3',
-      },
-      right: {
-        content: 'line 1\nmodified line 2\nline 3\nline 4',
-      },
-    });
-  </script>
-</body>
-
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        theme: 'ace/theme/twilight',
+        left: {
+          content: 'line 1\nline 2\nline 3',
+        },
+        right: {
+          content: 'line 1\nmodified line 2\nline 3\nline 4',
+        },
+      })
+    </script>
+  </body>
 </html>

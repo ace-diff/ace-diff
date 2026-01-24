@@ -1,13 +1,22 @@
-export default function on(elSelector, eventName, selector, fn) {
+export default function on(
+  elSelector: string,
+  eventName: string,
+  selector: string,
+  fn: (event: Event) => void,
+): void {
   const element =
-    elSelector === 'document' ? document : document.querySelector(elSelector)
+    elSelector === 'document'
+      ? document
+      : document.querySelector<HTMLElement>(elSelector)
 
-  element.addEventListener(eventName, (event) => {
+  if (!element) return
+
+  element.addEventListener(eventName, (event: Event) => {
     const possibleTargets = element.querySelectorAll(selector)
-    const { target } = event
+    const target = event.target as Node | null
 
     for (let i = 0, l = possibleTargets.length; i < l; i += 1) {
-      let el = target
+      let el: Node | null = target
       const p = possibleTargets[i]
 
       while (el && el !== element) {

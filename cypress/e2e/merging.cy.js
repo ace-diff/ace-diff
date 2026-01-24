@@ -1,7 +1,7 @@
 describe('Merging code', () => {
   context('Merging new code', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/cypress-index.html')
+      cy.visit('/cypress-index.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -37,7 +37,7 @@ describe('Merging code', () => {
 
   context('Merging deleted code', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/cypress-index.html')
+      cy.visit('/cypress-index.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -69,7 +69,7 @@ describe('Merging code', () => {
 
   context('Undo is working', () => {
     before(() => {
-      cy.visit('http://localhost:8081/cypress-index.html')
+      cy.visit('/cypress-index.html')
       cy.get('.acediff__deletedCodeConnector').last().click()
     })
 

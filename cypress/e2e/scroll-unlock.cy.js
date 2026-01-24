@@ -1,7 +1,7 @@
 describe('Scroll unlocking', () => {
   context('with lockScrolling disabled (unlocked)', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/scroll-unlock.html')
+      cy.visit('/scroll-unlock.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -62,7 +62,7 @@ describe('Scroll unlocking', () => {
 
   context('toggling lockScrolling via setOptions', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/scroll-unlock.html')
+      cy.visit('/scroll-unlock.html')
       cy.get('.acediff__wrap').should('have.length', 1)
 
       // Wait for Ace editor to be fully rendered by checking for line numbers in the gutter
@@ -82,7 +82,8 @@ describe('Scroll unlocking', () => {
       // Update lineHeight if still 0 (defensive workaround for headless mode)
       cy.window().then((win) => {
         if (win.aceDiffer.lineHeight === 0) {
-          win.aceDiffer.lineHeight = win.aceDiffer.editors.left.ace.renderer.lineHeight
+          win.aceDiffer.lineHeight =
+            win.aceDiffer.editors.left.ace.renderer.lineHeight
         }
       })
     })

@@ -1,6 +1,4 @@
-# These workspace settings are necessary for proper Cypress functionality in pnpm v10+
-# Reference: https://docs.cypress.io/app/references/advanced-installation#Troubleshoot-installation
+# pnpm requires this file to recognize the project root.
+# onlyBuiltDependencies limits native addon builds to listed packages for faster installs.
 onlyBuiltDependencies:
-  - cypress
-
-sideEffectsCache: false
+  - esbuild

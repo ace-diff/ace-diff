@@ -1,32 +1,34 @@
 /**
  * Simple is object check.
- * @param item
- * @returns {boolean}
  */
-function isObject(item) {
-  return (
-    item && typeof item === 'object' && !Array.isArray(item) && item !== null
-  )
+function isObject(item: unknown): item is Record<string, unknown> {
+  return item !== null && typeof item === 'object' && !Array.isArray(item)
 }
 
 /**
  * Deep merge two objects.
- * @param target
- * @param source
  */
-export default function merge(target, source) {
+export default function merge<T extends Record<string, unknown>>(
+  target: T,
+  source: Partial<T>,
+): T {
   if (isObject(target) && isObject(source)) {
     Object.keys(source).forEach((key) => {
       if (key === '__proto__' || key === 'constructor') return
-      if (isObject(source[key])) {
-        if (!target[key] || !isObject(target[key])) {
-          target[key] = source[key]
+      const sourceValue = source[key]
+      const targetValue = target[key]
+      if (isObject(sourceValue)) {
+        if (!targetValue || !isObject(targetValue)) {
+          ;(target as Record<string, unknown>)[key] = sourceValue
         }
-        if (target[key] != source[key]) {
-          merge(target[key], source[key]);
+        if (targetValue !== sourceValue) {
+          merge(
+            targetValue as Record<string, unknown>,
+            sourceValue as Record<string, unknown>,
+          )
         }
       } else {
-        Object.assign(target, { [key]: source[key] })
+        Object.assign(target, { [key]: sourceValue })
       }
     })
   }

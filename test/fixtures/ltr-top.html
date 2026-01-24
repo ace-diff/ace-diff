@@ -1,32 +1,33 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <title>Ace-diff - Test page</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <script type="module" src="../../dist/ace-diff.min.js"></script>
+  </head>
 
-<head>
-  <title>Ace-diff - Test page</title>
-  <link rel="stylesheet" href="../../dist/ace-diff.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js" type="text/javascript"
-    charset="utf-8"></script>
-  <script type="module" src="../../dist/ace-diff.min.js"></script>
-</head>
+  <body>
+    <div class="custom"></div>
 
-<body>
-  <div class="custom"></div>
-
-  <script type="module">
-    import AceDiff from '../../src/index'
-    window.aceDiffer = new AceDiff({
-      element: '.custom',
-      left: {
-        content: `something new
+    <script type="module">
+      import AceDiff from '../../dist/index.mjs'
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        left: {
+          content: `something new
 mid
 end`,
-      },
-      right: {
-        content: `mid
+        },
+        right: {
+          content: `mid
 end`,
-      },
-    });
-  </script>
-</body>
-
+        },
+      })
+    </script>
+  </body>
 </html>

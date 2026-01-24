@@ -1,10 +1,14 @@
-export default function throttle(callback, wait, immediate = false) {
-  let timeout = null
+export default function throttle<T extends (...args: unknown[]) => void>(
+  callback: T,
+  wait: number,
+  immediate = false,
+): (...args: Parameters<T>) => void {
+  let timeout: ReturnType<typeof setTimeout> | null = null
   let initialCall = true
 
-  return (...args) => {
+  return function (this: unknown, ...args: Parameters<T>): void {
     const callNow = immediate && initialCall
-    const next = () => {
+    const next = (): void => {
       callback.apply(this, args)
       timeout = null
     }
