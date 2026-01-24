@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ace-diff - Dark Theme</title>
+    <link rel="stylesheet" href="../src/styles/ace-diff.scss" />
+    <link rel="stylesheet" href="../src/styles/ace-diff-twilight.scss" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: #1a1a2e;
+        color: #eee;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      header {
+        padding: 1rem 2rem;
+        background: #16213e;
+        border-bottom: 1px solid #0f3460;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      header a {
+        color: #6ea8fe;
+        text-decoration: none;
+      }
+      header h1 {
+        font-size: 1.25rem;
+        font-weight: 500;
+      }
+      main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+      }
+      .diff-container {
+        flex: 1;
+        min-height: 500px;
+        position: relative;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a href="index.html">← demos</a>
+      <h1>Dark Theme</h1>
+    </header>
+    <main>
+      <div class="diff-container"></div>
+    </main>
+    <script type="module">
+      import AceDiff from '../src/index.ts'
+
+      window.aceDiffer = new AceDiff({
+        element: '.diff-container',
+        mode: 'ace/mode/javascript',
+        theme: 'ace/theme/monokai',
+        left: {
+          content: `function greet(name) {
+  console.log('Hello, ' + name);
+}
+
+function add(a, b) {
+  return a + b;
+}
+
+greet('World');
+`,
+        },
+        right: {
+          content: `function greet(name) {
+  console.log(\`Hello, \${name}!\`);
+}
+
+function add(a, b) {
+  return a + b;
+}
+
+function multiply(a, b) {
+  return a * b;
+}
+
+greet('World');
+`,
+        },
+      })
+    </script>
+  </body>
+</html>

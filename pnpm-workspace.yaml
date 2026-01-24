@@ -1,6 +1,8 @@
 # These workspace settings are necessary for proper Cypress functionality in pnpm v10+
 # Reference: https://docs.cypress.io/app/references/advanced-installation#Troubleshoot-installation
+# esbuild is included for the tsdown bundler
 onlyBuiltDependencies:
   - cypress
+  - esbuild
 
 sideEffectsCache: false

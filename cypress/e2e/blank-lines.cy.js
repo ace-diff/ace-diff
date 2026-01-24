@@ -1,7 +1,7 @@
 describe('Blank Line Merging', () => {
   context('Blank line at start', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/blank-line-start.html')
+      cy.visit('/blank-line-start.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -18,7 +18,7 @@ describe('Blank Line Merging', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
         expect(win.aceDiffer.getEditors().right.getValue()).to.equal(
-          "\nfunction setup() {\n  init()\n}"
+          '\nfunction setup() {\n  init()\n}',
         )
       })
     })
@@ -26,7 +26,7 @@ describe('Blank Line Merging', () => {
 
   context('Blank line in middle', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/blank-line-middle.html')
+      cy.visit('/blank-line-middle.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -43,7 +43,7 @@ describe('Blank Line Merging', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
         expect(win.aceDiffer.getEditors().right.getValue()).to.equal(
-          "function setup() {\n\n  init()\n}"
+          'function setup() {\n\n  init()\n}',
         )
       })
     })
@@ -51,7 +51,7 @@ describe('Blank Line Merging', () => {
 
   context('New line before closing brace', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/blank-line-end.html')
+      cy.visit('/blank-line-end.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -68,7 +68,7 @@ describe('Blank Line Merging', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
         expect(win.aceDiffer.getEditors().right.getValue()).to.equal(
-          "function setup() {\n  init()\n  cleanup()\n}"
+          'function setup() {\n  init()\n  cleanup()\n}',
         )
       })
     })
@@ -76,7 +76,7 @@ describe('Blank Line Merging', () => {
 
   context('Multiple consecutive blank lines', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/multiple-blank-lines.html')
+      cy.visit('/multiple-blank-lines.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -93,7 +93,7 @@ describe('Blank Line Merging', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
         expect(win.aceDiffer.getEditors().right.getValue()).to.equal(
-          "function setup() {\n\n\n  init()\n}"
+          'function setup() {\n\n\n  init()\n}',
         )
       })
     })

@@ -30,8 +30,19 @@ jobs:
       - name: Install Cypress binary
         run: pnpm exec cypress install
 
+      - name: Lint
+        run: |
+          pnpm exec eslint src --max-warnings 0
+          pnpm exec prettier --check .
+
+      - name: Type Check
+        run: pnpm run typecheck
+
       - name: Build
         run: pnpm run build
+
+      - name: Check Types (attw)
+        run: pnpm run attw
 
       - name: Run static server in the background
         run: pnpm run serve &

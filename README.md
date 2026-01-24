@@ -44,8 +44,31 @@ import AceDiff from 'ace-diff'
 import * as ace from 'ace-builds'
 
 // optionally, include CSS, or use your own
-import 'ace-diff/dist/ace-diff.min.css'
+import 'ace-diff/styles.css'
+// or import 'ace-diff/styles' (same file)
 ```
+
+### Upgrading from v3 to v4
+
+1. Update your CSS import:
+
+   ```js
+   // Before (v3.x)
+   import 'ace-diff/dist/ace-diff.min.css'
+
+   // After (v4.x)
+   import 'ace-diff/styles.css'
+   ```
+
+2. If you use `ace-builds`, ensure it's installed as a dependency:
+
+   ```bash
+   pnpm add ace-builds
+   ```
+
+   Note: ace-diff works with any Ace-compatible editor (Brace, CDN builds, etc.), so `ace-builds` is not strictly required.
+
+3. TypeScript users get types automatically - no need for `@types/ace-diff`
 
 ### HTML
 
@@ -108,14 +131,14 @@ Override these variables to customize the appearance:
 
 ```css
 .acediff {
-  --acediff-gutter-bg: #efefef;          /* Gutter background */
-  --acediff-gutter-border: #bcbcbc;      /* Gutter border color */
-  --acediff-diff-bg: #d8f2ff;            /* Diff highlight background */
-  --acediff-diff-border: #a2d7f2;        /* Diff highlight border */
-  --acediff-arrow-color: #000;           /* Copy arrow color */
-  --acediff-arrow-shadow: rgba(255, 255, 255, 0.7);  /* Arrow text shadow */
-  --acediff-arrow-hover-left: #004ea0;   /* Left arrow hover color */
-  --acediff-arrow-hover-right: #c98100;  /* Right arrow hover color */
+  --acediff-gutter-bg: #efefef; /* Gutter background */
+  --acediff-gutter-border: #bcbcbc; /* Gutter border color */
+  --acediff-diff-bg: #d8f2ff; /* Diff highlight background */
+  --acediff-diff-border: #a2d7f2; /* Diff highlight border */
+  --acediff-arrow-color: #000; /* Copy arrow color */
+  --acediff-arrow-shadow: rgba(255, 255, 255, 0.7); /* Arrow text shadow */
+  --acediff-arrow-hover-left: #004ea0; /* Left arrow hover color */
+  --acediff-arrow-hover-right: #c98100; /* Right arrow hover color */
 }
 ```
 
@@ -124,8 +147,8 @@ Override these variables to customize the appearance:
 We provide a preset for the Twilight Ace theme. Import it after the base CSS:
 
 ```js
-import 'ace-diff/dist/ace-diff.min.css'
-import 'ace-diff/dist/ace-diff-twilight.min.css'
+import 'ace-diff/styles.css'
+import 'ace-diff/styles-twilight.css'
 ```
 
 Then set the Ace editor theme to match:
