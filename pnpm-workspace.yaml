@@ -1,0 +1,6 @@
+# These workspace settings are necessary for proper Cypress functionality in pnpm v10+
+# Reference: https://docs.cypress.io/app/references/advanced-installation#Troubleshoot-installation
+onlyBuiltDependencies:
+  - cypress
+
+sideEffectsCache: false
