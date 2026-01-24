@@ -1,12 +1,15 @@
 describe('Theme CSS', () => {
   context('Light theme (default)', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/theme-light.html')
+      cy.visit('/theme-light.html')
     })
 
     it('applies light gutter background color', () => {
-      cy.get('.acediff__gutter')
-        .should('have.css', 'background-color', 'rgb(239, 239, 239)') // #efefef
+      cy.get('.acediff__gutter').should(
+        'have.css',
+        'background-color',
+        'rgb(239, 239, 239)',
+      ) // #efefef
     })
 
     it('applies light connector fill color', () => {
@@ -36,12 +39,15 @@ describe('Theme CSS', () => {
 
   context('Twilight theme preset', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/theme-twilight.html')
+      cy.visit('/theme-twilight.html')
     })
 
     it('applies twilight gutter background color', () => {
-      cy.get('.acediff__gutter')
-        .should('have.css', 'background-color', 'rgb(26, 26, 26)') // #1a1a1a
+      cy.get('.acediff__gutter').should(
+        'have.css',
+        'background-color',
+        'rgb(26, 26, 26)',
+      ) // #1a1a1a
     })
 
     it('applies twilight connector fill color', () => {

@@ -50,18 +50,18 @@ This opens a browser where you can select and run individual tests.
 
 Tests are located in `cypress/e2e/`:
 
-| Test File | Description |
-|-----------|-------------|
-| `api.cy.js` | Tests for the AceDiff API methods |
-| `basics.cy.js` | Basic initialization and rendering |
-| `blank-lines.cy.js` | Handling of blank line diffs and merges |
-| `diff-granularity.cy.js` | Broad vs specific diff granularity |
-| `issue-93.cy.js` | Regression test for issue #93 |
-| `left-to-right.cy.js` | Left-to-right merge operations |
-| `merging.cy.js` | General merge functionality |
-| `newlines.cy.js` | Handling of different EOL characters |
-| `right-to-left.cy.js` | Right-to-left merge operations |
-| `themes.cy.js` | Light and dark theme CSS verification |
+| Test File                | Description                             |
+| ------------------------ | --------------------------------------- |
+| `api.cy.js`              | Tests for the AceDiff API methods       |
+| `basics.cy.js`           | Basic initialization and rendering      |
+| `blank-lines.cy.js`      | Handling of blank line diffs and merges |
+| `diff-granularity.cy.js` | Broad vs specific diff granularity      |
+| `issue-93.cy.js`         | Regression test for issue #93           |
+| `left-to-right.cy.js`    | Left-to-right merge operations          |
+| `merging.cy.js`          | General merge functionality             |
+| `newlines.cy.js`         | Handling of different EOL characters    |
+| `right-to-left.cy.js`    | Right-to-left merge operations          |
+| `themes.cy.js`           | Light and dark theme CSS verification   |
 
 ## Test Fixtures
 

@@ -1,6 +1,6 @@
 describe('onDiffReady callback', () => {
   beforeEach(() => {
-    cy.visit('http://localhost:8081/on-diff-ready.html')
+    cy.visit('/on-diff-ready.html')
     cy.get('.acediff__wrap').should('have.length', 1)
     cy.wait(100)
   })
@@ -44,7 +44,7 @@ describe('onDiffReady callback', () => {
   })
 
   it('can be set via setOptions', () => {
-    cy.visit('http://localhost:8081/cypress-index.html')
+    cy.visit('/cypress-index.html')
     cy.get('.acediff__wrap').should('have.length', 1)
     cy.wait(100)
 

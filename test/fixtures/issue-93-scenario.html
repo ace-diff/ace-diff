@@ -1,25 +1,27 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
+  <head>
+    <title>Ace-diff - Issue #93 Scenario Test</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <script type="module" src="../../dist/ace-diff.min.js"></script>
+  </head>
 
-<head>
-  <title>Ace-diff - Issue #93 Scenario Test</title>
-  <link rel="stylesheet" href="../../dist/ace-diff.min.css">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js" type="text/javascript"
-    charset="utf-8"></script>
-  <script type="module" src="../../dist/ace-diff.min.js"></script>
-</head>
+  <body>
+    <div class="custom"></div>
 
-<body>
-  <div class="custom"></div>
-
-  <script type="module">
-    // This is the exact scenario from GitHub issue #93
-    // https://github.com/ace-diff/ace-diff/issues/93
-    import AceDiff from '../../src/index'
-    window.aceDiffer = new AceDiff({
-      element: '.custom',
-      left: {
-        content: `let flipSpeed = 55
+    <script type="module">
+      // This is the exact scenario from GitHub issue #93
+      // https://github.com/ace-diff/ace-diff/issues/93
+      import AceDiff from '../../dist/index.mjs'
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        left: {
+          content: `let flipSpeed = 55
 function setup() {
   createCanvas(windowWidth, windowHeight)
   background(255)
@@ -27,16 +29,15 @@ function setup() {
 function draw() {
   background(0)
 }`,
-      },
-      right: {
-        content: `function setup() {
+        },
+        right: {
+          content: `function setup() {
   createCanvas(windowWidth, windowHeight)
 }
 function draw() {
 }`,
-      },
-    });
-  </script>
-</body>
-
+        },
+      })
+    </script>
+  </body>
 </html>

@@ -3,7 +3,7 @@ describe('Issue #93 - Strange Merging Behavior with Insert into Newline', () => 
   // https://github.com/ace-diff/ace-diff/issues/93
 
   beforeEach(() => {
-    cy.visit('http://localhost:8081/issue-93-scenario.html')
+    cy.visit('/issue-93-scenario.html')
     cy.get('.acediff__wrap').should('have.length', 1)
     cy.wait(100)
   })
