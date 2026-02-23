@@ -43,7 +43,13 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Update version
-        run: pnpm version ${{ github.event.inputs.version }}
+        run: |
+          CURRENT=$(node -p "require('./package.json').version")
+          if [ "$CURRENT" != "${{ github.event.inputs.version }}" ]; then
+            pnpm version ${{ github.event.inputs.version }}
+          else
+            echo "Version is already $CURRENT, skipping version bump"
+          fi
 
       - name: Publish ace-diff
         run: pnpm publish --access public --no-git-checks
