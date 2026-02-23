@@ -1,5 +1,12 @@
-// generates a Bezier curve in SVG format
-export default function getCurve(startX, startY, endX, endY) {
+/**
+ * Generates a Bezier curve in SVG format
+ */
+export default function getCurve(
+  startX: number,
+  startY: number,
+  endX: number,
+  endY: number,
+): string {
   const w = endX - startX
   const halfWidth = startX + w / 2
 

@@ -1,7 +1,7 @@
 describe('Diff Granularity', () => {
   context('Broad granularity (default)', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/diff-granularity.html')
+      cy.visit('/diff-granularity.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -22,7 +22,7 @@ describe('Diff Granularity', () => {
       cy.window().then((win) => {
         expect(win.aceDiffer.getNumDiffs()).to.equal(0)
         expect(win.aceDiffer.getEditors().right.getValue()).to.equal(
-          "line1\nchanged2\nchanged3\nline4"
+          'line1\nchanged2\nchanged3\nline4',
         )
       })
     })
@@ -30,7 +30,7 @@ describe('Diff Granularity', () => {
 
   context('Specific granularity', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/diff-granularity.html')
+      cy.visit('/diff-granularity.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
@@ -50,7 +50,7 @@ describe('Diff Granularity', () => {
 
   context('Switching granularity dynamically', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:8081/diff-granularity.html')
+      cy.visit('/diff-granularity.html')
       cy.get('.acediff__wrap').should('have.length', 1)
       cy.wait(100)
     })
