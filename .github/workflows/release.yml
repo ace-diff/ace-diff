@@ -49,6 +49,7 @@ jobs:
             pnpm version ${{ github.event.inputs.version }}
           else
             echo "Version is already $CURRENT, skipping version bump"
+            git tag "v$CURRENT"
           fi
 
       - name: Publish ace-diff
