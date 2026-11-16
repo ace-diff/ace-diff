@@ -675,7 +675,7 @@ export default class AceDiff {
     offsetRight: number,
     diffText: string,
   ): DiffInfo {
-    let lineInfo: Partial<DiffInfo> = {}
+    let lineInfo: Partial<DiffInfo>
 
     if (diffType === DIFF_INSERT) {
       const info = this.getSingleDiffInfo(

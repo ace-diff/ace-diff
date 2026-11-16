@@ -10,8 +10,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'ace-diff': resolve(__dirname, 'src/index.ts'),
-      'ace-diff/styles': resolve(__dirname, 'src/styles/ace-diff.scss'),
+      'ace-diff': resolve(import.meta.dirname, 'src/index.ts'),
+      'ace-diff/styles': resolve(
+        import.meta.dirname,
+        'src/styles/ace-diff.scss',
+      ),
     },
   },
 })
