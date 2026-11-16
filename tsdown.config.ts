@@ -7,8 +7,11 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   minify: true,
-  external: ['ace-builds'],
-  noExternal: ['@sanity/diff-match-patch'],
+  deps: {
+    neverBundle: ['ace-builds'],
+    alwaysBundle: ['@sanity/diff-match-patch'],
+    onlyBundle: ['@sanity/diff-match-patch'],
+  },
   outExtension({ format }) {
     return {
       js: format === 'cjs' ? '.cjs' : '.js',

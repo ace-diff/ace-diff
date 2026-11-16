@@ -16,8 +16,7 @@ export const DIFF_GRANULARITY_BROAD = 'broad' as const
 export type EditorSide = typeof EDITOR_LEFT | typeof EDITOR_RIGHT
 export type CopyDirection = typeof LTR | typeof RTL
 export type DiffGranularity =
-  | typeof DIFF_GRANULARITY_SPECIFIC
-  | typeof DIFF_GRANULARITY_BROAD
+  typeof DIFF_GRANULARITY_SPECIFIC | typeof DIFF_GRANULARITY_BROAD
 
 // Default export for backward compatibility
 export default {
