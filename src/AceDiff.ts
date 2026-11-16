@@ -821,6 +821,15 @@ export default class AceDiff {
       info.endLine--
     }
 
+    // If the diff was only the newline ending the original start line
+    // (e.g. 'a\nb\n' vs 'a\nb'), moving the start to the next line leaves the
+    // end behind it. The diff then represents the new (empty) line created by
+    // that newline, so it must span at least that line.
+    if (info.endLine < info.startLine) {
+      info.endLine = info.startLine
+      info.endChar = 0
+    }
+
     const endsWithNewline = /\n$/.test(diffString)
     if (info.startChar > 0 && endsWithNewline) {
       info.endLine++

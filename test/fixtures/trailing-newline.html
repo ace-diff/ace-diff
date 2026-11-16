@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Ace-diff - Trailing Newline Test</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.40.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+  </head>
+
+  <body>
+    <div class="custom"></div>
+
+    <script type="module">
+      import AceDiff from '../../dist/index.mjs'
+      // Contents are passed as JSON-encoded query params so a single fixture
+      // can cover multiple newline scenarios (see GitHub issue #144)
+      const params = new URLSearchParams(window.location.search)
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        left: { content: JSON.parse(params.get('left')) },
+        right: { content: JSON.parse(params.get('right')) },
+      })
+    </script>
+  </body>
+</html>
