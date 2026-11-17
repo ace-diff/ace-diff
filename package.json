@@ -1,6 +1,6 @@
 {
   "name": "ace-diff",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "A diff/merging wrapper for Ace Editor built on google-diff-match-patch",
   "type": "module",
   "engines": {
