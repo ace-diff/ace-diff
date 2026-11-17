@@ -1,7 +1,6 @@
 /* eslint-disable no-console, @typescript-eslint/no-non-null-assertion */
 import type { Ace } from 'ace-builds'
 import { makeDiff, cleanupSemantic } from '@sanity/diff-match-patch'
-import throttle from './helpers/throttle.js'
 import debounce from './helpers/debounce.js'
 import normalizeContent from './helpers/normalizeContent.js'
 
@@ -373,21 +372,32 @@ export default class AceDiff {
       isSyncingScroll = false
     }
 
-    this.editors.left.ace.getSession().on(
-      'changeScrollTop',
-      throttle(() => {
-        syncScroll(this.editors.left, this.editors.right)
+    // Redraw the gutter connectors at most once per animation frame
+    let gapFrame: number | null = null
+    const scheduleUpdateGap = (): void => {
+      if (gapFrame !== null) return
+      gapFrame = requestAnimationFrame(() => {
+        gapFrame = null
         this.updateGap()
-      }, 16),
-    )
+      })
+    }
 
-    this.editors.right.ace.getSession().on(
-      'changeScrollTop',
-      throttle(() => {
-        syncScroll(this.editors.right, this.editors.left)
-        this.updateGap()
-      }, 16),
-    )
+    // Scroll syncing must happen synchronously inside the event handler.
+    // setScrollTop() on the target fires its changeScrollTop event
+    // synchronously, so isSyncingScroll suppresses that echo. If the sync
+    // were deferred (e.g. throttled), the echo would run later and push the
+    // target's now-stale position back onto the editor being scrolled,
+    // causing it to jump backwards while scrolling quickly (issue #140).
+    const onLeftScroll = (): void => {
+      syncScroll(this.editors.left, this.editors.right)
+      scheduleUpdateGap()
+    }
+    const onRightScroll = (): void => {
+      syncScroll(this.editors.right, this.editors.left)
+      scheduleUpdateGap()
+    }
+    this.editors.left.ace.getSession().on('changeScrollTop', onLeftScroll)
+    this.editors.right.ace.getSession().on('changeScrollTop', onRightScroll)
 
     const diffBound = this.diff.bind(this)
     this.editors.left.ace.on('change', diffBound)
@@ -423,6 +433,10 @@ export default class AceDiff {
     window.addEventListener('resize', onResize)
     this.removeEventHandlers = () => {
       window.removeEventListener('resize', onResize)
+      if (gapFrame !== null) {
+        cancelAnimationFrame(gapFrame)
+        gapFrame = null
+      }
     }
   }
 

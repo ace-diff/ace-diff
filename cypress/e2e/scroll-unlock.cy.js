@@ -97,11 +97,11 @@ describe('Scroll unlocking', () => {
         const { left } = win.aceDiffer.getEditors()
 
         // Scroll left editor - this triggers 'changeScrollTop' event
-        // which is throttled (16ms) and then syncs to right editor
+        // which syncs the right editor
         left.getSession().setScrollTop(500)
       })
 
-      // Wait for throttled scroll handler (16ms) plus buffer
+      // Small buffer for the scroll sync and gutter redraw
       cy.wait(100)
 
       // Verify scroll synced
