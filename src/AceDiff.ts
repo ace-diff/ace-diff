@@ -403,6 +403,18 @@ export default class AceDiff {
     this.editors.left.ace.on('change', diffBound)
     this.editors.right.ace.on('change', diffBound)
 
+    // Ace measures the line height asynchronously, so it may still be 0 when
+    // AceDiff initializes (slow font/CSS load, or a hidden container). The
+    // gutter is positioned using lineHeight, so redraw once Ace reports the
+    // real value, and again whenever it changes (e.g. setFontSize).
+    this.editors.left.ace.renderer.on('changeCharacterSize', () => {
+      const lineHeight = this.editors.left.ace.renderer.lineHeight
+      if (lineHeight > 0 && lineHeight !== this.lineHeight) {
+        this.lineHeight = lineHeight
+        this.diff()
+      }
+    })
+
     if (this.options.left.copyLinkEnabled) {
       query(
         `#${this.options.classes.gutterID}`,

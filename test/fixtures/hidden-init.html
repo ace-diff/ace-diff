@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Ace-diff - Hidden Init Test</title>
+    <link rel="stylesheet" href="../../dist/styles.css" />
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.41.0/ace.js"
+      type="text/javascript"
+      charset="utf-8"
+    ></script>
+    <style>
+      .custom {
+        height: 300px;
+      }
+      .hidden {
+        display: none;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- AceDiff is created while hidden (e.g. in an inactive tab or modal),
+         so Ace cannot measure the line height until it is shown -->
+    <div id="wrapper" class="hidden">
+      <div class="custom"></div>
+    </div>
+
+    <script type="module">
+      import AceDiff from '../../dist/index.mjs'
+
+      const left = []
+      const right = []
+      for (let i = 1; i <= 10; i++) {
+        left.push(`line ${i}`)
+        right.push(i === 3 ? `line ${i} changed` : `line ${i}`)
+      }
+      right.splice(7, 0, 'added line A', 'added line B')
+
+      window.aceDiffer = new AceDiff({
+        element: '.custom',
+        left: {
+          content: left.join('\n'),
+        },
+        right: {
+          content: right.join('\n'),
+        },
+      })
+    </script>
+  </body>
+</html>
